@@ -33,6 +33,7 @@ public final class DataChecks {
 	 * @throws NegativeValueException if off or len is negative
 	 * @throws LimitExceededException if off + len is greater than buf.length
 	 */
+	@SuppressWarnings("java:S1695") // NPE thrown
 	public static void checkByteArray(byte[] buf, int off, int len) {
 		if (buf == null) throw new NullPointerException(FIELD_BUF + " is null");
 		NegativeValueException.check(off, FIELD_OFF);

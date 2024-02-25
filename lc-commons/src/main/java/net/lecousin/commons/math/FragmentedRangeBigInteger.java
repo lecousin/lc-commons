@@ -322,18 +322,6 @@ public class FragmentedRangeBigInteger extends LinkedList<RangeBigInteger> {
 					add(i + 1, nr);
 					return;
 				}
-			} else if (r.getMin().equals(start)) {
-				if (r.getMax().equals(end)) {
-					remove(i);
-					return;
-				} else if (r.getMax().compareTo(end) < 0) {
-					remove(i);
-					start = r.getMax().add(BigInteger.ONE);
-					i--;
-				} else {
-					r.setMin(end.add(BigInteger.ONE));
-					return;
-				}
 			} else {
 				if (r.getMax().equals(end)) {
 					remove(i);

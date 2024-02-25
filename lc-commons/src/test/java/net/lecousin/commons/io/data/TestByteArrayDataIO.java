@@ -1,5 +1,6 @@
 package net.lecousin.commons.io.data;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
@@ -74,6 +75,7 @@ public class TestByteArrayDataIO {
 			for (int i = 0; i < expected.length; ++i)
 				assertEquals(expected[i], buffer[pos + i], "Byte " + i);
 			assertEquals(expected.length, io.getEnd() - io.getStart());
+			assertThat(io.getPosition()).isBetween(io.getStart(), io.getEnd());
 		}
 		
 	}

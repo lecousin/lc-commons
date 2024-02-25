@@ -311,18 +311,6 @@ public class FragmentedRangeLong extends LinkedList<RangeLong> {
 					add(i + 1, nr);
 					return;
 				}
-			} else if (r.getMin() == start) {
-				if (r.getMax() == end) {
-					remove(i);
-					return;
-				} else if (r.getMax() < end) {
-					remove(i);
-					start = r.getMax() + 1;
-					i--;
-				} else {
-					r.setMin(end + 1);
-					return;
-				}
 			} else {
 				if (r.getMax() == end) {
 					remove(i);

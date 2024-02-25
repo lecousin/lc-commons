@@ -143,19 +143,10 @@ public class CyclicArray<T> implements Deque<T> {
 		return e;
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public T removeLast() {
-		if (end == start) throw new NoSuchElementException(ERROR_MESSAGE_EMPTY_COLLECTION);
-		if (end == -1) end = start;
-		T e;
-		if (end == 0) {
-			end = array.length - 1;
-			e = (T) array[end];
-		} else {
-			e = (T) array[--end];
-		}
-		array[end] = null;
+		T e = pollLast();
+		if (e == null) throw new NoSuchElementException(ERROR_MESSAGE_EMPTY_COLLECTION);
 		return e;
 	}
 	
@@ -472,19 +463,8 @@ public class CyclicArray<T> implements Deque<T> {
 					removeAt(i);
 					return true;
 				}
-			for (int i = 0; i < end; ++i)
-				if (array[i].equals(element)) {
-					removeAt(i);
-					return true;
-				}
-			return false;
 		}
-		for (int i = start; i < end; ++i)
-			if (array[i].equals(element)) {
-				removeAt(i);
-				return true;
-			}
-		return false;
+		return removeThen(element);
 	}
 	
 	@Override
@@ -509,6 +489,12 @@ public class CyclicArray<T> implements Deque<T> {
 					removeAt(i);
 					return true;
 				}
+		}
+		return removeThen(element);
+	}
+	
+	private boolean removeThen(Object element) {
+		if (end < start) {
 			for (int i = 0; i < end; ++i)
 				if (array[i].equals(element)) {
 					removeAt(i);

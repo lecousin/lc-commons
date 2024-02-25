@@ -144,6 +144,133 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 		System.arraycopy(buf, off, bytes, (int) (start + pos), len);
 	}
 	
+	protected abstract int readUnsigned2BytesAt(int pos);
+	
+	protected int readUnsigned2BytesAt(long pos) throws IOException {
+		if (bytes == null) throw new ClosedChannelException();
+		NegativeValueException.check(pos, DataChecks.FIELD_POS);
+		if (start + pos > end - 2) throw new EOFException();
+		return readUnsigned2BytesAt((int) (start + pos));
+	}
+
+	protected abstract void writeUnsigned2BytesAt(int pos, int value);
+	
+	protected void writeUnsigned2BytesAt(long pos, int value) throws IOException {
+		if (bytes == null) throw new ClosedChannelException();
+		NegativeValueException.check(pos, DataChecks.FIELD_POS);
+		if (start + pos > end - 2) throw new EOFException();
+		writeUnsigned2BytesAt((int) (start + pos), value);
+	}
+
+	protected abstract int readUnsigned3BytesAt(int pos);
+	
+	protected int readUnsigned3BytesAt(long pos) throws IOException {
+		if (bytes == null) throw new ClosedChannelException();
+		NegativeValueException.check(pos, DataChecks.FIELD_POS);
+		if (start + pos > end - 3) throw new EOFException();
+		return readUnsigned3BytesAt((int) (start + pos));
+	}
+	
+	protected abstract void writeUnsigned3BytesAt(int pos, int value);
+	
+	protected void writeUnsigned3BytesAt(long pos, int value) throws IOException {
+		if (bytes == null) throw new ClosedChannelException();
+		NegativeValueException.check(pos, DataChecks.FIELD_POS);
+		if (start + pos > end - 3) throw new EOFException();
+		writeUnsigned3BytesAt((int) (start + pos), value);
+	}
+	
+	protected abstract long readUnsigned4BytesAt(int pos);
+	
+	protected long readUnsigned4BytesAt(long pos) throws IOException {
+		if (bytes == null) throw new ClosedChannelException();
+		NegativeValueException.check(pos, DataChecks.FIELD_POS);
+		if (start + pos > end - 4) throw new EOFException();
+		return readUnsigned4BytesAt((int) (start + pos));
+	}
+	
+	protected abstract void writeUnsigned4BytesAt(int pos, long value);
+	
+	protected void writeUnsigned4BytesAt(long pos, long value) throws IOException {
+		if (bytes == null) throw new ClosedChannelException();
+		NegativeValueException.check(pos, DataChecks.FIELD_POS);
+		if (start + pos > end - 4) throw new EOFException();
+		writeUnsigned4BytesAt((int) (start + pos), value);
+	}
+	
+	protected abstract long readUnsigned5BytesAt(int pos);
+	
+	protected long readUnsigned5BytesAt(long pos) throws IOException {
+		if (bytes == null) throw new ClosedChannelException();
+		NegativeValueException.check(pos, DataChecks.FIELD_POS);
+		if (start + pos > end - 5) throw new EOFException();
+		return readUnsigned5BytesAt((int) (start + pos));
+	}
+	
+	protected abstract void writeUnsigned5BytesAt(int pos, long value);
+	
+	protected void writeUnsigned5BytesAt(long pos, long value) throws IOException {
+		if (bytes == null) throw new ClosedChannelException();
+		NegativeValueException.check(pos, DataChecks.FIELD_POS);
+		if (start + pos > end - 5) throw new EOFException();
+		writeUnsigned5BytesAt((int) (start + pos), value);
+	}
+
+	protected abstract long readUnsigned6BytesAt(int pos);
+	
+	protected long readUnsigned6BytesAt(long pos) throws IOException {
+		if (bytes == null) throw new ClosedChannelException();
+		NegativeValueException.check(pos, DataChecks.FIELD_POS);
+		if (start + pos > end - 6) throw new EOFException();
+		return readUnsigned6BytesAt((int) (start + pos));
+	}
+	
+	protected abstract void writeUnsigned6BytesAt(int pos, long value);
+	
+	protected void writeUnsigned6BytesAt(long pos, long value) throws IOException {
+		if (bytes == null) throw new ClosedChannelException();
+		NegativeValueException.check(pos, DataChecks.FIELD_POS);
+		if (start + pos > end - 6) throw new EOFException();
+		writeUnsigned6BytesAt((int) (start + pos), value);
+	}
+
+	protected abstract long readUnsigned7BytesAt(int pos);
+	
+	protected long readUnsigned7BytesAt(long pos) throws IOException {
+		if (bytes == null) throw new ClosedChannelException();
+		NegativeValueException.check(pos, DataChecks.FIELD_POS);
+		if (start + pos > end - 7) throw new EOFException();
+		return readUnsigned7BytesAt((int) (start + pos));
+	}
+	
+	protected abstract void writeUnsigned7BytesAt(int pos, long value);
+	
+	protected void writeUnsigned7BytesAt(long pos, long value) throws IOException {
+		if (bytes == null) throw new ClosedChannelException();
+		NegativeValueException.check(pos, DataChecks.FIELD_POS);
+		if (start + pos > end - 7) throw new EOFException();
+		writeUnsigned7BytesAt((int) (start + pos), value);
+	}
+	
+	protected abstract long readSigned8BytesAt(int pos);
+	
+	protected long readSigned8BytesAt(long pos) throws IOException {
+		if (bytes == null) throw new ClosedChannelException();
+		NegativeValueException.check(pos, DataChecks.FIELD_POS);
+		if (start + pos > end - 8) throw new EOFException();
+		return readSigned8BytesAt((int) (start + pos));
+	}
+	
+	protected abstract void writeSigned8BytesAt(int pos, long value);
+	
+	protected void writeSigned8BytesAt(long pos, long value) throws IOException {
+		if (bytes == null) throw new ClosedChannelException();
+		NegativeValueException.check(pos, DataChecks.FIELD_POS);
+		if (start + pos > end - 8) throw new EOFException();
+		writeSigned8BytesAt((int) (start + pos), value);
+	}
+
+
 	/** Little-Endian implementation. */
 	public abstract static class LittleEndian extends ByteArrayDataIO {
 		
@@ -170,30 +297,18 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[position++] = (byte) ((value & 0xFF00) >> 8);
 		}
 
-		private int readUnsigned2BytesAt(int pos) {
+		@Override
+		protected int readUnsigned2BytesAt(int pos) {
 			return bytes[pos++] & 0xFF |
 				((bytes[pos] & 0xFF) << 8);
 		}
 		
-		protected int readUnsigned2BytesAt(long pos) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 2) throw new EOFException();
-			return readUnsigned2BytesAt((int) (start + pos));
-		}
-		
-		private void writeUnsigned2BytesAt(int pos, int value) {
+		@Override
+		protected void writeUnsigned2BytesAt(int pos, int value) {
 			bytes[pos++] = (byte) (value & 0xFF);
 			bytes[pos] = (byte) ((value & 0xFF00) >> 8);
 		}
 		
-		protected void writeUnsigned2BytesAt(long pos, int value) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 2) throw new EOFException();
-			writeUnsigned2BytesAt((int) (start + pos), value);
-		}
-
 		protected int readUnsigned3Bytes() throws IOException {
 			if (bytes == null) throw new ClosedChannelException();
 			if (position > end - 3) throw new EOFException();
@@ -210,32 +325,20 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[position++] = (byte) ((value & 0xFF0000) >> 16);
 		}
 
-		private int readUnsigned3BytesAt(int pos) {
+		@Override
+		protected int readUnsigned3BytesAt(int pos) {
 			return bytes[pos++] & 0xFF |
 				((bytes[pos++] & 0xFF) << 8) |
 				((bytes[pos] & 0xFF) << 16);
 		}
 		
-		protected int readUnsigned3BytesAt(long pos) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 3) throw new EOFException();
-			return readUnsigned3BytesAt((int) (start + pos));
-		}
-		
-		private void writeUnsigned3BytesAt(int pos, int value) {
+		@Override
+		protected void writeUnsigned3BytesAt(int pos, int value) {
 			bytes[pos++] = (byte) (value & 0xFF);
 			bytes[pos++] = (byte) ((value & 0xFF00) >> 8);
 			bytes[pos] = (byte) ((value & 0xFF0000) >> 16);
 		}
 		
-		protected void writeUnsigned3BytesAt(long pos, int value) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 3) throw new EOFException();
-			writeUnsigned3BytesAt((int) (start + pos), value);
-		}
-
 		protected long readUnsigned4Bytes() throws IOException {
 			if (bytes == null) throw new ClosedChannelException();
 			if (position > end - 4) throw new EOFException();
@@ -254,32 +357,20 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[position++] = (byte) ((value & 0xFF000000L) >> 24);
 		}
 
-		private long readUnsigned4BytesAt(int pos) {
+		@Override
+		protected long readUnsigned4BytesAt(int pos) {
 			return bytes[pos++] & 0xFF |
 				((bytes[pos++] & 0xFF) << 8) |
 				((bytes[pos++] & 0xFF) << 16) |
 				((long) (bytes[pos] & 0xFF) << 24);
 		}
 		
-		protected long readUnsigned4BytesAt(long pos) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 4) throw new EOFException();
-			return readUnsigned4BytesAt((int) (start + pos));
-		}
-		
-		private void writeUnsigned4BytesAt(int pos, long value) {
+		@Override
+		protected void writeUnsigned4BytesAt(int pos, long value) {
 			bytes[pos++] = (byte) (value & 0xFF);
 			bytes[pos++] = (byte) ((value & 0xFF00) >> 8);
 			bytes[pos++] = (byte) ((value & 0xFF0000) >> 16);
 			bytes[pos] = (byte) ((value & 0xFF000000L) >> 24);
-		}
-		
-		protected void writeUnsigned4BytesAt(long pos, long value) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 4) throw new EOFException();
-			writeUnsigned4BytesAt((int) (start + pos), value);
 		}
 
 		protected long readUnsigned5Bytes() throws IOException {
@@ -302,7 +393,8 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[position++] = (byte) ((value & 0xFF00000000L) >> 32);
 		}
 
-		private long readUnsigned5BytesAt(int pos) {
+		@Override
+		protected long readUnsigned5BytesAt(int pos) {
 			return bytes[pos++] & 0xFF |
 				((bytes[pos++] & 0xFF) << 8) |
 				((bytes[pos++] & 0xFF) << 16) |
@@ -310,26 +402,13 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 				((long) (bytes[pos] & 0xFF) << 32);
 		}
 		
-		protected long readUnsigned5BytesAt(long pos) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 5) throw new EOFException();
-			return readUnsigned5BytesAt((int) (start + pos));
-		}
-		
-		private void writeUnsigned5BytesAt(int pos, long value) {
+		@Override
+		protected void writeUnsigned5BytesAt(int pos, long value) {
 			bytes[pos++] = (byte) (value & 0xFF);
 			bytes[pos++] = (byte) ((value & 0xFF00) >> 8);
 			bytes[pos++] = (byte) ((value & 0xFF0000) >> 16);
 			bytes[pos++] = (byte) ((value & 0xFF000000L) >> 24);
 			bytes[pos] = (byte) ((value & 0xFF00000000L) >> 32);
-		}
-		
-		protected void writeUnsigned5BytesAt(long pos, long value) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 5) throw new EOFException();
-			writeUnsigned5BytesAt((int) (start + pos), value);
 		}
 
 		protected long readUnsigned6Bytes() throws IOException {
@@ -354,7 +433,8 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[position++] = (byte) ((value & 0xFF0000000000L) >> 40);
 		}
 
-		private long readUnsigned6BytesAt(int pos) {
+		@Override
+		protected long readUnsigned6BytesAt(int pos) {
 			return bytes[pos++] & 0xFF |
 				((bytes[pos++] & 0xFF) << 8) |
 				((bytes[pos++] & 0xFF) << 16) |
@@ -363,14 +443,8 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 				((long) (bytes[pos] & 0xFF) << 40);
 		}
 		
-		protected long readUnsigned6BytesAt(long pos) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 6) throw new EOFException();
-			return readUnsigned6BytesAt((int) (start + pos));
-		}
-		
-		private void writeUnsigned6BytesAt(int pos, long value) {
+		@Override
+		protected void writeUnsigned6BytesAt(int pos, long value) {
 			bytes[pos++] = (byte) (value & 0xFF);
 			bytes[pos++] = (byte) ((value & 0xFF00) >> 8);
 			bytes[pos++] = (byte) ((value & 0xFF0000) >> 16);
@@ -379,13 +453,6 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[pos] = (byte) ((value & 0xFF0000000000L) >> 40);
 		}
 		
-		protected void writeUnsigned6BytesAt(long pos, long value) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 6) throw new EOFException();
-			writeUnsigned6BytesAt((int) (start + pos), value);
-		}
-
 		protected long readUnsigned7Bytes() throws IOException {
 			if (bytes == null) throw new ClosedChannelException();
 			if (position > end - 7) throw new EOFException();
@@ -410,7 +477,8 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[position++] = (byte) ((value & 0xFF000000000000L) >> 48);
 		}
 
-		private long readUnsigned7BytesAt(int pos) {
+		@Override
+		protected long readUnsigned7BytesAt(int pos) {
 			return bytes[pos++] & 0xFF |
 				((bytes[pos++] & 0xFF) << 8) |
 				((bytes[pos++] & 0xFF) << 16) |
@@ -420,14 +488,8 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 				((long) (bytes[pos] & 0xFF) << 48);
 		}
 		
-		protected long readUnsigned7BytesAt(long pos) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 7) throw new EOFException();
-			return readUnsigned7BytesAt((int) (start + pos));
-		}
-		
-		private void writeUnsigned7BytesAt(int pos, long value) {
+		@Override
+		protected void writeUnsigned7BytesAt(int pos, long value) {
 			bytes[pos++] = (byte) (value & 0xFF);
 			bytes[pos++] = (byte) ((value & 0xFF00) >> 8);
 			bytes[pos++] = (byte) ((value & 0xFF0000) >> 16);
@@ -435,13 +497,6 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[pos++] = (byte) ((value & 0xFF00000000L) >> 32);
 			bytes[pos++] = (byte) ((value & 0xFF0000000000L) >> 40);
 			bytes[pos] = (byte) ((value & 0xFF000000000000L) >> 48);
-		}
-		
-		protected void writeUnsigned7BytesAt(long pos, long value) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 7) throw new EOFException();
-			writeUnsigned7BytesAt((int) (start + pos), value);
 		}
 
 		protected long readSigned8Bytes() throws IOException {
@@ -470,8 +525,8 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[position++] = (byte) ((value >> 56) & 0xFF);
 		}
 
-
-		private long readSigned8BytesAt(int pos) {
+		@Override
+		protected long readSigned8BytesAt(int pos) {
 			return bytes[pos++] & 0xFF |
 				((bytes[pos++] & 0xFF) << 8) |
 				((bytes[pos++] & 0xFF) << 16) |
@@ -482,14 +537,8 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 				((long) (bytes[pos] & 0xFF) << 56);
 		}
 		
-		protected long readSigned8BytesAt(long pos) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 8) throw new EOFException();
-			return readSigned8BytesAt((int) (start + pos));
-		}
-		
-		private void writeSigned8BytesAt(int pos, long value) {
+		@Override
+		protected void writeSigned8BytesAt(int pos, long value) {
 			bytes[pos++] = (byte) (value & 0xFF);
 			bytes[pos++] = (byte) ((value & 0xFF00) >> 8);
 			bytes[pos++] = (byte) ((value & 0xFF0000) >> 16);
@@ -498,13 +547,6 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[pos++] = (byte) ((value & 0xFF0000000000L) >> 40);
 			bytes[pos++] = (byte) ((value & 0xFF000000000000L) >> 48);
 			bytes[pos] = (byte) ((value >> 56) & 0xFF);
-		}
-		
-		protected void writeSigned8BytesAt(long pos, long value) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 8) throw new EOFException();
-			writeSigned8BytesAt((int) (start + pos), value);
 		}
 
 		// CHECKSTYLE DISABLE: LeftCurly
@@ -732,28 +774,16 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[position++] = (byte) (value & 0xFF);
 		}
 		
-		private int readUnsigned2BytesAt(int pos) {
+		@Override
+		protected int readUnsigned2BytesAt(int pos) {
 			return ((bytes[pos++] & 0xFF) << 8) |
 				bytes[pos] & 0xFF;
 		}
 		
-		protected int readUnsigned2BytesAt(long pos) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 2) throw new EOFException();
-			return readUnsigned2BytesAt((int) (start + pos));
-		}
-		
-		private void writeUnsigned2BytesAt(int pos, int value) {
+		@Override
+		protected void writeUnsigned2BytesAt(int pos, int value) {
 			bytes[pos++] = (byte) ((value & 0xFF00) >> 8);
 			bytes[pos] = (byte) (value & 0xFF);
-		}
-		
-		protected void writeUnsigned2BytesAt(long pos, int value) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 2) throw new EOFException();
-			writeUnsigned2BytesAt((int) (start + pos), value);
 		}
 
 		protected int readUnsigned3Bytes() throws IOException {
@@ -772,30 +802,18 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[position++] = (byte) (value & 0xFF);
 		}
 		
-		private int readUnsigned3BytesAt(int pos) {
+		@Override
+		protected int readUnsigned3BytesAt(int pos) {
 			return ((bytes[pos++] & 0xFF) << 16) |
 				((bytes[pos++] & 0xFF) << 8) |
 				(bytes[pos] & 0xFF);
 		}
 		
-		protected int readUnsigned3BytesAt(long pos) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 3) throw new EOFException();
-			return readUnsigned3BytesAt((int) (start + pos));
-		}
-		
-		private void writeUnsigned3BytesAt(int pos, int value) {
+		@Override
+		protected void writeUnsigned3BytesAt(int pos, int value) {
 			bytes[pos++] = (byte) ((value & 0xFF0000) >> 16);
 			bytes[pos++] = (byte) ((value & 0xFF00) >> 8);
 			bytes[pos] = (byte) (value & 0xFF);
-		}
-		
-		protected void writeUnsigned3BytesAt(long pos, int value) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 3) throw new EOFException();
-			writeUnsigned3BytesAt((int) (start + pos), value);
 		}
 
 		protected long readUnsigned4Bytes() throws IOException {
@@ -816,32 +834,20 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[position++] = (byte) (value & 0xFF);
 		}
 		
-		private long readUnsigned4BytesAt(int pos) {
+		@Override
+		protected long readUnsigned4BytesAt(int pos) {
 			return ((long) (bytes[pos++] & 0xFF) << 24) |
 				((bytes[pos++] & 0xFF) << 16) |
 				((bytes[pos++] & 0xFF) << 8) |
 				(bytes[pos] & 0xFF);
 		}
 		
-		protected long readUnsigned4BytesAt(long pos) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 4) throw new EOFException();
-			return readUnsigned4BytesAt((int) (start + pos));
-		}
-		
-		private void writeUnsigned4BytesAt(int pos, long value) {
+		@Override
+		protected void writeUnsigned4BytesAt(int pos, long value) {
 			bytes[pos++] = (byte) ((value & 0xFF000000L) >> 24);
 			bytes[pos++] = (byte) ((value & 0xFF0000) >> 16);
 			bytes[pos++] = (byte) ((value & 0xFF00) >> 8);
 			bytes[pos] = (byte) (value & 0xFF);
-		}
-		
-		protected void writeUnsigned4BytesAt(long pos, long value) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 4) throw new EOFException();
-			writeUnsigned4BytesAt((int) (start + pos), value);
 		}
 
 		protected long readUnsigned5Bytes() throws IOException {
@@ -864,8 +870,8 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[position++] = (byte) (value & 0xFF);
 		}
 		
-		
-		private long readUnsigned5BytesAt(int pos) {
+		@Override
+		protected long readUnsigned5BytesAt(int pos) {
 			return ((long) (bytes[pos++] & 0xFF) << 32) |
 				((long) (bytes[pos++] & 0xFF) << 24) |
 				((bytes[pos++] & 0xFF) << 16) |
@@ -873,26 +879,13 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 				(bytes[pos] & 0xFF);
 		}
 		
-		protected long readUnsigned5BytesAt(long pos) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 5) throw new EOFException();
-			return readUnsigned5BytesAt((int) (start + pos));
-		}
-		
-		private void writeUnsigned5BytesAt(int pos, long value) {
+		@Override
+		protected void writeUnsigned5BytesAt(int pos, long value) {
 			bytes[pos++] = (byte) ((value & 0xFF00000000L) >> 32);
 			bytes[pos++] = (byte) ((value & 0xFF000000L) >> 24);
 			bytes[pos++] = (byte) ((value & 0xFF0000) >> 16);
 			bytes[pos++] = (byte) ((value & 0xFF00) >> 8);
 			bytes[pos] = (byte) (value & 0xFF);
-		}
-		
-		protected void writeUnsigned5BytesAt(long pos, long value) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 5) throw new EOFException();
-			writeUnsigned5BytesAt((int) (start + pos), value);
 		}
 
 		protected long readUnsigned6Bytes() throws IOException {
@@ -917,7 +910,8 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[position++] = (byte) (value & 0xFF);
 		}
 		
-		private long readUnsigned6BytesAt(int pos) {
+		@Override
+		protected long readUnsigned6BytesAt(int pos) {
 			return ((long) (bytes[pos++] & 0xFF) << 40) |
 				((long) (bytes[pos++] & 0xFF) << 32) |
 				((long) (bytes[pos++] & 0xFF) << 24) |
@@ -926,27 +920,14 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 				(bytes[pos] & 0xFF);
 		}
 		
-		protected long readUnsigned6BytesAt(long pos) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 6) throw new EOFException();
-			return readUnsigned6BytesAt((int) (start + pos));
-		}
-		
-		private void writeUnsigned6BytesAt(int pos, long value) {
+		@Override
+		protected void writeUnsigned6BytesAt(int pos, long value) {
 			bytes[pos++] = (byte) ((value & 0xFF0000000000L) >> 40);
 			bytes[pos++] = (byte) ((value & 0xFF00000000L) >> 32);
 			bytes[pos++] = (byte) ((value & 0xFF000000L) >> 24);
 			bytes[pos++] = (byte) ((value & 0xFF0000) >> 16);
 			bytes[pos++] = (byte) ((value & 0xFF00) >> 8);
 			bytes[pos] = (byte) (value & 0xFF);
-		}
-		
-		protected void writeUnsigned6BytesAt(long pos, long value) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 6) throw new EOFException();
-			writeUnsigned6BytesAt((int) (start + pos), value);
 		}
 
 		protected long readUnsigned7Bytes() throws IOException {
@@ -973,7 +954,8 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[position++] = (byte) (value & 0xFF);
 		}
 		
-		private long readUnsigned7BytesAt(int pos) {
+		@Override
+		protected long readUnsigned7BytesAt(int pos) {
 			return ((long) (bytes[pos++] & 0xFF) << 48) |
 				((long) (bytes[pos++] & 0xFF) << 40) |
 				((long) (bytes[pos++] & 0xFF) << 32) |
@@ -983,14 +965,8 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 				(bytes[pos] & 0xFF);
 		}
 		
-		protected long readUnsigned7BytesAt(long pos) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 7) throw new EOFException();
-			return readUnsigned7BytesAt((int) (start + pos));
-		}
-		
-		private void writeUnsigned7BytesAt(int pos, long value) {
+		@Override
+		protected void writeUnsigned7BytesAt(int pos, long value) {
 			bytes[pos++] = (byte) ((value & 0xFF000000000000L) >> 48);
 			bytes[pos++] = (byte) ((value & 0xFF0000000000L) >> 40);
 			bytes[pos++] = (byte) ((value & 0xFF00000000L) >> 32);
@@ -998,13 +974,6 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[pos++] = (byte) ((value & 0xFF0000) >> 16);
 			bytes[pos++] = (byte) ((value & 0xFF00) >> 8);
 			bytes[pos] = (byte) (value & 0xFF);
-		}
-		
-		protected void writeUnsigned7BytesAt(long pos, long value) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 7) throw new EOFException();
-			writeUnsigned7BytesAt((int) (start + pos), value);
 		}
 
 		protected long readSigned8Bytes() throws IOException {
@@ -1033,7 +1002,8 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[position++] = (byte) (value & 0xFF);
 		}
 		
-		private long readSigned8BytesAt(int pos) {
+		@Override
+		protected long readSigned8BytesAt(int pos) {
 			return ((long) (bytes[pos++] & 0xFF) << 56) |
 				((long) (bytes[pos++] & 0xFF) << 48) |
 				((long) (bytes[pos++] & 0xFF) << 40) |
@@ -1044,14 +1014,8 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 				(bytes[pos] & 0xFF);
 		}
 		
-		protected long readSigned8BytesAt(long pos) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 8) throw new EOFException();
-			return readSigned8BytesAt((int) (start + pos));
-		}
-		
-		private void writeSigned8BytesAt(int pos, long value) {
+		@Override
+		protected void writeSigned8BytesAt(int pos, long value) {
 			bytes[pos++] = (byte) ((value >> 56) & 0xFF);
 			bytes[pos++] = (byte) ((value & 0xFF000000000000L) >> 48);
 			bytes[pos++] = (byte) ((value & 0xFF0000000000L) >> 40);
@@ -1060,13 +1024,6 @@ public abstract class ByteArrayDataIO extends AbstractIO implements BytesDataIO,
 			bytes[pos++] = (byte) ((value & 0xFF0000) >> 16);
 			bytes[pos++] = (byte) ((value & 0xFF00) >> 8);
 			bytes[pos] = (byte) (value & 0xFF);
-		}
-		
-		protected void writeSigned8BytesAt(long pos, long value) throws IOException {
-			if (bytes == null) throw new ClosedChannelException();
-			NegativeValueException.check(pos, DataChecks.FIELD_POS);
-			if (start + pos > end - 8) throw new EOFException();
-			writeSigned8BytesAt((int) (start + pos), value);
 		}
 
 		// CHECKSTYLE DISABLE: LeftCurly
