@@ -201,7 +201,7 @@
 	  <id>checkstyle</id>
 	  <activation>
 		<property><name>!skipCheckstyle</name></property>
-		<file><exists>${project.basedir}/../checkstyle.xml</exists></file>
+		<file><exists>../checkstyle.xml</exists></file>
 	  </activation>
 	  <build>
         <plugins>
