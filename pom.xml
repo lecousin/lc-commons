@@ -72,7 +72,7 @@
 	
 	<!-- sonar -->
 	<sonar.coverage.exclusions>**/test/**</sonar.coverage.exclusions>
-    <sonar.cpd.exclusions>**/test/**</sonar.cpd.exclusions>
+    <sonar.cpd.exclusions>**/test/**,**/io/**/*IOView.*</sonar.cpd.exclusions>
     
     <sonar.issue.ignore.multicriteria>e1</sonar.issue.ignore.multicriteria>
     <!-- ignore: too many assertions.... sonar want us to test less things ??? -->
@@ -124,6 +124,7 @@
   	<module>lc-commons</module>
   	<module>lc-commons-test</module>
   	<module>jacoco-report-aggregate</module>
+  	<module>lc-commons-io</module>
   </modules>
   
   <build>
