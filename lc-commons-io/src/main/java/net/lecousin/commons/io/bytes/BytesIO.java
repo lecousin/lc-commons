@@ -124,7 +124,15 @@ public interface BytesIO extends IO {
 		 * @throws EOFException if the buffer cannot be filled because it would reached the end
 		 * @throws IOException in case an error occurred while reading
 		 */
-		void readBytesFully(ByteBuffer buffer) throws IOException;
+		default void readBytesFully(ByteBuffer buffer) throws IOException {
+			if (isClosed()) throw new ClosedChannelException();
+			int done = 0;
+			while (done < buffer.remaining()) {
+				int nb = readBytes(buffer);
+				if (nb <= 0) throw new EOFException();
+				done += nb;
+			}
+		}
 		
 		/**
 		 * Read <code>len</code> bytes to the given buffer.<br/>
@@ -180,6 +188,7 @@ public interface BytesIO extends IO {
 		 */
 		default void skipFully(long toSkip) throws IOException {
 			if (isClosed()) throw new ClosedChannelException();
+			NegativeValueException.check(toSkip, "toSkip");
 			long done = 0;
 			while (done < toSkip) {
 				long nb = skipUpTo(toSkip - done);
@@ -291,7 +300,15 @@ public interface BytesIO extends IO {
 			 * @throws NegativeValueException if pos is negative
 			 * @throws IOException in case an error occurred while reading
 			 */
-			void readBytesFullyAt(long pos, ByteBuffer buffer) throws IOException;
+			default void readBytesFullyAt(long pos, ByteBuffer buffer) throws IOException {
+				if (isClosed()) throw new ClosedChannelException();
+				int done = 0;
+				while (done < buffer.remaining()) {
+					int nb = readBytesAt(pos + done, buffer);
+					if (nb <= 0) throw new EOFException();
+					done += nb;
+				}
+			}
 			
 			/**
 			 * Read <code>len</code> bytes at the given position into the given buffer.<br/>
@@ -435,7 +452,15 @@ public interface BytesIO extends IO {
 		 * @throws EOFException if all bytes cannot be written because end is reached
 		 * @throws IOException in case an error occurred while writing
 		 */
-		void writeBytesFully(ByteBuffer buffer) throws IOException;
+		default void writeBytesFully(ByteBuffer buffer) throws IOException {
+			if (isClosed()) throw new ClosedChannelException();
+			int done = 0;
+			while (done < buffer.remaining()) {
+				int nb = writeBytes(buffer);
+				if (nb <= 0) throw new EOFException();
+				done += nb;
+			}
+		}
 		
 		/**
 		 * Write all bytes from the all the given buffer.<br/>
@@ -587,7 +612,15 @@ public interface BytesIO extends IO {
 			 * @throws NegativeValueException if pos is negative
 			 * @throws IOException in case an error occurred while writing
 			 */
-			void writeBytesFullyAt(long pos, ByteBuffer buffer) throws IOException;
+			default void writeBytesFullyAt(long pos, ByteBuffer buffer) throws IOException {
+				IOChecks.checkByteBufferOperation(this, pos, buffer);
+				int done = 0;
+				while (done < buffer.remaining()) {
+					int nb = writeBytesAt(pos + done, buffer);
+					if (nb <= 0) throw new EOFException();
+					done += nb;
+				}
+			}
 			
 			/**
 			 * Write exactly <code>len</code> bytes from the given buffer at the given position.<br/>
