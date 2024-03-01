@@ -13,8 +13,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+import net.lecousin.commons.exceptions.NegativeValueException;
 import net.lecousin.commons.function.FunctionThrows;
-import net.lecousin.commons.function.SupplierThrows;
 import net.lecousin.commons.io.bytes.AbstractReadableSeekableBytesIOTest;
 import net.lecousin.commons.io.bytes.BytesIO;
 import net.lecousin.commons.io.bytes.data.BytesDataIOTestUtils.DataTestCasesProvider;
@@ -92,22 +92,30 @@ public abstract class AbstractReadableSeekableBytesDataIOTest implements TestCas
 
 	@ParameterizedTest(name = "Generic data read: {0}")
 	@ArgumentsSource(DataTestCasesProvider.class)
-	void readData2(String displayName, byte[] expected, int nbBytes, boolean signed, Function<byte[], BytesDataIO.Readable> ioSupplier) throws Exception {
-		BytesDataIO.Readable io = ioSupplier.apply(expected);
+	void readData2(String displayName, byte[] expected, int nbBytes, boolean signed, Function<byte[], BytesDataIO.Readable.Seekable> ioSupplier) throws Exception {
+		BytesDataIO.Readable.Seekable io = ioSupplier.apply(expected);
 		
+		assertThrows(IllegalArgumentException.class, () -> io.readSignedBytesAt(0, 9));
+		assertThrows(IllegalArgumentException.class, () -> io.readSignedBytesAt(0, -1));
+		assertThrows(IllegalArgumentException.class, () -> io.readSignedBytesAt(0, 0));
+		assertThrows(IllegalArgumentException.class, () -> io.readUnsignedBytesAt(0, 8));
+		assertThrows(IllegalArgumentException.class, () -> io.readUnsignedBytesAt(0, -1));
+		assertThrows(IllegalArgumentException.class, () -> io.readUnsignedBytesAt(0, 0));
+		assertThrows(NegativeValueException.class, () -> io.readUnsignedBytesAt(-1, 1));
+
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 
-		SupplierThrows<? extends Number> ioReader = signed ? () -> io.readSignedBytes(nbBytes) : () -> io.readUnsignedBytes(nbBytes);
+		FunctionThrows<Long, ? extends Number> ioReader = signed ? p -> io.readSignedBytesAt(p, nbBytes) : p -> io.readUnsignedBytesAt(p, nbBytes);
 		
 		for (int i = 0; i < expected.length - (nbBytes - 1); i += nbBytes) {
-			Number n = ioReader.get();
+			Number n = ioReader.apply((long) i);
 			assertThat(n).as("Read at " + i + "/" + expected.length).isEqualTo(dataReader.apply(expected, i));
 		}
-		assertThrows(EOFException.class, () -> ioReader.get());
+		assertThrows(EOFException.class, () -> ioReader.apply((long) expected.length));
 		
 		io.close();
-		assertThrows(ClosedChannelException.class, () -> ioReader.get());
+		assertThrows(ClosedChannelException.class, () -> ioReader.apply(0L));
 	}
 
 }

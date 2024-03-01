@@ -16,6 +16,8 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import net.lecousin.commons.exceptions.LimitExceededException;
 import net.lecousin.commons.exceptions.NegativeValueException;
+import net.lecousin.commons.io.AbstractSeekableIOTest;
+import net.lecousin.commons.io.IO;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.RandomContentWithBufferSizeTestCasesProvider;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.SmallRandomContentTestCasesProvider;
 import net.lecousin.commons.test.TestCase;
@@ -29,6 +31,16 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 		public List<? extends TestCase<byte[], BytesIO.Readable>> getTestCases() {
 			return AbstractReadableSeekableBytesIOTest.this.getTestCases().stream()
 				.map(tc -> new TestCase<>(tc.getName(), (Function<byte[], BytesIO.Readable>) (content) -> tc.getArgumentProvider().apply(content).asReadableBytesIO()))
+				.toList();
+		}
+	}
+	
+	@Nested
+	public class AsSeekableIO extends AbstractSeekableIOTest {
+		@Override
+		public List<? extends TestCase<Integer, IO.Seekable>> getTestCases() {
+			return AbstractReadableSeekableBytesIOTest.this.getTestCases().stream()
+				.map(tc -> new TestCase<>(tc.getName(), (Function<Integer, IO.Seekable>) (size) -> tc.getArgumentProvider().apply(BytesIOTestUtils.generateContent(size))))
 				.toList();
 		}
 	}

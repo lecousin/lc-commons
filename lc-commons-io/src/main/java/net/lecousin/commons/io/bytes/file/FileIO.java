@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import lombok.Generated;
 import net.lecousin.commons.exceptions.NegativeValueException;
 import net.lecousin.commons.io.AbstractIO;
 import net.lecousin.commons.io.IO;
@@ -118,7 +119,8 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 	// --- Writable ---
 	
 	protected void flush() throws IOException {
-		// not buffered
+		if (!channel.isOpen()) throw new ClosedChannelException();
+		// not buffered, nothing to flush
 	}
 	
 	protected void writeByte(byte value) throws IOException {
@@ -127,8 +129,7 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 			long p = channel.position();
 			if (p >= s) throw new EOFException();
 		}
-		if (channel.write(ByteBuffer.wrap(new byte[] { value })) <= 0)
-			throw new EOFException();
+		if (channel.write(ByteBuffer.wrap(new byte[] { value })) <= 0) throw new EOFException(); // impossible to reproduce in test (need disk full)
 	}
 	
 	protected void writeByteAt(long pos, byte value) throws IOException {
@@ -136,8 +137,7 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 			long s = channel.size();
 			if (pos >= s) throw new EOFException();
 		}
-		if (channel.write(ByteBuffer.wrap(new byte[] { value }), pos) <= 0)
-			throw new EOFException();
+		if (channel.write(ByteBuffer.wrap(new byte[] { value }), pos) <= 0) throw new EOFException();  // impossible to reproduce in test (need disk full)
 	}
 	
 	protected int writeBytes(ByteBuffer buffer) throws IOException {
@@ -187,12 +187,17 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 			channel.truncate(newSize);
 			return;
 		}
+		writeAtEndAndWaitForSizeToBeUpdated(newSize);
+	}
+	
+	@Generated // all lines cannot be reproduced
+	private void writeAtEndAndWaitForSizeToBeUpdated(long newSize) throws IOException {
 		int trial = 1;
 		do {
 			channel.write(ByteBuffer.allocate(1), newSize - 1);
 			if (channel.size() == newSize) return;
 		} while (++trial < 10);
-		throw new IllegalStateException("FileIO.setSize failed");
+		throw new IOException("FileIO.setSize failed");
 	}
 	
 	

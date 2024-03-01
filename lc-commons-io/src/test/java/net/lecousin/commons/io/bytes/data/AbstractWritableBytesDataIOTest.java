@@ -147,6 +147,13 @@ public abstract class AbstractWritableBytesDataIOTest implements TestCasesProvid
 	void writeData2(String displayName, byte[] toWrite, int nbBytes, boolean signed, Function<Integer, WritableTestCase<? extends BytesDataIO.Writable, ?>> ioSupplier) throws Exception {
 		WritableTestCase<? extends BytesDataIO.Writable, ?> ioTuple = ioSupplier.apply(toWrite.length);
 		BytesDataIO.Writable io = ioTuple.getIo();
+		
+		assertThrows(IllegalArgumentException.class, () -> io.writeSignedBytes(9, 0));
+		assertThrows(IllegalArgumentException.class, () -> io.writeSignedBytes(-1, 0));
+		assertThrows(IllegalArgumentException.class, () -> io.writeSignedBytes(0, 0));
+		assertThrows(IllegalArgumentException.class, () -> io.writeUnsignedBytes(8, 0));
+		assertThrows(IllegalArgumentException.class, () -> io.writeUnsignedBytes(-1, 0));
+		assertThrows(IllegalArgumentException.class, () -> io.writeUnsignedBytes(0, 0));
 
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);

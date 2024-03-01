@@ -309,7 +309,7 @@ class TestSingleEvent {
 				Thread t = new Thread(() -> {
 					if ((index % 5) == 0)
 						try {
-							Thread.sleep(index / 10 + 1);
+							Thread.sleep(index + 1);
 						} catch (InterruptedException e) {
 							return;
 						}

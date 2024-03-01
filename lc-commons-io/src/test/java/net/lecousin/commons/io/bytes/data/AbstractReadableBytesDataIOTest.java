@@ -60,6 +60,7 @@ public abstract class AbstractReadableBytesDataIOTest implements TestCasesProvid
 			}
 		}
 		if (ioReader2 == null) ioReader2 = ioReader;
+		
 		boolean useReader2 = false;
 		for (int i = 0; i < expected.length - (nbBytes - 1); i += nbBytes) {
 			Number n = (useReader2 ? ioReader2 : ioReader).get();
@@ -82,11 +83,18 @@ public abstract class AbstractReadableBytesDataIOTest implements TestCasesProvid
 	void readData2(String displayName, byte[] expected, int nbBytes, boolean signed, Function<byte[], BytesDataIO.Readable> ioSupplier) throws Exception {
 		BytesDataIO.Readable io = ioSupplier.apply(expected);
 		
+		assertThrows(IllegalArgumentException.class, () -> io.readSignedBytes(9));
+		assertThrows(IllegalArgumentException.class, () -> io.readSignedBytes(-1));
+		assertThrows(IllegalArgumentException.class, () -> io.readSignedBytes(0));
+		assertThrows(IllegalArgumentException.class, () -> io.readUnsignedBytes(8));
+		assertThrows(IllegalArgumentException.class, () -> io.readUnsignedBytes(-1));
+		assertThrows(IllegalArgumentException.class, () -> io.readUnsignedBytes(0));
+		
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 
 		SupplierThrows<? extends Number> ioReader = signed ? () -> io.readSignedBytes(nbBytes) : () -> io.readUnsignedBytes(nbBytes);
-		
+
 		for (int i = 0; i < expected.length - (nbBytes - 1); i += nbBytes) {
 			Number n = ioReader.get();
 			assertThat(n).as("Read at " + i + "/" + expected.length).isEqualTo(dataReader.apply(expected, i));

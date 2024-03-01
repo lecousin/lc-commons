@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -17,6 +18,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import net.lecousin.commons.collections.LcArrayUtils;
 import net.lecousin.commons.exceptions.LimitExceededException;
 import net.lecousin.commons.exceptions.NegativeValueException;
+import net.lecousin.commons.io.AbstractSeekableIOTest;
 import net.lecousin.commons.io.IO;
 import net.lecousin.commons.io.LcByteBufferUtils;
 import net.lecousin.commons.io.bytes.AbstractWritableBytesIOTest.WritableTestCase;
@@ -34,13 +36,30 @@ public abstract class AbstractWritableSeekableBytesIOTest implements TestCasesPr
 		@Override
 		public List<? extends TestCase<Integer, WritableTestCase<?,?>>> getTestCases() {
 			return AbstractWritableSeekableBytesIOTest.this.getTestCases().stream()
-				.map(tc -> new TestCase<>(tc.getName(), (Function<Integer, WritableTestCase<?,?>>) (size) -> tc.getArgumentProvider().apply(size)))
+				.map(tc -> new TestCase<>(tc.getName(), (Function<Integer, WritableTestCase<?,?>>) (size) -> {
+					WritableTestCase<? extends BytesIO.Writable.Seekable, ?> wtc = tc.getArgumentProvider().apply(size);
+					BytesIO.Writable.Seekable seekable = wtc.getIo();
+					BytesIO.Writable writable = seekable.asWritableBytesIO();
+					return new WritableTestCase<>(writable, Pair.of(seekable, wtc.getObject()));
+				}))
 				.toList();
 		}
 		
 		@Override
 		protected void checkWrittenData(BytesIO.Writable io, Object object, byte[] expected) throws Exception {
-			AbstractWritableSeekableBytesIOTest.this.checkWrittenData((BytesIO.Writable.Seekable) io, object, expected);
+			@SuppressWarnings("unchecked")
+			Pair<BytesIO.Writable.Seekable, Object> pair = (Pair<BytesIO.Writable.Seekable, Object>) object;
+			AbstractWritableSeekableBytesIOTest.this.checkWrittenData(pair.getLeft(), pair.getRight(), expected);
+		}
+	}
+	
+	@Nested
+	public class AsSeekableIO extends AbstractSeekableIOTest {
+		@Override
+		public List<? extends TestCase<Integer, IO.Seekable>> getTestCases() {
+			return AbstractWritableSeekableBytesIOTest.this.getTestCases().stream()
+				.map(tc -> new TestCase<>(tc.getName(), (Function<Integer, IO.Seekable>) (size) -> tc.getArgumentProvider().apply(size).getIo()))
+				.toList();
 		}
 	}
 
@@ -66,16 +85,18 @@ public abstract class AbstractWritableSeekableBytesIOTest implements TestCasesPr
 		
 		if (io instanceof IO.Writable.Appendable) {
 			byte[] additional = BytesIOTestUtils.generateContent(23);
-			io.writeBytesFullyAt(toWrite.length, additional);
+			int before = Math.min(5, toWrite.length);
+			io.writeBytesFullyAt(toWrite.length - before, additional);
 			io.flush();
-			checkWrittenData(io, ioTuple.getObject(), LcArrayUtils.concat(toWrite, additional));
+			checkWrittenData(io, ioTuple.getObject(), LcByteBufferUtils.concat(ByteBuffer.wrap(toWrite, 0, toWrite.length - before), ByteBuffer.wrap(additional)));
 			if (io instanceof IO.Writable.Resizable r) {
-				r.setSize(toWrite.length + additional.length + 69);
+				r.setSize(toWrite.length - before + additional.length + 69);
 				byte[] additional2 = BytesIOTestUtils.generateContent(69);
-				io.writeBytesFullyAt(toWrite.length + additional.length, additional2);
+				io.writeBytesFullyAt(toWrite.length - before + additional.length, additional2);
 				io.flush();
-				checkWrittenData(io, ioTuple.getObject(), LcArrayUtils.concat(toWrite, additional, additional2));
+				checkWrittenData(io, ioTuple.getObject(), LcByteBufferUtils.concat(ByteBuffer.wrap(toWrite, 0, toWrite.length - before), ByteBuffer.wrap(additional), ByteBuffer.wrap(additional2)));
 				r.setSize(toWrite.length);
+				io.writeBytesFullyAt(toWrite.length - before, toWrite, toWrite.length - before, before);
 				io.flush();
 				checkWrittenData(io, ioTuple.getObject(), toWrite);
 			}
@@ -127,16 +148,18 @@ public abstract class AbstractWritableSeekableBytesIOTest implements TestCasesPr
 		
 		if (io instanceof IO.Writable.Appendable) {
 			byte[] additional = BytesIOTestUtils.generateContent(23);
-			io.writeBytesFullyAt(toWrite.length, additional, 7, 13);
+			int before = Math.min(5, toWrite.length);
+			io.writeBytesFullyAt(toWrite.length - before, additional, 7, 13);
 			io.flush();
-			checkWrittenData(io, ioTuple.getObject(), LcByteBufferUtils.concat(ByteBuffer.wrap(toWrite), ByteBuffer.wrap(additional, 7, 13)));
+			checkWrittenData(io, ioTuple.getObject(), LcByteBufferUtils.concat(ByteBuffer.wrap(toWrite, 0, toWrite.length - before), ByteBuffer.wrap(additional, 7, 13)));
 			if (io instanceof IO.Writable.Resizable r) {
-				r.setSize(toWrite.length + 13 + 32);
+				r.setSize(toWrite.length - before + 13 + 32);
 				byte[] additional2 = BytesIOTestUtils.generateContent(69);
-				io.writeBytesFullyAt(toWrite.length + 13, additional2, 17, 32);
+				io.writeBytesFullyAt(toWrite.length - before + 13, additional2, 17, 32);
 				io.flush();
-				checkWrittenData(io, ioTuple.getObject(), LcByteBufferUtils.concat(ByteBuffer.wrap(toWrite), ByteBuffer.wrap(additional, 7, 13), ByteBuffer.wrap(additional2, 17, 32)));
+				checkWrittenData(io, ioTuple.getObject(), LcByteBufferUtils.concat(ByteBuffer.wrap(toWrite, 0, toWrite.length - before), ByteBuffer.wrap(additional, 7, 13), ByteBuffer.wrap(additional2, 17, 32)));
 				r.setSize(toWrite.length);
+				io.writeBytesFullyAt(toWrite.length - before, toWrite, toWrite.length - before, before);
 				io.flush();
 				checkWrittenData(io, ioTuple.getObject(), toWrite);
 			}
@@ -185,16 +208,18 @@ public abstract class AbstractWritableSeekableBytesIOTest implements TestCasesPr
 		
 		if (io instanceof IO.Writable.Appendable) {
 			byte[] additional = BytesIOTestUtils.generateContent(23);
-			io.writeBytesFullyAt(toWrite.length, ByteBuffer.wrap(additional));
+			int before = Math.min(5, toWrite.length);
+			io.writeBytesFullyAt(toWrite.length - before, ByteBuffer.wrap(additional));
 			io.flush();
-			checkWrittenData(io, ioTuple.getObject(), LcArrayUtils.concat(toWrite, additional));
+			checkWrittenData(io, ioTuple.getObject(), LcByteBufferUtils.concat(ByteBuffer.wrap(toWrite, 0, toWrite.length - before), ByteBuffer.wrap(additional)));
 			if (io instanceof IO.Writable.Resizable r) {
-				r.setSize(toWrite.length + additional.length + 69);
+				r.setSize(toWrite.length - before + additional.length + 69);
 				byte[] additional2 = BytesIOTestUtils.generateContent(69);
-				io.writeBytesFullyAt(toWrite.length + additional.length, ByteBuffer.wrap(additional2));
+				io.writeBytesFullyAt(toWrite.length - before + additional.length, ByteBuffer.wrap(additional2));
 				io.flush();
-				checkWrittenData(io, ioTuple.getObject(), LcArrayUtils.concat(toWrite, additional, additional2));
+				checkWrittenData(io, ioTuple.getObject(), LcByteBufferUtils.concat(ByteBuffer.wrap(toWrite, 0, toWrite.length - before), ByteBuffer.wrap(additional), ByteBuffer.wrap(additional2)));
 				r.setSize(toWrite.length);
+				io.writeBytesFullyAt(toWrite.length - before, ByteBuffer.wrap(toWrite, toWrite.length - before, before));
 				io.flush();
 				checkWrittenData(io, ioTuple.getObject(), toWrite);
 			}
@@ -239,7 +264,7 @@ public abstract class AbstractWritableSeekableBytesIOTest implements TestCasesPr
 	
 	@ParameterizedTest(name = "{0}")
 	@ArgumentsSource(RandomContentTestCasesProvider.class)
-	void writeFullyBytesAtBufferList(String displayName, byte[] toWrite, Function<Integer, WritableTestCase<? extends BytesIO.Writable.Seekable, ?>> ioSupplier) throws Exception {
+	void writeBytesFullyAtBufferList(String displayName, byte[] toWrite, Function<Integer, WritableTestCase<? extends BytesIO.Writable.Seekable, ?>> ioSupplier) throws Exception {
 		WritableTestCase<? extends BytesIO.Writable.Seekable, ?> ioTuple = ioSupplier.apply(toWrite.length);
 		BytesIO.Writable.Seekable io = ioTuple.getIo();
 
@@ -287,9 +312,17 @@ public abstract class AbstractWritableSeekableBytesIOTest implements TestCasesPr
 		assertThat(io.writeBytesAt(0, ByteBuffer.allocate(0))).isZero();
 
 		int step = toWrite.length > 10000 ? 1111 : 3;
+		byte[] b;
+		if (io instanceof IO.Writable.Appendable)
+			b = toWrite;
+		else {
+			// we generate a bigger array, so at one point we try to write more than the size
+			b = new byte[toWrite.length + 20];
+			System.arraycopy(toWrite, 0, b, 0, toWrite.length);
+		}
 		for (int i = 0; i < toWrite.length;) {
-			int l = Math.min(step, toWrite.length - i);
-			int nb = io.writeBytesAt(i, ByteBuffer.wrap(toWrite, i, l));
+			int l = Math.min(step, b.length - i);
+			int nb = io.writeBytesAt(i, ByteBuffer.wrap(b, i, l));
 			assertThat(nb).isPositive();
 			i += nb;
 		}
@@ -303,19 +336,28 @@ public abstract class AbstractWritableSeekableBytesIOTest implements TestCasesPr
 		
 		if (io instanceof IO.Writable.Appendable) {
 			byte[] additional = BytesIOTestUtils.generateContent(23);
-			int nb = io.writeBytesAt(toWrite.length, ByteBuffer.wrap(additional));
-			assertThat(nb).isPositive();
+			int before = Math.min(5, toWrite.length);
+			int done = 0;
+			while (done < additional.length) {
+				int nb = io.writeBytesAt(toWrite.length - before + done, ByteBuffer.wrap(additional, done, additional.length - done));
+				assertThat(nb).isPositive();
+				done += nb;
+			}
 			io.flush();
-			checkWrittenData(io, ioTuple.getObject(), LcByteBufferUtils.concat(ByteBuffer.wrap(toWrite), ByteBuffer.wrap(additional, 0, nb)));
+			checkWrittenData(io, ioTuple.getObject(), LcByteBufferUtils.concat(ByteBuffer.wrap(toWrite, 0, toWrite.length - before), ByteBuffer.wrap(additional)));
 			if (io instanceof IO.Writable.Resizable r) {
-				r.setSize(toWrite.length + nb + 69);
+				r.setSize(toWrite.length - before + additional.length + 69);
 				byte[] additional2 = BytesIOTestUtils.generateContent(69);
-				int nb2 = io.writeBytesAt(toWrite.length + nb, ByteBuffer.wrap(additional2));
-				assertThat(nb2).isPositive();
-				r.setSize(toWrite.length + nb + nb2);
+				done = 0;
+				while (done < additional2.length) {
+					int nb = io.writeBytesAt(toWrite.length - before + additional.length + done, ByteBuffer.wrap(additional2, done, additional2.length - done));
+					assertThat(nb).isPositive();
+					done += nb;
+				}
 				io.flush();
-				checkWrittenData(io, ioTuple.getObject(), LcByteBufferUtils.concat(ByteBuffer.wrap(toWrite), ByteBuffer.wrap(additional, 0, nb), ByteBuffer.wrap(additional2, 0, nb2)));
+				checkWrittenData(io, ioTuple.getObject(), LcByteBufferUtils.concat(ByteBuffer.wrap(toWrite, 0, toWrite.length - before), ByteBuffer.wrap(additional), ByteBuffer.wrap(additional2)));
 				r.setSize(toWrite.length);
+				io.writeBytesFullyAt(toWrite.length - before, toWrite, toWrite.length - before, before);
 				io.flush();
 				checkWrittenData(io, ioTuple.getObject(), toWrite);
 			}
@@ -348,11 +390,19 @@ public abstract class AbstractWritableSeekableBytesIOTest implements TestCasesPr
 		assertThat(io.writeBytesAt(0, new byte[0])).isZero();
 
 		int step = toWrite.length > 10000 ? 1111 : 3;
+		byte[] b;
+		if (io instanceof IO.Writable.Appendable)
+			b = toWrite;
+		else {
+			// we generate a bigger array, so at one point we try to write more than the size
+			b = new byte[toWrite.length + 20];
+			System.arraycopy(toWrite, 0, b, 0, toWrite.length);
+		}
 		for (int i = 0; i < toWrite.length;) {
-			int l = Math.min(step, toWrite.length - i);
-			byte[] b = new byte[l];
-			System.arraycopy(toWrite, i, b, 0, l);
-			int nb = io.writeBytesAt(i, b);
+			int l = Math.min(step, b.length - i);
+			byte[] bb = new byte[l];
+			System.arraycopy(b, i, bb, 0, l);
+			int nb = io.writeBytesAt(i, bb);
 			assertThat(nb).isPositive();
 			i += nb;
 		}
@@ -415,9 +465,17 @@ public abstract class AbstractWritableSeekableBytesIOTest implements TestCasesPr
 		assertThat(io.writeBytesAt(0, new byte[10], 7, 0)).isZero();
 
 		int step = toWrite.length > 10000 ? 1111 : 3;
+		byte[] b;
+		if (io instanceof IO.Writable.Appendable)
+			b = toWrite;
+		else {
+			// we generate a bigger array, so at one point we try to write more than the size
+			b = new byte[toWrite.length + 20];
+			System.arraycopy(toWrite, 0, b, 0, toWrite.length);
+		}
 		for (int i = 0; i < toWrite.length;) {
-			int l = Math.min(step, toWrite.length - i);
-			int nb = io.writeBytesAt(i, toWrite, i, l);
+			int l = Math.min(step, b.length - i);
+			int nb = io.writeBytesAt(i, b, i, l);
 			assertThat(nb).as("Write up to " + l + " at " + i + "/" + toWrite.length).isPositive();
 			i += nb;
 		}
@@ -432,19 +490,28 @@ public abstract class AbstractWritableSeekableBytesIOTest implements TestCasesPr
 		
 		if (io instanceof IO.Writable.Appendable) {
 			byte[] additional = BytesIOTestUtils.generateContent(23);
-			int nb = io.writeBytesAt(toWrite.length, additional, 3, 19);
-			assertThat(nb).isPositive();
+			int before = Math.min(5, toWrite.length);
+			int done = 0;
+			while (done < additional.length) {
+				int nb = io.writeBytesAt(toWrite.length - before + done, additional, done, additional.length - done);
+				assertThat(nb).isPositive();
+				done += nb;
+			}
 			io.flush();
-			checkWrittenData(io, ioTuple.getObject(), LcByteBufferUtils.concat(ByteBuffer.wrap(toWrite), ByteBuffer.wrap(additional, 3, nb)));
+			checkWrittenData(io, ioTuple.getObject(), LcByteBufferUtils.concat(ByteBuffer.wrap(toWrite, 0, toWrite.length - before), ByteBuffer.wrap(additional)));
 			if (io instanceof IO.Writable.Resizable r) {
-				r.setSize(toWrite.length + nb + 69);
-				byte[] additional2 = BytesIOTestUtils.generateContent(100);
-				int nb2 = io.writeBytesAt(toWrite.length + nb, ByteBuffer.wrap(additional2, 6, 69));
-				assertThat(nb2).isPositive();
-				r.setSize(toWrite.length + nb + nb2);
+				r.setSize(toWrite.length - before + additional.length + 69);
+				byte[] additional2 = BytesIOTestUtils.generateContent(69);
+				done = 0;
+				while (done < additional2.length) {
+					int nb = io.writeBytesAt(toWrite.length - before + additional.length + done, additional2, done, additional2.length - done);
+					assertThat(nb).isPositive();
+					done += nb;
+				}
 				io.flush();
-				checkWrittenData(io, ioTuple.getObject(), LcByteBufferUtils.concat(ByteBuffer.wrap(toWrite), ByteBuffer.wrap(additional, 3, nb), ByteBuffer.wrap(additional2, 6, nb2)));
+				checkWrittenData(io, ioTuple.getObject(), LcByteBufferUtils.concat(ByteBuffer.wrap(toWrite, 0, toWrite.length - before), ByteBuffer.wrap(additional), ByteBuffer.wrap(additional2)));
 				r.setSize(toWrite.length);
+				io.writeBytesFullyAt(toWrite.length - before, toWrite, toWrite.length - before, before);
 				io.flush();
 				checkWrittenData(io, ioTuple.getObject(), toWrite);
 			}

@@ -119,6 +119,7 @@ public abstract class AbstractWritableBytesIOTest implements TestCasesProvider<I
 		assertThrows(ClosedChannelException.class, () -> io.writeBytesFully((byte[]) null));
 		assertThrows(ClosedChannelException.class, () -> io.writeBytesFully(new byte[0]));
 		assertThrows(ClosedChannelException.class, () -> io.writeBytesFully(new byte[1]));
+		assertThrows(ClosedChannelException.class, () -> io.flush());
 	}
 	
 	@ParameterizedTest(name = "{0}")
@@ -303,9 +304,17 @@ public abstract class AbstractWritableBytesIOTest implements TestCasesProvider<I
 		assertThat(io.writeBytes(ByteBuffer.allocate(0))).isZero();
 
 		int step = toWrite.length > 10000 ? 1111 : 3;
+		byte[] b;
+		if (io instanceof IO.Writable.Appendable)
+			b = toWrite;
+		else {
+			// we generate a bigger array, so at one point we try to write more than the size
+			b = new byte[toWrite.length + 20];
+			System.arraycopy(toWrite, 0, b, 0, toWrite.length);
+		}
 		for (int i = 0; i < toWrite.length;) {
-			int l = Math.min(step, toWrite.length - i);
-			int nb = io.writeBytes(ByteBuffer.wrap(toWrite, i, l));
+			int l = Math.min(step, b.length - i);
+			int nb = io.writeBytes(ByteBuffer.wrap(b, i, l));
 			assertThat(nb).isPositive();
 			i += nb;
 		}
@@ -363,11 +372,19 @@ public abstract class AbstractWritableBytesIOTest implements TestCasesProvider<I
 		assertThat(io.writeBytes(new byte[0])).isZero();
 
 		int step = toWrite.length > 10000 ? 1111 : 3;
+		byte[] b;
+		if (io instanceof IO.Writable.Appendable)
+			b = toWrite;
+		else {
+			// we generate a bigger array, so at one point we try to write more than the size
+			b = new byte[toWrite.length + 20];
+			System.arraycopy(toWrite, 0, b, 0, toWrite.length);
+		}
 		for (int i = 0; i < toWrite.length;) {
-			int l = Math.min(step, toWrite.length - i);
-			byte[] b = new byte[l];
-			System.arraycopy(toWrite, i, b, 0, l);
-			int nb = io.writeBytes(b);
+			int l = Math.min(step, b.length - i);
+			byte[] bb = new byte[l];
+			System.arraycopy(b, i, bb, 0, l);
+			int nb = io.writeBytes(bb);
 			assertThat(nb).isPositive();
 			i += nb;
 		}
@@ -429,9 +446,17 @@ public abstract class AbstractWritableBytesIOTest implements TestCasesProvider<I
 		assertThat(io.writeBytes(new byte[10], 7, 0)).isZero();
 
 		int step = toWrite.length > 10000 ? 1111 : 3;
+		byte[] b;
+		if (io instanceof IO.Writable.Appendable)
+			b = toWrite;
+		else {
+			// we generate a bigger array, so at one point we try to write more than the size
+			b = new byte[toWrite.length + 20];
+			System.arraycopy(toWrite, 0, b, 0, toWrite.length);
+		}
 		for (int i = 0; i < toWrite.length;) {
-			int l = Math.min(step, toWrite.length - i);
-			int nb = io.writeBytes(toWrite, i, l);
+			int l = Math.min(step, b.length - i);
+			int nb = io.writeBytes(b, i, l);
 			assertThat(nb).as("Write up to " + l + " at " + i + "/" + toWrite.length).isPositive();
 			i += nb;
 		}

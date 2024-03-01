@@ -60,12 +60,27 @@ public abstract class AbstractSeekableIOTest implements TestCasesProvider<Intege
 		if (!(io instanceof IO.Writable.Appendable)) {
 			assertThrows(EOFException.class, () -> io.seek(SeekFrom.START, size + 1));
 			assertThrows(EOFException.class, () -> io.seek(SeekFrom.END, -1));
+		} else {
+			long s = io.size();
+			io.seek(SeekFrom.END, -1);
+			assertThat(io.position()).isEqualTo(s + 1);
+			assertThat(io.size()).isEqualTo(s + 1);
+			s++;
+			io.seek(SeekFrom.CURRENT, 1);
+			assertThat(io.position()).isEqualTo(s + 1);
+			assertThat(io.size()).isEqualTo(s + 1);
+			s++;
+			io.seek(SeekFrom.START, s + 1);
+			assertThat(io.position()).isEqualTo(s + 1);
+			assertThat(io.size()).isEqualTo(s + 1);
 		}
 		
 		io.close();
 		assertThrows(ClosedChannelException.class, () -> io.seek(SeekFrom.START, 0));
 		assertThrows(ClosedChannelException.class, () -> io.seek(SeekFrom.CURRENT, 0));
 		assertThrows(ClosedChannelException.class, () -> io.seek(SeekFrom.END, 0));
+		assertThrows(ClosedChannelException.class, () -> io.position());
+		assertThrows(ClosedChannelException.class, () -> io.size());
 	}
 	
 }

@@ -1,8 +1,11 @@
 package net.lecousin.commons.io.bytes;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import net.lecousin.commons.io.IO;
@@ -152,7 +155,20 @@ public abstract class BytesIOView<T extends BytesIO> extends IOView<T> {
 
 			@Override
 			public long seek(SeekFrom from, long offset) throws IOException {
-				return io.seek(from, offset);
+				if (!(io instanceof IO.Writable.Appendable))
+					return io.seek(from, offset);
+				// we need to secure the seek
+				if (io.isClosed()) throw new ClosedChannelException();
+				long s = io.size();
+				long p;
+				switch (Objects.requireNonNull(from, "from")) {
+				case CURRENT: p = io.position() + offset; break;
+				case END: p = s - offset; break;
+				case START: default: p = offset; break;
+				}
+				if (p < 0) throw new IllegalArgumentException("Cannot move beyond the start: " + p);
+				if (p > s) throw new EOFException();
+				return io.seek(SeekFrom.START, p);
 			}
 
 			@Override

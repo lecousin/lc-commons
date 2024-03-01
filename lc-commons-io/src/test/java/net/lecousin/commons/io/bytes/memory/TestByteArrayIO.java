@@ -155,6 +155,7 @@ public class TestByteArrayIO {
 			ba.trim();
 			assertThat(ba.getSize()).isEqualTo(expected.length);
 			assertThat(ba.getArray()).containsExactly(expected);
+			assertThat(ba.getArrayStartOffset()).isZero();
 		}
 	}
 

@@ -7,9 +7,9 @@ import net.lecousin.commons.io.bytes.data.AbstractReadWriteBytesDataBufferTest;
 import net.lecousin.commons.io.bytes.data.BytesDataBuffer.ReadWrite;
 import net.lecousin.commons.test.TestCase;
 
-public class TestArrayDataBuffer {
+public class TestByteArrayDataBuffer {
 
-	public static class TestReadable extends AbstractReadWriteBytesDataBufferTest {
+	public static class TestReadWrite extends AbstractReadWriteBytesDataBufferTest {
 		@Override
 		public List<? extends TestCase<Integer, ReadWrite>> getTestCases() {
 			return List.of(

@@ -105,7 +105,7 @@ public class TestFileIO {
 			return List.of(
 				new TestCase<>("File", size -> {
 					try {
-						Path path = Files.createTempFile("test-lc-commons-io-file", "-writable");
+						Path path = Files.createTempFile("test-lc-commons-io-file", "-rw");
 						path.toFile().deleteOnExit();
 						try (RandomAccessFile f = new RandomAccessFile(path.toFile(), "rw")) {
 							f.setLength(size);
@@ -117,7 +117,7 @@ public class TestFileIO {
 				}),
 				new TestCase<>("File resizable", size -> {
 					try {
-						Path path = Files.createTempFile("test-lc-commons-io-file", "-resizable");
+						Path path = Files.createTempFile("test-lc-commons-io-file", "-rw-resizable");
 						path.toFile().deleteOnExit();
 						try (RandomAccessFile f = new RandomAccessFile(path.toFile(), "rw")) {
 							f.setLength(size);
@@ -129,7 +129,7 @@ public class TestFileIO {
 				}),
 				new TestCase<>("File appendable", size -> {
 					try {
-						Path path = Files.createTempFile("test-lc-commons-io-file", "-appendable");
+						Path path = Files.createTempFile("test-lc-commons-io-file", "-rw-appendable");
 						path.toFile().deleteOnExit();
 						try (RandomAccessFile f = new RandomAccessFile(path.toFile(), "rw")) {
 							f.setLength(size);
@@ -141,7 +141,7 @@ public class TestFileIO {
 				}),
 				new TestCase<>("File appendable resizable", size -> {
 					try {
-						Path path = Files.createTempFile("test-lc-commons-io-file", "-appendable-resizable");
+						Path path = Files.createTempFile("test-lc-commons-io-file", "-rw-appendable-resizable");
 						path.toFile().deleteOnExit();
 						try (RandomAccessFile f = new RandomAccessFile(path.toFile(), "rw")) {
 							f.setLength(size);

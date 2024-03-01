@@ -47,14 +47,26 @@ public abstract class AbstractWritableBytesDataBufferTest implements TestCasesPr
 	void test(String displayName, Function<Integer, WritableTestCase<?, ?>> bufferProvider, int nbBytes, ByteOrder order, boolean signed, byte[] content) {
 		WritableTestCase<?, ?> tc = bufferProvider.apply(content.length);
 		BytesDataBuffer.Writable buffer = tc.getBuffer();
+		if (!order.equals(buffer.getByteOrder()))
+			buffer.setByteOrder(order);
 		buffer.setByteOrder(order);
 		
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> BytesData.of(order).readSignedBytes(nbBytes, b, o) : (b,o) -> BytesData.of(order).readUnsignedBytes(nbBytes, b, o);
 		
 		Consumer<Long> bufferWriter = getBufferWriter(buffer, nbBytes, signed);
+		Consumer<Long> bufferWriter2 = bufferWriter;
+		if (signed) {
+			switch (nbBytes) {
+			case 2: bufferWriter2 = v -> buffer.writeShort(v.shortValue()); break;
+			case 4: bufferWriter2 = v -> buffer.writeInteger(v.intValue()); break;
+			case 8: bufferWriter2 = buffer::writeLong; break;
+			}
+		}
 		
+		boolean useWriter2 = false;
 		for (int i = 0; i < content.length; i += nbBytes) {
-			bufferWriter.accept(dataReader.apply(content, i));
+			(useWriter2 ? bufferWriter2 : bufferWriter).accept(dataReader.apply(content, i));
+			useWriter2 = !useWriter2;
 		}
 		
 		checkWrittenData(buffer, tc.getObject(), content);

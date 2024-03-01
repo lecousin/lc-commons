@@ -13,6 +13,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import net.lecousin.commons.collections.LcArrayUtils;
+import net.lecousin.commons.exceptions.NegativeValueException;
 import net.lecousin.commons.function.BiConsumerThrows;
 import net.lecousin.commons.io.IO;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils;
@@ -146,6 +147,14 @@ public abstract class AbstractWritableSeekableBytesDataIOTest implements TestCas
 		WritableTestCase<? extends BytesDataIO.Writable.Seekable, ?> ioTuple = ioSupplier.apply(toWrite.length);
 		BytesDataIO.Writable.Seekable io = ioTuple.getIo();
 
+		assertThrows(IllegalArgumentException.class, () -> io.writeSignedBytesAt(0, 9, 0));
+		assertThrows(IllegalArgumentException.class, () -> io.writeSignedBytesAt(0, -1, 0));
+		assertThrows(IllegalArgumentException.class, () -> io.writeSignedBytesAt(0, 0, 0));
+		assertThrows(IllegalArgumentException.class, () -> io.writeUnsignedBytesAt(0, 8, 0));
+		assertThrows(IllegalArgumentException.class, () -> io.writeUnsignedBytesAt(0, -1, 0));
+		assertThrows(IllegalArgumentException.class, () -> io.writeUnsignedBytesAt(0, 0, 0));
+		assertThrows(NegativeValueException.class, () -> io.writeUnsignedBytesAt(-1, 1, 0));
+		
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 

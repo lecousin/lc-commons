@@ -57,14 +57,26 @@ public abstract class AbstractReadableBytesDataBufferTest implements TestCasesPr
 	@ArgumentsSource(ByteArrayDataBufferArgumentsProvider.class)
 	void test(String displayName, Function<byte[], BytesDataBuffer.Readable> bufferProvider, int nbBytes, ByteOrder order, boolean signed, byte[] content) {
 		BytesDataBuffer.Readable buffer = bufferProvider.apply(content);
-		buffer.setByteOrder(order);
+		if (!order.equals(buffer.getByteOrder()))
+			buffer.setByteOrder(order);
+		assertThat(buffer.remaining()).isEqualTo(content.length);
 		
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> BytesData.of(order).readSignedBytes(nbBytes, b, o) : (b,o) -> BytesData.of(order).readUnsignedBytes(nbBytes, b, o);
 		
 		Supplier<? extends Number> bufferReader = getBufferReader(buffer, nbBytes, signed);
+		Supplier<? extends Number> bufferReader2 = bufferReader;
+		if (signed) {
+			switch (nbBytes) {
+			case 2: bufferReader2 = buffer::readShort; break;
+			case 4: bufferReader2 = buffer::readInteger; break;
+			case 8: bufferReader2 = buffer::readLong; break;
+			}
+		}
 		
+		boolean useReader2 = false;
 		for (int i = 0; i < content.length; i += nbBytes) {
-			assertThat(bufferReader.get().longValue()).as("Byte " + i + "/" + content.length).isEqualTo(dataReader.apply(content, i));
+			assertThat((useReader2 ? bufferReader2 : bufferReader).get().longValue()).as("Byte " + i + "/" + content.length).isEqualTo(dataReader.apply(content, i));
+			useReader2 = !useReader2;
 		}
 	}
 	
