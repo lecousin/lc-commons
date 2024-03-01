@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.EOFException;
+import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -40,8 +41,8 @@ public abstract class AbstractReadableBytesDataIOTest implements TestCasesProvid
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 
-		SupplierThrows<? extends Number> ioReader = null;
-		SupplierThrows<? extends Number> ioReader2 = null;
+		SupplierThrows<? extends Number, IOException> ioReader = null;
+		SupplierThrows<? extends Number, IOException> ioReader2 = null;
 		switch (nbBytes) {
 		case 1: ioReader = signed ? io::readByte : io::readUnsignedByte; break;
 		case 2: ioReader = signed ? io::readSigned2Bytes : io::readUnsigned2Bytes; break;
@@ -68,8 +69,8 @@ public abstract class AbstractReadableBytesDataIOTest implements TestCasesProvid
 			useReader2 = !useReader2;
 		}
 		
-		SupplierThrows<? extends Number> r = ioReader;
-		SupplierThrows<? extends Number> r2 = ioReader2;
+		SupplierThrows<? extends Number, IOException> r = ioReader;
+		SupplierThrows<? extends Number, IOException> r2 = ioReader2;
 		assertThrows(EOFException.class, () -> r.get());
 		assertThrows(EOFException.class, () -> r2.get());
 		
@@ -93,7 +94,7 @@ public abstract class AbstractReadableBytesDataIOTest implements TestCasesProvid
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 
-		SupplierThrows<? extends Number> ioReader = signed ? () -> io.readSignedBytes(nbBytes) : () -> io.readUnsignedBytes(nbBytes);
+		SupplierThrows<? extends Number, IOException> ioReader = signed ? () -> io.readSignedBytes(nbBytes) : () -> io.readUnsignedBytes(nbBytes);
 
 		for (int i = 0; i < expected.length - (nbBytes - 1); i += nbBytes) {
 			Number n = ioReader.get();

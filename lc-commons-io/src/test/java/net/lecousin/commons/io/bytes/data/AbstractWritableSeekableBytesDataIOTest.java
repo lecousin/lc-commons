@@ -3,6 +3,7 @@ package net.lecousin.commons.io.bytes.data;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.EOFException;
+import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -56,8 +57,8 @@ public abstract class AbstractWritableSeekableBytesDataIOTest implements TestCas
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 
-		BiConsumerThrows<Long, Number> ioWriter = null;
-		BiConsumerThrows<Long, Number> ioWriter2 = null;
+		BiConsumerThrows<Long, Number, IOException> ioWriter = null;
+		BiConsumerThrows<Long, Number, IOException> ioWriter2 = null;
 		
 		switch (nbBytes) {
 		case 1: ioWriter = signed ? (p,v) -> io.writeByteAt(p, v.byteValue()) : (p,v) -> io.writeUnsignedByteAt(p, v.intValue()); break;
@@ -88,8 +89,8 @@ public abstract class AbstractWritableSeekableBytesDataIOTest implements TestCas
 		for (; pos < toWrite.length; ++pos)
 			io.writeByteAt(pos, toWrite[pos]);
 		
-		BiConsumerThrows<Long, Number> w = ioWriter;
-		BiConsumerThrows<Long, Number> w2 = ioWriter2;
+		BiConsumerThrows<Long, Number, IOException> w = ioWriter;
+		BiConsumerThrows<Long, Number, IOException> w2 = ioWriter2;
 		
 		if (!(io instanceof IO.Writable.Appendable)) {
 			assertThrows(EOFException.class, () -> w.accept((long) toWrite.length, 0L));
@@ -158,7 +159,7 @@ public abstract class AbstractWritableSeekableBytesDataIOTest implements TestCas
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 
-		BiConsumerThrows<Long, Number> ioWriter = signed ? (p,v) -> io.writeSignedBytesAt(p, nbBytes, v.longValue()) : (p,v) -> io.writeUnsignedBytesAt(p, nbBytes, v.longValue());
+		BiConsumerThrows<Long, Number, IOException> ioWriter = signed ? (p,v) -> io.writeSignedBytesAt(p, nbBytes, v.longValue()) : (p,v) -> io.writeUnsignedBytesAt(p, nbBytes, v.longValue());
 		
 		int pos = 0;
 		for (; pos < toWrite.length - (nbBytes - 1); pos += nbBytes) {
@@ -168,7 +169,7 @@ public abstract class AbstractWritableSeekableBytesDataIOTest implements TestCas
 		for (; pos < toWrite.length; ++pos)
 			io.writeByteAt(pos, toWrite[pos]);
 		
-		BiConsumerThrows<Long, Number> w = ioWriter;
+		BiConsumerThrows<Long, Number, IOException> w = ioWriter;
 		
 		if (!(io instanceof IO.Writable.Appendable))
 			assertThrows(EOFException.class, () -> w.accept((long) toWrite.length, 0L));

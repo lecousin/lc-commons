@@ -5,8 +5,9 @@ package net.lecousin.commons.function;
  * @param <A> type of first argument
  * @param <B> type of second argument
  * @param <R> return type
+ * @param <E> type of exception
  */
-public interface BiFunctionThrows<A, B, R> {
+public interface BiFunctionThrows<A, B, R, E extends Exception> {
 
 	/**
 	 * Performs the operation.
@@ -14,9 +15,9 @@ public interface BiFunctionThrows<A, B, R> {
 	 * @param a first argument
 	 * @param b second argument
 	 * @return value
-	 * @throws Exception in case of error
+	 * @throws E in case of error
 	 */
 	@SuppressWarnings("java:S112")
-	R apply(A a, B b) throws Exception;
+	R apply(A a, B b) throws E;
 	
 }

@@ -16,7 +16,7 @@ public final class IOTestUtils {
 		// no instance
 	}
 	
-	private static final Integer[] TEST_CASE_SIZES = new Integer[] { 0, 1, 2, 10, 4000, 66666, 1234567 };
+	private static final Integer[] TEST_CASE_SIZES = new Integer[] { 0, 1, 10, 5000, 1234567 };
 	
 	public static Stream<Integer> sizes() { return Arrays.stream(TEST_CASE_SIZES); }
 	

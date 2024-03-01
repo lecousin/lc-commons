@@ -177,6 +177,34 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 		return channel.write(buffer, pos);
 	}
 	
+	protected void writeBytesFully(ByteBuffer buffer) throws IOException {
+		if (!canAppend) {
+			long s = channel.size();
+			if (buffer.remaining() == 0) return;
+			long p = channel.position();
+			if (p + buffer.remaining() > s) throw new EOFException();
+		} else if (!channel.isOpen())
+			throw new ClosedChannelException();
+		while (buffer.hasRemaining()) {
+			int nb = channel.write(buffer);
+			if (nb <= 0) throw new EOFException();
+		}
+	}
+	
+	protected void writeBytesFullyAt(long pos, ByteBuffer buffer) throws IOException {
+		IOChecks.checkByteBufferOperation(this, pos, buffer);
+		if (buffer.remaining() == 0) return;
+		if (!canAppend) {
+			long s = channel.size();
+			if (pos + buffer.remaining() > s) throw new EOFException();
+		}
+		while (buffer.hasRemaining()) {
+			int nb = channel.write(buffer, pos);
+			if (nb <= 0) throw new EOFException();
+			pos += nb;
+		}
+	}
+	
 	// --- Resizable ---
 	
 	protected void setSize(long newSize) throws IOException {
@@ -292,6 +320,10 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 		public int writeBytes(ByteBuffer buffer) throws IOException { return super.writeBytes(buffer); }
 		@Override
 		public int writeBytesAt(long pos, ByteBuffer buffer) throws IOException { return super.writeBytesAt(pos, buffer); }
+		@Override
+		public void writeBytesFully(ByteBuffer buffer) throws IOException { super.writeBytesFully(buffer); }
+		@Override
+		public void writeBytesFullyAt(long pos, ByteBuffer buffer) throws IOException { super.writeBytesFullyAt(pos, buffer); }
 		
 		/** Write-only and appendable FileIO. */
 		public static class Appendable extends FileIO.Writable implements BytesIO.Writable.Seekable.Appendable {
@@ -450,6 +482,10 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 		public int writeBytes(ByteBuffer buffer) throws IOException { return super.writeBytes(buffer); }
 		@Override
 		public int writeBytesAt(long pos, ByteBuffer buffer) throws IOException { return super.writeBytesAt(pos, buffer); }
+		@Override
+		public void writeBytesFully(ByteBuffer buffer) throws IOException { super.writeBytesFully(buffer); }
+		@Override
+		public void writeBytesFullyAt(long pos, ByteBuffer buffer) throws IOException { super.writeBytesFullyAt(pos, buffer); }
 
 		/** Read-Write Appendable FileIO. */
 		public static class Appendable extends FileIO.ReadWrite implements BytesIO.ReadWrite.Appendable {

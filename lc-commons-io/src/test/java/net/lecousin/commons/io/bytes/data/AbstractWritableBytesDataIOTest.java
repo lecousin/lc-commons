@@ -3,6 +3,7 @@ package net.lecousin.commons.io.bytes.data;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.EOFException;
+import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -57,8 +58,8 @@ public abstract class AbstractWritableBytesDataIOTest implements TestCasesProvid
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 
-		ConsumerThrows<Number> ioWriter = null;
-		ConsumerThrows<Number> ioWriter2 = null;
+		ConsumerThrows<Number, IOException> ioWriter = null;
+		ConsumerThrows<Number, IOException> ioWriter2 = null;
 		
 		switch (nbBytes) {
 		case 1: ioWriter = signed ? v -> io.writeByte(v.byteValue()) : v -> io.writeUnsignedByte(v.intValue()); break;
@@ -89,8 +90,8 @@ public abstract class AbstractWritableBytesDataIOTest implements TestCasesProvid
 		for (; pos < toWrite.length; ++pos)
 			io.writeByte(toWrite[pos]);
 		
-		ConsumerThrows<Number> w = ioWriter;
-		ConsumerThrows<Number> w2 = ioWriter2;
+		ConsumerThrows<Number, IOException> w = ioWriter;
+		ConsumerThrows<Number, IOException> w2 = ioWriter2;
 		
 		if (!(io instanceof IO.Writable.Appendable)) {
 			assertThrows(EOFException.class, () -> w.accept(0L));
@@ -158,7 +159,7 @@ public abstract class AbstractWritableBytesDataIOTest implements TestCasesProvid
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 
-		ConsumerThrows<Number> ioWriter = signed ? v -> io.writeSignedBytes(nbBytes, v.longValue()) : v -> io.writeUnsignedBytes(nbBytes, v.longValue());
+		ConsumerThrows<Number, IOException> ioWriter = signed ? v -> io.writeSignedBytes(nbBytes, v.longValue()) : v -> io.writeUnsignedBytes(nbBytes, v.longValue());
 		
 		int pos = 0;
 		for (; pos < toWrite.length - (nbBytes - 1); pos += nbBytes) {
@@ -168,7 +169,7 @@ public abstract class AbstractWritableBytesDataIOTest implements TestCasesProvid
 		for (; pos < toWrite.length; ++pos)
 			io.writeByte(toWrite[pos]);
 		
-		ConsumerThrows<Number> w = ioWriter;
+		ConsumerThrows<Number, IOException> w = ioWriter;
 		
 		if (!(io instanceof IO.Writable.Appendable))
 			assertThrows(EOFException.class, () -> w.accept(0L));
