@@ -102,6 +102,41 @@ public interface BytesDataBuffer {
 			return readSigned8Bytes();
 		}
 		
+		/** Read a signed integer encoded on the given number of bytes.
+		 * @param nbBytes must be between 1 and 8
+		 * @return the signed value
+		 */
+		default long readSignedBytes(int nbBytes) {
+			switch (nbBytes) {
+			case 1: return readSignedByte();
+			case 2: return readSigned2Bytes();
+			case 3: return readSigned3Bytes();
+			case 4: return readSigned4Bytes();
+			case 5: return readSigned5Bytes();
+			case 6: return readSigned6Bytes();
+			case 7: return readSigned7Bytes();
+			case 8: return readSigned8Bytes();
+			default: throw new IllegalArgumentException();
+			}
+		}
+		
+		/** Read an unsigned integer encoded on the given number of bytes.
+		 * @param nbBytes must be between 1 and 7
+		 * @return the unsigned value
+		 */
+		default long readUnsignedBytes(int nbBytes) {
+			switch (nbBytes) {
+			case 1: return readUnsignedByte();
+			case 2: return readUnsigned2Bytes();
+			case 3: return readUnsigned3Bytes();
+			case 4: return readUnsigned4Bytes();
+			case 5: return readUnsigned5Bytes();
+			case 6: return readUnsigned6Bytes();
+			case 7: return readUnsigned7Bytes();
+			default: throw new IllegalArgumentException();
+			}
+		}
+		
 	}
 	
 	/** Writable BytesDataBuffer. */
@@ -205,6 +240,41 @@ public interface BytesDataBuffer {
 			writeSigned8Bytes(value);
 		}
 		
+		/** Write a signed integer encoded on the given number of bytes.
+		 * @param nbBytes must be between 1 and 8
+		 * @param value value
+		 */
+		default void writeSignedBytes(int nbBytes, long value) {
+			switch (nbBytes) {
+			case 1: writeSignedByte((byte) value); break;
+			case 2: writeSigned2Bytes((short) value); break;
+			case 3: writeSigned3Bytes((int) value); break;
+			case 4: writeSigned4Bytes((int) value); break;
+			case 5: writeSigned5Bytes(value); break;
+			case 6: writeSigned6Bytes(value); break;
+			case 7: writeSigned7Bytes(value); break;
+			case 8: writeSigned8Bytes(value); break;
+			default: throw new IllegalArgumentException();
+			}
+		}
+		
+		/** >rite an unsigned integer encoded on the given number of bytes.
+		 * @param nbBytes must be between 1 and 7
+		 * @param value value
+		 */
+		default void writeUnsignedBytes(int nbBytes, long value) {
+			switch (nbBytes) {
+			case 1: writeUnsignedByte((byte) value); break;
+			case 2: writeUnsigned2Bytes((int) value); break;
+			case 3: writeUnsigned3Bytes((int) value); break;
+			case 4: writeUnsigned4Bytes((int) value); break;
+			case 5: writeUnsigned5Bytes(value); break;
+			case 6: writeUnsigned6Bytes(value); break;
+			case 7: writeUnsigned7Bytes(value); break;
+			default: throw new IllegalArgumentException();
+			}
+		}
+
 	}
 
 	

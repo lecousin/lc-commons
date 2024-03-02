@@ -5,12 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.ByteOrder;
 import java.nio.channels.ClosedChannelException;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.function.FailableFunction;
+import org.apache.commons.lang3.function.TriFunction;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -119,4 +121,23 @@ public abstract class AbstractReadableSeekableBytesDataIOTest implements TestCas
 		assertThrows(ClosedChannelException.class, () -> ioReader.apply(0L));
 	}
 
+	@ParameterizedTest(name = "Generic data read: {0}")
+	@ArgumentsSource(DataTestCasesProvider.class)
+	void readDataSwitchByteOrder(String displayName, byte[] expected, int nbBytes, boolean signed, Function<byte[], BytesDataIO.Readable.Seekable> ioSupplier) throws Exception {
+		BytesDataIO.Readable.Seekable io = ioSupplier.apply(expected);
+
+		TriFunction<BytesData, byte[], Integer, Long> dataReader = signed ? (data,b,o) -> data.readSignedBytes(nbBytes, b, o) : (data,b,o) -> data.readUnsignedBytes(nbBytes, b, o);
+		FailableFunction<Long, ? extends Number, IOException> ioReader = signed ? p -> io.readSignedBytesAt(p, nbBytes) : p -> io.readUnsignedBytesAt(p, nbBytes);
+		
+		ByteOrder[] order = new ByteOrder[] { ByteOrder.LITTLE_ENDIAN, ByteOrder.BIG_ENDIAN };
+		for (int i = 0, j = 0; i < expected.length - (nbBytes - 1); i += nbBytes, j++) {
+			io.setByteOrder(order[j % 2]);
+			Number n = ioReader.apply((long) i);
+			assertThat(n).as("Read at " + i + "/" + expected.length).isEqualTo(dataReader.apply(BytesData.of(order[j % 2]), expected, i));
+		}
+		assertThrows(EOFException.class, () -> ioReader.apply((long) expected.length));
+		
+		io.close();
+		assertThrows(ClosedChannelException.class, () -> ioReader.apply(0L));
+	}
 }

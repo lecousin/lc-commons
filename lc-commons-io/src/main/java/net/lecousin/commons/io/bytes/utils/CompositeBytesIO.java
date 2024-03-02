@@ -205,7 +205,7 @@ public interface CompositeBytesIO {
 			}
 			if (p < 0) throw new IllegalArgumentException("Cannot move beyond the start: " + p);
 			if (p > size) throw new EOFException();
-			if (p == size || head == null) {
+			if (p == size) {
 				cursor = null;
 			} else {
 				cursor = getElementForPosition(p);
@@ -249,7 +249,7 @@ public interface CompositeBytesIO {
 		public byte readByteAt(long pos) throws IOException {
 			if (isClosed()) throw new ClosedChannelException();
 			NegativeValueException.check(pos, IOChecks.FIELD_POS);
-			if (pos >= size || head == null) throw new EOFException();
+			if (pos >= size) throw new EOFException();
 			Element e = getElementForPosition(pos);
 			return ((BytesIO.Readable.Seekable) e.io).readByteAt(pos - e.startPosition);
 		}
@@ -258,7 +258,7 @@ public interface CompositeBytesIO {
 		public void writeByteAt(long pos, byte value) throws IOException {
 			if (isClosed()) throw new ClosedChannelException();
 			NegativeValueException.check(pos, IOChecks.FIELD_POS);
-			if (pos >= size || head == null) throw new EOFException();
+			if (pos >= size) throw new EOFException();
 			Element e = getElementForPosition(pos);
 			((BytesIO.Writable.Seekable) e.io).writeByteAt(pos - e.startPosition, value);
 		}
@@ -320,7 +320,7 @@ public interface CompositeBytesIO {
 			if (isClosed()) throw new ClosedChannelException();
 			NegativeValueException.check(pos, IOChecks.FIELD_POS);
 			if (buffer.remaining() == 0) return 0;
-			if (pos >= size || head == null) return -1;
+			if (pos >= size) return -1;
 			Element e = getElementForPosition(pos);
 			return ((BytesIO.Readable.Seekable) e.io).readBytesAt(pos - e.startPosition, buffer);
 		}
@@ -329,7 +329,7 @@ public interface CompositeBytesIO {
 		public int readBytesAt(long pos, byte[] buf, int off, int len) throws IOException {
 			IOChecks.checkByteArrayOperation(this, pos, buf, off, len);
 			if (len == 0) return 0;
-			if (pos >= size || head == null) return -1;
+			if (pos >= size) return -1;
 			Element e = getElementForPosition(pos);
 			return ((BytesIO.Readable.Seekable) e.io).readBytesAt(pos - e.startPosition, buf, off, len);
 		}
@@ -339,7 +339,7 @@ public interface CompositeBytesIO {
 			if (isClosed()) throw new ClosedChannelException();
 			NegativeValueException.check(pos, IOChecks.FIELD_POS);
 			if (buffer.remaining() == 0) return 0;
-			if (pos >= size || head == null) return -1;
+			if (pos >= size) return -1;
 			Element e = getElementForPosition(pos);
 			return ((BytesIO.Writable.Seekable) e.io).writeBytesAt(pos - e.startPosition, buffer);
 		}
@@ -348,7 +348,7 @@ public interface CompositeBytesIO {
 		public int writeBytesAt(long pos, byte[] buf, int off, int len) throws IOException {
 			IOChecks.checkByteArrayOperation(this, pos, buf, off, len);
 			if (len == 0) return 0;
-			if (pos >= size || head == null) return -1;
+			if (pos >= size) return -1;
 			Element e = getElementForPosition(pos);
 			return ((BytesIO.Writable.Seekable) e.io).writeBytesAt(pos - e.startPosition, buf, off, len);
 		}

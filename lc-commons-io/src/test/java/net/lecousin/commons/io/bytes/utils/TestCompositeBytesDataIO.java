@@ -12,6 +12,7 @@ import net.lecousin.commons.io.bytes.data.AbstractReadableSeekableBytesDataIOTes
 import net.lecousin.commons.io.bytes.data.AbstractWritableBytesDataIOTest;
 import net.lecousin.commons.io.bytes.data.AbstractWritableSeekableBytesDataIOTest;
 import net.lecousin.commons.io.bytes.data.BytesDataIO;
+import net.lecousin.commons.io.bytes.memory.BufferedReadableBytesDataIO;
 import net.lecousin.commons.io.bytes.memory.ByteArray;
 import net.lecousin.commons.test.TestCase;
 
@@ -97,6 +98,35 @@ public class TestCompositeBytesDataIO {
 						BytesDataIO.ReadWrite sub2 = SubBytesDataIO.fromReadWrite(io, content.length / 3, content.length / 3, false);
 						BytesDataIO.ReadWrite sub3 = SubBytesDataIO.fromReadWrite(io, 2 * (content.length / 3), content.length - (2 * (content.length / 3)), false);
 						return CompositeBytesDataIO.fromReadable(List.of(sub1, sub2, sub3), ByteOrder.BIG_ENDIAN, true, true);
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+				}),
+				new TestCase<>("3 BufferedReadableBytesData (unknown size)", content -> {
+					try {
+						if (content.length == 0) return CompositeBytesDataIO.fromReadable(List.of(), ByteOrder.LITTLE_ENDIAN, true, true);
+						BytesDataIO.ReadWrite io = new ByteArray(content).asBytesDataIO();
+						BytesDataIO.ReadWrite sub1 = SubBytesDataIO.fromReadWrite(io, 0, content.length / 3, false);
+						BytesDataIO.ReadWrite sub2 = SubBytesDataIO.fromReadWrite(io, content.length / 3, content.length / 3, false);
+						BytesDataIO.ReadWrite sub3 = SubBytesDataIO.fromReadWrite(io, 2 * (content.length / 3), content.length - (2 * (content.length / 3)), false);
+						BufferedReadableBytesDataIO buffered1 = new BufferedReadableBytesDataIO(sub1, false);
+						BufferedReadableBytesDataIO buffered2 = new BufferedReadableBytesDataIO(sub2, false);
+						BufferedReadableBytesDataIO buffered3 = new BufferedReadableBytesDataIO(sub3, false);
+						return CompositeBytesDataIO.fromReadable(List.of(buffered1, buffered2, buffered3), ByteOrder.LITTLE_ENDIAN, true, true);
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+				}),
+				new TestCase<>("3 parts: 2 BufferedReadableBytesData (unknown size) and a SubIO in the middle", content -> {
+					try {
+						if (content.length == 0) return CompositeBytesDataIO.fromReadable(List.of(), ByteOrder.LITTLE_ENDIAN, true, true);
+						BytesDataIO.ReadWrite io = new ByteArray(content).asBytesDataIO();
+						BytesDataIO.ReadWrite sub1 = SubBytesDataIO.fromReadWrite(io, 0, content.length / 3, false);
+						BytesDataIO.ReadWrite sub2 = SubBytesDataIO.fromReadWrite(io, content.length / 3, content.length / 3, false);
+						BytesDataIO.ReadWrite sub3 = SubBytesDataIO.fromReadWrite(io, 2 * (content.length / 3), content.length - (2 * (content.length / 3)), false);
+						BufferedReadableBytesDataIO buffered1 = new BufferedReadableBytesDataIO(sub1, false);
+						BufferedReadableBytesDataIO buffered3 = new BufferedReadableBytesDataIO(sub3, false);
+						return CompositeBytesDataIO.fromReadable(List.of(buffered1, sub2, buffered3), ByteOrder.LITTLE_ENDIAN, false, true);
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}

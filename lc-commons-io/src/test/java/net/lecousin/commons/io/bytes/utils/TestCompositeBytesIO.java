@@ -11,6 +11,7 @@ import net.lecousin.commons.io.bytes.AbstractWritableBytesIOTest;
 import net.lecousin.commons.io.bytes.AbstractWritableBytesIOTest.WritableTestCase;
 import net.lecousin.commons.io.bytes.AbstractWritableSeekableBytesIOTest;
 import net.lecousin.commons.io.bytes.BytesIO;
+import net.lecousin.commons.io.bytes.memory.BufferedReadableBytesDataIO;
 import net.lecousin.commons.io.bytes.memory.ByteArray;
 import net.lecousin.commons.test.TestCase;
 
@@ -56,6 +57,35 @@ public class TestCompositeBytesIO {
 						BytesIO.ReadWrite sub2 = SubBytesIO.fromReadWrite(io, content.length / 3, content.length / 3, false);
 						BytesIO.ReadWrite sub3 = SubBytesIO.fromReadWrite(io, 2 * (content.length / 3), content.length - (2 * (content.length / 3)), false);
 						return CompositeBytesIO.fromReadable(List.of(sub1, sub2, sub3), true, true);
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+				}),
+				new TestCase<>("3 BufferedReadableBytesData (unknown size)", content -> {
+					try {
+						if (content.length == 0) return CompositeBytesIO.fromReadable(List.of(), true, true);
+						BytesIO.ReadWrite io = new ByteArray(content).asBytesIO();
+						BytesIO.ReadWrite sub1 = SubBytesIO.fromReadWrite(io, 0, content.length / 3, false);
+						BytesIO.ReadWrite sub2 = SubBytesIO.fromReadWrite(io, content.length / 3, content.length / 3, false);
+						BytesIO.ReadWrite sub3 = SubBytesIO.fromReadWrite(io, 2 * (content.length / 3), content.length - (2 * (content.length / 3)), false);
+						BufferedReadableBytesDataIO buffered1 = new BufferedReadableBytesDataIO(sub1, false);
+						BufferedReadableBytesDataIO buffered2 = new BufferedReadableBytesDataIO(sub2, false);
+						BufferedReadableBytesDataIO buffered3 = new BufferedReadableBytesDataIO(sub3, false);
+						return CompositeBytesIO.fromReadable(List.of(buffered1, buffered2, buffered3), true, true);
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+				}),
+				new TestCase<>("3 parts: 2 BufferedReadableBytesData (unknown size) and a SubIO in the middle", content -> {
+					try {
+						if (content.length == 0) return CompositeBytesIO.fromReadable(List.of(), true, true);
+						BytesIO.ReadWrite io = new ByteArray(content).asBytesIO();
+						BytesIO.ReadWrite sub1 = SubBytesIO.fromReadWrite(io, 0, content.length / 3, false);
+						BytesIO.ReadWrite sub2 = SubBytesIO.fromReadWrite(io, content.length / 3, content.length / 3, false);
+						BytesIO.ReadWrite sub3 = SubBytesIO.fromReadWrite(io, 2 * (content.length / 3), content.length - (2 * (content.length / 3)), false);
+						BufferedReadableBytesDataIO buffered1 = new BufferedReadableBytesDataIO(sub1, false);
+						BufferedReadableBytesDataIO buffered3 = new BufferedReadableBytesDataIO(sub3, false);
+						return CompositeBytesIO.fromReadable(List.of(buffered1, sub2, buffered3), false, true);
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}

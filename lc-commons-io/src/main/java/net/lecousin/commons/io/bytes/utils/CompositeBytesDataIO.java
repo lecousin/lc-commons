@@ -143,7 +143,7 @@ public interface CompositeBytesDataIO {
 			int nbBytes, long pos, FailableBiFunction<BytesDataIO.Readable.Seekable, Long, T, IOException> ioReader, BiFunction<BytesData, byte[], T> dataReader
 		) throws IOException {
 			NegativeValueException.check(pos, IOChecks.FIELD_POS);
-			if (pos >= size || head == null) throw new EOFException();
+			if (pos >= size) throw new EOFException();
 			Element e = getElementForPosition(pos);
 			if (pos - e.startPosition + nbBytes <= e.size) {
 				// we can perform the operation on the io
@@ -338,7 +338,7 @@ public interface CompositeBytesDataIO {
 			int nbBytes, long pos, T value, FailableTriConsumer<BytesDataIO.Writable.Seekable, Long, T, IOException> ioWriter, TriConsumer<BytesData, byte[], T> dataWriter
 		) throws IOException {
 			NegativeValueException.check(pos, IOChecks.FIELD_POS);
-			if (pos >= size || head == null) throw new EOFException();
+			if (pos >= size) throw new EOFException();
 			Element e = getElementForPosition(pos);
 			if (pos - e.startPosition + nbBytes <= e.size) {
 				// we can perform the operation on the io

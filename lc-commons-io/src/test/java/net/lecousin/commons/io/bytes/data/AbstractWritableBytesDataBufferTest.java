@@ -72,4 +72,26 @@ public abstract class AbstractWritableBytesDataBufferTest implements TestCasesPr
 		checkWrittenData(buffer, tc.getObject(), content);
 	}
 	
+	@ParameterizedTest(name = "{0}")
+	@ArgumentsSource(ByteArrayDataBufferArgumentsProvider.class)
+	void test2(String displayName, Function<Integer, WritableTestCase<?, ?>> bufferProvider, int nbBytes, ByteOrder order, boolean signed, byte[] content) {
+		WritableTestCase<?, ?> tc = bufferProvider.apply(content.length);
+		BytesDataBuffer.Writable buffer = tc.getBuffer();
+		if (!order.equals(buffer.getByteOrder()))
+			buffer.setByteOrder(order);
+		buffer.setByteOrder(order);
+		
+		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> BytesData.of(order).readSignedBytes(nbBytes, b, o) : (b,o) -> BytesData.of(order).readUnsignedBytes(nbBytes, b, o);
+		
+		for (int i = 0; i < content.length; i += nbBytes) {
+			long value = dataReader.apply(content, i);
+			if (signed)
+				buffer.writeSignedBytes(nbBytes, value);
+			else
+				buffer.writeUnsignedBytes(nbBytes, value);
+		}
+		
+		checkWrittenData(buffer, tc.getObject(), content);
+	}
+	
 }

@@ -80,4 +80,21 @@ public abstract class AbstractReadableBytesDataBufferTest implements TestCasesPr
 		}
 	}
 	
+
+	@ParameterizedTest(name = "{0}")
+	@ArgumentsSource(ByteArrayDataBufferArgumentsProvider.class)
+	void test2(String displayName, Function<byte[], BytesDataBuffer.Readable> bufferProvider, int nbBytes, ByteOrder order, boolean signed, byte[] content) {
+		BytesDataBuffer.Readable buffer = bufferProvider.apply(content);
+		if (!order.equals(buffer.getByteOrder()))
+			buffer.setByteOrder(order);
+		assertThat(buffer.remaining()).isEqualTo(content.length);
+		
+		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> BytesData.of(order).readSignedBytes(nbBytes, b, o) : (b,o) -> BytesData.of(order).readUnsignedBytes(nbBytes, b, o);
+		
+		for (int i = 0; i < content.length; i += nbBytes) {
+			long value = signed ? buffer.readSignedBytes(nbBytes) : buffer.readUnsignedBytes(nbBytes);
+			assertThat(value).as("Byte " + i + "/" + content.length).isEqualTo(dataReader.apply(content, i));
+		}
+	}
+	
 }

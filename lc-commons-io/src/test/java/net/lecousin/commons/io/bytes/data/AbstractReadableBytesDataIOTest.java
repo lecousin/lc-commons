@@ -5,12 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.ByteOrder;
 import java.nio.channels.ClosedChannelException;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.function.FailableSupplier;
+import org.apache.commons.lang3.function.TriFunction;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -100,6 +102,30 @@ public abstract class AbstractReadableBytesDataIOTest implements TestCasesProvid
 			Number n = ioReader.get();
 			assertThat(n).as("Read at " + i + "/" + expected.length).isEqualTo(dataReader.apply(expected, i));
 		}
+		assertThrows(EOFException.class, () -> ioReader.get());
+		
+		io.close();
+		assertThrows(ClosedChannelException.class, () -> ioReader.get());
+	}
+	
+
+	@ParameterizedTest(name = "Generic data read: {0}")
+	@ArgumentsSource(DataTestCasesProvider.class)
+	void readDataSwitchByteOrder(String displayName, byte[] expected, int nbBytes, boolean signed, Function<byte[], BytesDataIO.Readable> ioSupplier) throws Exception {
+		BytesDataIO.Readable io = ioSupplier.apply(expected);
+		
+		TriFunction<BytesData, byte[], Integer, Long> dataReader = signed ? (data,b,o) -> data.readSignedBytes(nbBytes, b, o) : (data,b,o) -> data.readUnsignedBytes(nbBytes, b, o);
+		FailableSupplier<? extends Number, IOException> ioReader = signed ? () -> io.readSignedBytes(nbBytes) : () -> io.readUnsignedBytes(nbBytes);
+
+		ByteOrder[] order = new ByteOrder[] { ByteOrder.LITTLE_ENDIAN, ByteOrder.BIG_ENDIAN };
+		for (int i = 0, j = 0; i < expected.length - (nbBytes - 1); i += nbBytes, j++) {
+			io.setByteOrder(order[j % 2]);
+			Number n = ioReader.get();
+			assertThat(n).as("Read at " + i + "/" + expected.length).isEqualTo(dataReader.apply(BytesData.of(order[j % 2]), expected, i));
+		}
+		io.setByteOrder(ByteOrder.LITTLE_ENDIAN);
+		assertThrows(EOFException.class, () -> ioReader.get());
+		io.setByteOrder(ByteOrder.BIG_ENDIAN);
 		assertThrows(EOFException.class, () -> ioReader.get());
 		
 		io.close();

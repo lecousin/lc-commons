@@ -4,12 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.ByteOrder;
 import java.nio.channels.ClosedChannelException;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.function.FailableConsumer;
+import org.apache.commons.lang3.function.TriFunction;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -208,6 +210,31 @@ public abstract class AbstractWritableBytesDataIOTest implements TestCasesProvid
 		}
 		io.close();
 		assertThrows(ClosedChannelException.class, () -> w.accept(0));
+	}
+
+
+	@ParameterizedTest(name = "{0}")
+	@ArgumentsSource(DataTestCasesProvider.class)
+	void writeDataSwitchByteOrder(String displayName, byte[] toWrite, int nbBytes, boolean signed, Function<Integer, WritableTestCase<? extends BytesDataIO.Writable, ?>> ioSupplier) throws Exception {
+		WritableTestCase<? extends BytesDataIO.Writable, ?> ioTuple = ioSupplier.apply(toWrite.length);
+		BytesDataIO.Writable io = ioTuple.getIo();
+		
+		TriFunction<BytesData, byte[], Integer, Long> dataReader = signed ? (data,b,o) -> data.readSignedBytes(nbBytes, b, o) : (data,b,o) -> data.readUnsignedBytes(nbBytes, b, o);
+		FailableConsumer<Number, IOException> ioWriter = signed ? v -> io.writeSignedBytes(nbBytes, v.longValue()) : v -> io.writeUnsignedBytes(nbBytes, v.longValue());
+		
+		ByteOrder[] order = new ByteOrder[] { ByteOrder.LITTLE_ENDIAN, ByteOrder.BIG_ENDIAN };
+		int pos = 0;
+		for (int j = 0; pos < toWrite.length - (nbBytes - 1); pos += nbBytes, j++) {
+			io.setByteOrder(order[j % 2]);
+			ioWriter.accept(dataReader.apply(BytesData.of(order[j % 2]), toWrite, pos));
+		}
+		// finish last bytes
+		for (; pos < toWrite.length; ++pos)
+			io.writeByte(toWrite[pos]);
+		
+		io.flush();
+		checkWrittenData(io, ioTuple.getObject(), toWrite);
+		io.close();
 	}
 
 }
