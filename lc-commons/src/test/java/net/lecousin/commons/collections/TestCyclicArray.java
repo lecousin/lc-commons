@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import net.lecousin.commons.exceptions.NegativeValueException;
-import net.lecousin.commons.test.collections.TestDeque;
 
 class TestCyclicArray implements TestDeque<Integer, CyclicArray<Integer>> {
 
