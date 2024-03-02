@@ -5,9 +5,10 @@ import java.io.IOException;
 import java.nio.ByteOrder;
 import java.nio.channels.ClosedChannelException;
 
+import org.apache.commons.lang3.function.FailableBiConsumer;
+import org.apache.commons.lang3.function.FailableFunction;
+
 import net.lecousin.commons.exceptions.NegativeValueException;
-import net.lecousin.commons.function.BiConsumerThrows;
-import net.lecousin.commons.function.FunctionThrows;
 import net.lecousin.commons.io.IOChecks;
 import net.lecousin.commons.io.bytes.data.BytesDataIO;
 
@@ -77,14 +78,14 @@ public interface SubBytesDataIO {
 			((BytesDataIO) io).setByteOrder(order);
 		}
 		
-		private <T extends Number> T readData(int nbBytes, FunctionThrows<Long, T, IOException> reader) throws IOException {
+		private <T extends Number> T readData(int nbBytes, FailableFunction<Long, T, IOException> reader) throws IOException {
 			if (position > size - nbBytes) throw new EOFException();
 			T value = reader.apply(start + position);
 			position += nbBytes;
 			return value;
 		}
 		
-		private <T extends Number> T readDataAt(int nbBytes, long pos, FunctionThrows<Long, T, IOException> reader) throws IOException {
+		private <T extends Number> T readDataAt(int nbBytes, long pos, FailableFunction<Long, T, IOException> reader) throws IOException {
 			NegativeValueException.check(pos, IOChecks.FIELD_POS);
 			if (pos > size - nbBytes) throw new EOFException();
 			return reader.apply(start + pos);
@@ -247,13 +248,13 @@ public interface SubBytesDataIO {
 		}
 		
 
-		private <T extends Number> void writeData(int nbBytes, T value, BiConsumerThrows<Long, T, IOException> writer) throws IOException {
+		private <T extends Number> void writeData(int nbBytes, T value, FailableBiConsumer<Long, T, IOException> writer) throws IOException {
 			if (position > size - nbBytes) throw new EOFException();
 			writer.accept(start + position, value);
 			position += nbBytes;
 		}
 
-		private <T extends Number> void writeDataAt(int nbBytes, T value, long pos, BiConsumerThrows<Long, T, IOException> writer) throws IOException {
+		private <T extends Number> void writeDataAt(int nbBytes, T value, long pos, FailableBiConsumer<Long, T, IOException> writer) throws IOException {
 			NegativeValueException.check(pos, IOChecks.FIELD_POS);
 			if (pos > size - nbBytes) throw new EOFException();
 			writer.accept(start + pos, value);

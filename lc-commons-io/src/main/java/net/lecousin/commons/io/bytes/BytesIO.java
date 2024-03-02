@@ -126,12 +126,8 @@ public interface BytesIO extends IO {
 		 */
 		default void readBytesFully(ByteBuffer buffer) throws IOException {
 			if (isClosed()) throw new ClosedChannelException();
-			int done = 0;
-			while (done < buffer.remaining()) {
-				int nb = readBytes(buffer);
-				if (nb <= 0) throw new EOFException();
-				done += nb;
-			}
+			while (buffer.hasRemaining())
+				if (readBytes(buffer) <= 0) throw new EOFException();
 		}
 		
 		/**
@@ -303,7 +299,7 @@ public interface BytesIO extends IO {
 			default void readBytesFullyAt(long pos, ByteBuffer buffer) throws IOException {
 				if (isClosed()) throw new ClosedChannelException();
 				int done = 0;
-				while (done < buffer.remaining()) {
+				while (buffer.hasRemaining()) {
 					int nb = readBytesAt(pos + done, buffer);
 					if (nb <= 0) throw new EOFException();
 					done += nb;
@@ -454,12 +450,8 @@ public interface BytesIO extends IO {
 		 */
 		default void writeBytesFully(ByteBuffer buffer) throws IOException {
 			if (isClosed()) throw new ClosedChannelException();
-			int done = 0;
-			while (done < buffer.remaining()) {
-				int nb = writeBytes(buffer);
-				if (nb <= 0) throw new EOFException();
-				done += nb;
-			}
+			while (buffer.hasRemaining())
+				if (writeBytes(buffer) <= 0) throw new EOFException();
 		}
 		
 		/**
@@ -615,7 +607,7 @@ public interface BytesIO extends IO {
 			default void writeBytesFullyAt(long pos, ByteBuffer buffer) throws IOException {
 				IOChecks.checkByteBufferOperation(this, pos, buffer);
 				int done = 0;
-				while (done < buffer.remaining()) {
+				while (buffer.hasRemaining()) {
 					int nb = writeBytesAt(pos + done, buffer);
 					if (nb <= 0) throw new EOFException();
 					done += nb;

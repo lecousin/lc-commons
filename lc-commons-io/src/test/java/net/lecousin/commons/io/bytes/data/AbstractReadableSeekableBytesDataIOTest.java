@@ -10,12 +10,12 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.apache.commons.lang3.function.FailableFunction;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import net.lecousin.commons.exceptions.NegativeValueException;
-import net.lecousin.commons.function.FunctionThrows;
 import net.lecousin.commons.io.bytes.AbstractReadableSeekableBytesIOTest;
 import net.lecousin.commons.io.bytes.BytesIO;
 import net.lecousin.commons.io.bytes.data.BytesDataIOTestUtils.DataTestCasesProvider;
@@ -52,8 +52,8 @@ public abstract class AbstractReadableSeekableBytesDataIOTest implements TestCas
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 
-		FunctionThrows<Long, ? extends Number, IOException> ioReader = null;
-		FunctionThrows<Long, ? extends Number, IOException> ioReader2 = null;
+		FailableFunction<Long, ? extends Number, IOException> ioReader = null;
+		FailableFunction<Long, ? extends Number, IOException> ioReader2 = null;
 		switch (nbBytes) {
 		case 1: ioReader = signed ? io::readByteAt : io::readUnsignedByteAt; break;
 		case 2: ioReader = signed ? io::readSigned2BytesAt : io::readUnsigned2BytesAt; break;
@@ -79,8 +79,8 @@ public abstract class AbstractReadableSeekableBytesDataIOTest implements TestCas
 			useReader2 = !useReader2;
 		}
 		
-		FunctionThrows<Long, ? extends Number, IOException> r = ioReader;
-		FunctionThrows<Long, ? extends Number, IOException> r2 = ioReader2;
+		FailableFunction<Long, ? extends Number, IOException> r = ioReader;
+		FailableFunction<Long, ? extends Number, IOException> r2 = ioReader2;
 		assertThrows(EOFException.class, () -> r.apply((long) expected.length));
 		assertThrows(EOFException.class, () -> r2.apply((long) expected.length));
 		
@@ -107,7 +107,7 @@ public abstract class AbstractReadableSeekableBytesDataIOTest implements TestCas
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 
-		FunctionThrows<Long, ? extends Number, IOException> ioReader = signed ? p -> io.readSignedBytesAt(p, nbBytes) : p -> io.readUnsignedBytesAt(p, nbBytes);
+		FailableFunction<Long, ? extends Number, IOException> ioReader = signed ? p -> io.readSignedBytesAt(p, nbBytes) : p -> io.readUnsignedBytesAt(p, nbBytes);
 		
 		for (int i = 0; i < expected.length - (nbBytes - 1); i += nbBytes) {
 			Number n = ioReader.apply((long) i);

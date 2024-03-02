@@ -10,11 +10,11 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.apache.commons.lang3.function.FailableSupplier;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-import net.lecousin.commons.function.SupplierThrows;
 import net.lecousin.commons.io.bytes.AbstractReadableBytesIOTest;
 import net.lecousin.commons.io.bytes.BytesIO;
 import net.lecousin.commons.io.bytes.data.BytesDataIOTestUtils.DataTestCasesProvider;
@@ -41,8 +41,8 @@ public abstract class AbstractReadableBytesDataIOTest implements TestCasesProvid
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 
-		SupplierThrows<? extends Number, IOException> ioReader = null;
-		SupplierThrows<? extends Number, IOException> ioReader2 = null;
+		FailableSupplier<? extends Number, IOException> ioReader = null;
+		FailableSupplier<? extends Number, IOException> ioReader2 = null;
 		switch (nbBytes) {
 		case 1: ioReader = signed ? io::readByte : io::readUnsignedByte; break;
 		case 2: ioReader = signed ? io::readSigned2Bytes : io::readUnsigned2Bytes; break;
@@ -69,8 +69,8 @@ public abstract class AbstractReadableBytesDataIOTest implements TestCasesProvid
 			useReader2 = !useReader2;
 		}
 		
-		SupplierThrows<? extends Number, IOException> r = ioReader;
-		SupplierThrows<? extends Number, IOException> r2 = ioReader2;
+		FailableSupplier<? extends Number, IOException> r = ioReader;
+		FailableSupplier<? extends Number, IOException> r2 = ioReader2;
 		assertThrows(EOFException.class, () -> r.get());
 		assertThrows(EOFException.class, () -> r2.get());
 		
@@ -94,7 +94,7 @@ public abstract class AbstractReadableBytesDataIOTest implements TestCasesProvid
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 
-		SupplierThrows<? extends Number, IOException> ioReader = signed ? () -> io.readSignedBytes(nbBytes) : () -> io.readUnsignedBytes(nbBytes);
+		FailableSupplier<? extends Number, IOException> ioReader = signed ? () -> io.readSignedBytes(nbBytes) : () -> io.readUnsignedBytes(nbBytes);
 
 		for (int i = 0; i < expected.length - (nbBytes - 1); i += nbBytes) {
 			Number n = ioReader.get();

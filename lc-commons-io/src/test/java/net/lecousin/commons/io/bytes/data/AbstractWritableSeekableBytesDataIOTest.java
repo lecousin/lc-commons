@@ -9,16 +9,16 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.apache.commons.lang3.function.FailableBiConsumer;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import net.lecousin.commons.collections.LcArrayUtils;
 import net.lecousin.commons.exceptions.NegativeValueException;
-import net.lecousin.commons.function.BiConsumerThrows;
 import net.lecousin.commons.io.IO;
-import net.lecousin.commons.io.bytes.BytesIOTestUtils;
 import net.lecousin.commons.io.bytes.AbstractWritableBytesIOTest.WritableTestCase;
+import net.lecousin.commons.io.bytes.BytesIOTestUtils;
 import net.lecousin.commons.io.bytes.data.BytesDataIOTestUtils.DataTestCasesProvider;
 import net.lecousin.commons.test.TestCase;
 import net.lecousin.commons.test.TestCasesProvider;
@@ -57,8 +57,8 @@ public abstract class AbstractWritableSeekableBytesDataIOTest implements TestCas
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 
-		BiConsumerThrows<Long, Number, IOException> ioWriter = null;
-		BiConsumerThrows<Long, Number, IOException> ioWriter2 = null;
+		FailableBiConsumer<Long, Number, IOException> ioWriter = null;
+		FailableBiConsumer<Long, Number, IOException> ioWriter2 = null;
 		
 		switch (nbBytes) {
 		case 1: ioWriter = signed ? (p,v) -> io.writeByteAt(p, v.byteValue()) : (p,v) -> io.writeUnsignedByteAt(p, v.intValue()); break;
@@ -89,8 +89,8 @@ public abstract class AbstractWritableSeekableBytesDataIOTest implements TestCas
 		for (; pos < toWrite.length; ++pos)
 			io.writeByteAt(pos, toWrite[pos]);
 		
-		BiConsumerThrows<Long, Number, IOException> w = ioWriter;
-		BiConsumerThrows<Long, Number, IOException> w2 = ioWriter2;
+		FailableBiConsumer<Long, Number, IOException> w = ioWriter;
+		FailableBiConsumer<Long, Number, IOException> w2 = ioWriter2;
 		
 		if (!(io instanceof IO.Writable.Appendable)) {
 			assertThrows(EOFException.class, () -> w.accept((long) toWrite.length, 0L));
@@ -159,7 +159,7 @@ public abstract class AbstractWritableSeekableBytesDataIOTest implements TestCas
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 
-		BiConsumerThrows<Long, Number, IOException> ioWriter = signed ? (p,v) -> io.writeSignedBytesAt(p, nbBytes, v.longValue()) : (p,v) -> io.writeUnsignedBytesAt(p, nbBytes, v.longValue());
+		FailableBiConsumer<Long, Number, IOException> ioWriter = signed ? (p,v) -> io.writeSignedBytesAt(p, nbBytes, v.longValue()) : (p,v) -> io.writeUnsignedBytesAt(p, nbBytes, v.longValue());
 		
 		int pos = 0;
 		for (; pos < toWrite.length - (nbBytes - 1); pos += nbBytes) {
@@ -169,7 +169,7 @@ public abstract class AbstractWritableSeekableBytesDataIOTest implements TestCas
 		for (; pos < toWrite.length; ++pos)
 			io.writeByteAt(pos, toWrite[pos]);
 		
-		BiConsumerThrows<Long, Number, IOException> w = ioWriter;
+		FailableBiConsumer<Long, Number, IOException> w = ioWriter;
 		
 		if (!(io instanceof IO.Writable.Appendable))
 			assertThrows(EOFException.class, () -> w.accept((long) toWrite.length, 0L));

@@ -9,12 +9,12 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.apache.commons.lang3.function.FailableConsumer;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import net.lecousin.commons.collections.LcArrayUtils;
-import net.lecousin.commons.function.ConsumerThrows;
 import net.lecousin.commons.io.IO;
 import net.lecousin.commons.io.bytes.AbstractWritableBytesIOTest;
 import net.lecousin.commons.io.bytes.AbstractWritableBytesIOTest.WritableTestCase;
@@ -58,8 +58,8 @@ public abstract class AbstractWritableBytesDataIOTest implements TestCasesProvid
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 
-		ConsumerThrows<Number, IOException> ioWriter = null;
-		ConsumerThrows<Number, IOException> ioWriter2 = null;
+		FailableConsumer<Number, IOException> ioWriter = null;
+		FailableConsumer<Number, IOException> ioWriter2 = null;
 		
 		switch (nbBytes) {
 		case 1: ioWriter = signed ? v -> io.writeByte(v.byteValue()) : v -> io.writeUnsignedByte(v.intValue()); break;
@@ -90,8 +90,8 @@ public abstract class AbstractWritableBytesDataIOTest implements TestCasesProvid
 		for (; pos < toWrite.length; ++pos)
 			io.writeByte(toWrite[pos]);
 		
-		ConsumerThrows<Number, IOException> w = ioWriter;
-		ConsumerThrows<Number, IOException> w2 = ioWriter2;
+		FailableConsumer<Number, IOException> w = ioWriter;
+		FailableConsumer<Number, IOException> w2 = ioWriter2;
 		
 		if (!(io instanceof IO.Writable.Appendable)) {
 			assertThrows(EOFException.class, () -> w.accept(0L));
@@ -159,7 +159,7 @@ public abstract class AbstractWritableBytesDataIOTest implements TestCasesProvid
 		BytesData data = BytesData.of(io.getByteOrder());
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> data.readSignedBytes(nbBytes, b, o) : (b,o) -> data.readUnsignedBytes(nbBytes, b, o);
 
-		ConsumerThrows<Number, IOException> ioWriter = signed ? v -> io.writeSignedBytes(nbBytes, v.longValue()) : v -> io.writeUnsignedBytes(nbBytes, v.longValue());
+		FailableConsumer<Number, IOException> ioWriter = signed ? v -> io.writeSignedBytes(nbBytes, v.longValue()) : v -> io.writeUnsignedBytes(nbBytes, v.longValue());
 		
 		int pos = 0;
 		for (; pos < toWrite.length - (nbBytes - 1); pos += nbBytes) {
@@ -169,7 +169,7 @@ public abstract class AbstractWritableBytesDataIOTest implements TestCasesProvid
 		for (; pos < toWrite.length; ++pos)
 			io.writeByte(toWrite[pos]);
 		
-		ConsumerThrows<Number, IOException> w = ioWriter;
+		FailableConsumer<Number, IOException> w = ioWriter;
 		
 		if (!(io instanceof IO.Writable.Appendable))
 			assertThrows(EOFException.class, () -> w.accept(0L));
