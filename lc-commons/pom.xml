@@ -7,10 +7,6 @@
   </parent>
   <artifactId>lc-commons</artifactId>
   
-  <properties>
-	<apache-commons-lang3.version>3.14.0</apache-commons-lang3.version>
-  </properties>
-  
   <dependencies>
 	<dependency>
 	  <groupId>org.apache.commons</groupId>

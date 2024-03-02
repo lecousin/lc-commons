@@ -7,10 +7,6 @@
   </parent>
   <artifactId>lc-commons-io</artifactId>
   
-  <properties>
-	<apache.commons-io.version>2.15.1</apache.commons-io.version>
-  </properties>
-  
   <dependencies>
 	<dependency>
       <groupId>${project.groupId}</groupId>

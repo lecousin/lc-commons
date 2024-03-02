@@ -48,6 +48,8 @@
 	<!-- dependencies -->
 	<lombok.version>1.18.28</lombok.version>
 	<slf4j.version>2.0.12</slf4j.version>
+	<apache-commons-lang3.version>3.14.0</apache-commons-lang3.version>
+	<apache.commons-io.version>2.15.1</apache.commons-io.version>
 	
 	<!-- tests -->
 	<junit-jupiter.version>5.10.1</junit-jupiter.version>
@@ -184,7 +186,7 @@
                 <resource>
                   <directory>${project.basedir}/src</directory>
                   <includes>
-                    <include>README.md</include>
+                    <include>*.md</include>
                   </includes>
                   <filtering>true</filtering>
                 </resource>
