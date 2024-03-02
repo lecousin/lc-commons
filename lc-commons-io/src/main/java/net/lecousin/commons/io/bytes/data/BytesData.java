@@ -65,6 +65,14 @@ public interface BytesData {
 	}
 	
 	/**
+	 * Read an unsigned 2-bytes integer from 2 bytes.
+	 * @param b1 byte1
+	 * @param b2 byte2
+	 * @return unsigned integer
+	 */
+	int readUnsigned2Bytes(byte b1, byte b2);
+	
+	/**
 	 * Write a value as an unsigned integer on 2 bytes.
 	 * @param data buffer where to write the 2 bytes
 	 * @param value value to write
@@ -1283,6 +1291,11 @@ public interface BytesData {
 		}
 		
 		@Override
+		public int readUnsigned2Bytes(byte b1, byte b2) {
+			return b1 & 0xFF | ((b2 & 0xFF) << 8);
+		}
+		
+		@Override
 		public void writeUnsigned2Bytes(byte[] data, int value) {
 			data[0] = (byte) (value & 0xFF);
 			data[1] = (byte) ((value & 0xFF00) >> 8);
@@ -1669,6 +1682,11 @@ public interface BytesData {
 		public int readUnsigned2Bytes(ByteBuffer buffer) {
 			return ((buffer.get() & 0xFF) << 8) |
 				(buffer.get() & 0xFF);
+		}
+		
+		@Override
+		public int readUnsigned2Bytes(byte b1, byte b2) {
+			return ((b1 & 0xFF) << 8) | (b2 & 0xFF);
 		}
 		
 		@Override

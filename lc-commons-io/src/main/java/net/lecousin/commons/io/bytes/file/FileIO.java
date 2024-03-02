@@ -108,8 +108,10 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 	
 	protected long skipUpTo(long toSkip) throws IOException {
 		long max = channel.size();
-		long pos = channel.position();
+		if (toSkip == 0) return 0;
 		NegativeValueException.check(toSkip, "toSkip");
+		long pos = channel.position();
+		if (pos == max) return -1;
 		long target = pos + toSkip;
 		if (target > max) target = max;
 		channel.position(target);

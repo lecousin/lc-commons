@@ -373,11 +373,11 @@ public interface CompositeBytesIO {
 			NegativeValueException.check(toSkip, "toSkip");
 			return doOperationOnPosition(() -> {
 				long result = ((BytesIO.Readable) cursor.io).skipUpTo(toSkip);
-				if (result == 0) throw new EOFException();
+				if (result <= 0) throw new EOFException();
 				position += result;
 				cursor.ioPosition += result;
 				return result;
-			}, 0L);
+			}, -1L);
 		}
 	}
 	

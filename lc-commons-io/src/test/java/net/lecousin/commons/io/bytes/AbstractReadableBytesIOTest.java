@@ -313,7 +313,7 @@ public abstract class AbstractReadableBytesIOTest implements TestCasesProvider<b
 		do {
 			long skipped = io.skipUpTo(skipSize);
 			if (pos == expected.length) {
-				assertEquals(0L, skipped);
+				assertEquals(-1L, skipped);
 				break;
 			} else
 				assertThat(skipped).isPositive();
@@ -322,7 +322,7 @@ public abstract class AbstractReadableBytesIOTest implements TestCasesProvider<b
 		} while (true);
 
 		assertThat(io.skipUpTo(0)).isZero();
-		assertThat(io.skipUpTo(1)).isZero();
+		assertThat(io.skipUpTo(1)).isEqualTo(-1L);
 		assertThrows(NegativeValueException.class, () -> io.skipUpTo(-1));
 		
 		io.close();

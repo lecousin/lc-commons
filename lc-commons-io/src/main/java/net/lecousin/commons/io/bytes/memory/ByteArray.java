@@ -1,5 +1,6 @@
 package net.lecousin.commons.io.bytes.memory;
 
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
 import java.util.function.IntBinaryOperator;
@@ -37,6 +38,25 @@ public class ByteArray implements DataArray<byte[]> {
 	 */
 	public ByteArray(byte[] buf) {
 		this(Objects.requireNonNull(buf), 0, buf.length);
+	}
+	
+	/**
+	 * Constructor.
+	 * @param buffer byte buffer
+	 */
+	public ByteArray(ByteBuffer buffer) {
+		if (buffer.hasArray()) {
+			this.bytes = buffer.array();
+			this.start = buffer.arrayOffset();
+			this.position = buffer.position();
+			this.end = this.start + buffer.limit();
+		} else {
+			this.bytes = new byte[buffer.remaining()];
+			buffer.get(this.bytes);
+			this.start = 0;
+			this.position = 0;
+			this.end = this.bytes.length;
+		}
 	}
 	
 	@Override
@@ -89,6 +109,17 @@ public class ByteArray implements DataArray<byte[]> {
 			start = 0;
 			end = b.length;
 		}
+	}
+	
+	/**
+	 * Flips this buffer. The end is set to the current position and then
+     * the position is set to zero.
+	 * @return this
+	 */
+	public ByteArray flip() {
+		end = start + position;
+        position = 0;
+        return this;
 	}
 
 	/** @return a ByteArrayIO based on this byte array. */

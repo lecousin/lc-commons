@@ -231,7 +231,9 @@ public interface SubBytesIO {
 		@Override
 		public long skipUpTo(long toSkip) throws IOException {
 			if (io == null) throw new ClosedChannelException();
+			if (toSkip == 0) return 0;
 			NegativeValueException.check(toSkip, "toSkip");
+			if (position == size) return -1;
 			long skip = Math.min(toSkip, size - position);
 			this.position += skip;
 			return skip;

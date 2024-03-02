@@ -206,7 +206,10 @@ public class ByteArrayIO extends AbstractIO implements BytesIO.ReadWrite.Resizab
 	public long skipUpTo(long toSkip) throws IOException {
 		if (bytes == null) throw new ClosedChannelException();
 		NegativeValueException.check(toSkip, "toSkip");
-		long nb = Math.min(toSkip, bytes.remaining());
+		if (toSkip == 0) return 0;
+		int r = bytes.remaining();
+		if (r == 0) return -1;
+		long nb = Math.min(toSkip, r);
 		bytes.position += (int) nb;
 		return nb;
 	}

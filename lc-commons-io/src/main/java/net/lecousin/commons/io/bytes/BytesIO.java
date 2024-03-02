@@ -484,7 +484,12 @@ public interface BytesIO extends IO {
 		 */
 		default void writeBytesFully(byte[] buf, int off, int len) throws IOException {
 			IOChecks.checkByteArrayOperation(this, buf, off, len);
-			writeBytesFully(ByteBuffer.wrap(buf, off, len));
+			while (len > 0) {
+				int nb = writeBytes(buf, off, len);
+				if (nb <= 0) throw new EOFException();
+				off += nb;
+				len -= nb;
+			}
 		}
 		
 		/**
