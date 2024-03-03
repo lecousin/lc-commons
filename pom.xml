@@ -127,6 +127,7 @@
   	<module>lc-commons-test</module>
   	<module>jacoco-report-aggregate</module>
   	<module>lc-commons-io</module>
+  	<module>reactive</module>
   </modules>
   
   <build>

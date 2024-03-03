@@ -146,7 +146,12 @@ public interface BytesIO extends IO {
 		 */
 		default void readBytesFully(byte[] buf, int off, int len) throws IOException {
 			IOChecks.checkByteArrayOperation(this, buf, off, len);
-			readBytesFully(ByteBuffer.wrap(buf, off, len));
+			while (len > 0) {
+				int nb = readBytes(buf, off, len);
+				if (nb <= 0) throw new EOFException();
+				off += nb;
+				len -= nb;
+			}
 		}
 		
 		/**
@@ -298,6 +303,7 @@ public interface BytesIO extends IO {
 			 */
 			default void readBytesFullyAt(long pos, ByteBuffer buffer) throws IOException {
 				if (isClosed()) throw new ClosedChannelException();
+				NegativeValueException.check(pos, IOChecks.FIELD_POS);
 				int done = 0;
 				while (buffer.hasRemaining()) {
 					int nb = readBytesAt(pos + done, buffer);
@@ -322,8 +328,14 @@ public interface BytesIO extends IO {
 			 * @throws IOException in case an error occurred while reading
 			 */
 			default void readBytesFullyAt(long pos, byte[] buf, int off, int len) throws IOException {
-				IOChecks.checkByteArrayOperation(this, buf, off, len);
-				readBytesFullyAt(pos, ByteBuffer.wrap(buf, off, len));
+				IOChecks.checkByteArrayOperation(this, pos, buf, off, len);
+				while (len > 0) {
+					int nb = readBytesAt(pos, buf, off, len);
+					if (nb <= 0) throw new EOFException();
+					off += nb;
+					pos += nb;
+					len -= nb;
+				}
 			}
 			
 			/**
@@ -339,7 +351,7 @@ public interface BytesIO extends IO {
 			 * @throws IOException in case an error occurred while reading
 			 */
 			default void readBytesFullyAt(long pos, byte[] buf) throws IOException {
-				IOChecks.checkByteArrayOperation(this, buf);
+				IOChecks.checkByteArrayOperation(this, pos, buf);
 				readBytesFullyAt(pos, buf, 0, buf.length);
 			}
 			
