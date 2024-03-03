@@ -137,14 +137,15 @@ public interface ReactiveBytesIO extends ReactiveIO {
 		 * </ul>
 		 */
 		default Mono<ByteBuffer> readBytesFully(ByteBuffer buffer) {
-			return ReactiveIOChecks.deferByteBuffer(this, buffer, () ->
-				readBytes(buffer)
+			return ReactiveIOChecks.deferByteBuffer(this, buffer, () -> {
+				if (!buffer.hasRemaining()) return Mono.just(buffer);
+				return readBytes(buffer)
 				.expand(nb -> {
 					if (nb <= 0) return Mono.error(new EOFException());
 					if (!buffer.hasRemaining()) return Mono.empty();
 					return readBytes(buffer);
-				}).then(Mono.defer(() -> Mono.just(buffer)))
-			);
+				}).then(Mono.defer(() -> Mono.just(buffer)));
+			});
 		}
 		
 		/**
@@ -164,16 +165,17 @@ public interface ReactiveBytesIO extends ReactiveIO {
 		 * </ul>
 		 */
 		default Mono<byte[]> readBytesFully(byte[] buf, int off, int len) {
-			return ReactiveIOChecks.deferByteArray(this, buf, off, len, () ->
-				readBytes(buf, off, len).zipWith(Mono.just(0))
+			return ReactiveIOChecks.deferByteArray(this, buf, off, len, () -> {
+				if (len == 0) return Mono.just(buf);
+				return readBytes(buf, off, len).zipWith(Mono.just(0))
 				.expand(tuple -> {
 					int nb = tuple.getT1();
 					if (nb <= 0) return Mono.error(new EOFException());
 					nb += tuple.getT2();
 					if (len == nb) return Mono.empty();
 					return readBytes(buf, off + nb, len - nb).zipWith(Mono.just(nb));
-				}).then(Mono.defer(() -> Mono.just(buf)))
-			);
+				}).then(Mono.defer(() -> Mono.just(buf)));
+			});
 		}
 		
 		/**
@@ -375,16 +377,17 @@ public interface ReactiveBytesIO extends ReactiveIO {
 			 * </ul>
 			 */
 			default Mono<byte[]> readBytesFullyAt(long pos, byte[] buf, int off, int len) {
-				return ReactiveIOChecks.deferByteArray(this, pos, buf, off, len, () ->
-					readBytesAt(pos, buf, off, len).zipWith(Mono.just(0))
+				return ReactiveIOChecks.deferByteArray(this, pos, buf, off, len, () -> {
+					if (len == 0) return Mono.just(buf);
+					return readBytesAt(pos, buf, off, len).zipWith(Mono.just(0))
 					.expand(tuple -> {
 						int nb = tuple.getT1();
 						if (nb <= 0) return Mono.error(new EOFException());
 						nb += tuple.getT2();
 						if (nb == len) return Mono.empty();
 						return readBytesAt(pos + nb, buf, off + nb, len - nb).zipWith(Mono.just(nb));
-					}).then(Mono.defer(() -> Mono.just(buf)))
-				);
+					}).then(Mono.defer(() -> Mono.just(buf)));
+				});
 			}
 			
 			/**
@@ -516,14 +519,15 @@ public interface ReactiveBytesIO extends ReactiveIO {
 		 * </ul>
 		 */
 		default Mono<Void> writeBytesFully(ByteBuffer buffer) {
-			return ReactiveIOChecks.deferByteBuffer(this, buffer, () ->
-				writeBytes(buffer)
+			return ReactiveIOChecks.deferByteBuffer(this, buffer, () -> {
+				if (!buffer.hasRemaining()) return Mono.empty();
+				return writeBytes(buffer)
 				.expand(nb -> {
 					if (nb <= 0) return Mono.error(new EOFException());
 					if (!buffer.hasRemaining()) return Mono.empty();
 					return writeBytes(buffer);
-				}).then()
-			);
+				}).then();
+			});
 		}
 		
 		/**
@@ -580,16 +584,17 @@ public interface ReactiveBytesIO extends ReactiveIO {
 		 * </ul>
 		 */
 		default Mono<Void> writeBytesFully(byte[] buf, int off, int len) {
-			return ReactiveIOChecks.deferByteArray(this, buf, off, len, () ->
-				writeBytes(buf, off, len).zipWith(Mono.just(0))
+			return ReactiveIOChecks.deferByteArray(this, buf, off, len, () -> {
+				if (len == 0) return Mono.empty();
+				return writeBytes(buf, off, len).zipWith(Mono.just(0))
 				.expand(tuple -> {
 					int nb = tuple.getT1();
 					if (nb <= 0) return Mono.error(new EOFException());
 					nb += tuple.getT2();
 					if (nb == len) return Mono.empty();
 					return writeBytes(buf, off + nb, len - nb).zipWith(Mono.just(nb));
-				}).then()
-			);
+				}).then();
+			});
 		}
 		
 		/**
@@ -716,16 +721,17 @@ public interface ReactiveBytesIO extends ReactiveIO {
 			 * </ul>
 			 */
 			default Mono<Void> writeBytesFullyAt(long pos, ByteBuffer buffer) {
-				return ReactiveIOChecks.deferByteBuffer(this, pos, buffer, () ->
-					writeBytesAt(pos, buffer).zipWith(Mono.just(0L))
+				return ReactiveIOChecks.deferByteBuffer(this, pos, buffer, () -> {
+					if (!buffer.hasRemaining()) return Mono.empty();
+					return writeBytesAt(pos, buffer).zipWith(Mono.just(0L))
 					.expand(tuple -> {
 						long nb = tuple.getT1();
 						if (nb <= 0) return Mono.error(new EOFException());
 						if (!buffer.hasRemaining()) return Mono.empty();
 						nb += tuple.getT2();
 						return writeBytesAt(pos + nb, buffer).zipWith(Mono.just(nb));
-					}).then()
-				);
+					}).then();
+				});
 			}
 			
 			/**
@@ -745,16 +751,17 @@ public interface ReactiveBytesIO extends ReactiveIO {
 			 * </ul>
 			 */
 			default Mono<Void> writeBytesFullyAt(long pos, byte[] buf, int off, int len) {
-				return ReactiveIOChecks.deferByteArray(this, pos, buf, off, len, () ->
-					writeBytesAt(pos, buf, off, len).zipWith(Mono.just(0))
+				return ReactiveIOChecks.deferByteArray(this, pos, buf, off, len, () -> {
+					if (len == 0) return Mono.empty();
+					return writeBytesAt(pos, buf, off, len).zipWith(Mono.just(0))
 					.expand(tuple -> {
 						int nb = tuple.getT1();
 						if (nb <= 0) return Mono.error(new EOFException());
 						nb += tuple.getT2();
 						if (nb == len) return Mono.empty();
 						return writeBytesAt(pos + nb, buf, off + nb, len - nb).zipWith(Mono.just(nb));
-					}).then()
-				);
+					}).then();
+				});
 			}
 			
 			/**

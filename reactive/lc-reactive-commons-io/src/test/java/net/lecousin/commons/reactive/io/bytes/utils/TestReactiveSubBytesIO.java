@@ -27,7 +27,7 @@ public class TestReactiveSubBytesIO {
 				new TestCase<>("ByteArrayIO", data -> {
 					byte[] buf = new byte[data.length + 777];
 					System.arraycopy(data, 0, buf, 111, data.length);
-					return ReactiveSubBytesIO.ofReadable(ReactiveBytesIO.fromByteArray(new ByteArray(buf)), 111, 111 + data.length, false);
+					return ReactiveSubBytesIO.fromReadable(ReactiveBytesIO.fromByteArray(new ByteArray(buf)), 111, 111 + data.length, false);
 				}),
 				new TestCase<>("FileIO", data -> {
 					try {
@@ -39,7 +39,7 @@ public class TestReactiveSubBytesIO {
 							out.write(new byte[666]);
 						}
 						ReactiveBytesIO.Readable.Seekable fio = ReactiveFileIO.openReadableSeekable(path).block();
-						return ReactiveSubBytesIO.ofReadable(fio, 111, 111 + data.length, true);
+						return ReactiveSubBytesIO.fromReadable(fio, 111, 111 + data.length, true);
 					} catch (IOException e) {
 						throw new RuntimeException(e);
 					}
@@ -69,7 +69,7 @@ public class TestReactiveSubBytesIO {
 			return List.of(
 				new TestCase<>("ByteArrayIO", size -> {
 					ByteArray ba = new ByteArray(new byte[size + 777]);
-					return new WritableTestCase<>(ReactiveSubBytesIO.ofWritable(ReactiveBytesIO.fromByteArray(ba), 111, 111 + size, false), ba);
+					return new WritableTestCase<>(ReactiveSubBytesIO.fromWritable(ReactiveBytesIO.fromByteArray(ba), 111, 111 + size, false), ba);
 				}),
 				new TestCase<>("FileIO", size -> {
 					try {
@@ -79,7 +79,7 @@ public class TestReactiveSubBytesIO {
 							f.setLength(size + 777);
 						}
 						ReactiveBytesIO.Writable.Seekable fio = ReactiveFileIO.openWritableSeekable(path).block();
-						return new WritableTestCase<>(ReactiveSubBytesIO.ofWritable(fio, 111, 111 + size, true), path);
+						return new WritableTestCase<>(ReactiveSubBytesIO.fromWritable(fio, 111, 111 + size, true), path);
 					} catch (IOException e) {
 						throw new RuntimeException(e);
 					}
@@ -101,7 +101,7 @@ public class TestReactiveSubBytesIO {
 			return List.of(
 				new TestCase<>(
 					"ByteArrayIO",
-					initialSize -> ReactiveSubBytesIO.ofReadWrite(
+					initialSize -> ReactiveSubBytesIO.fromReadWrite(
 						ReactiveBytesIO.fromByteArray(new ByteArray(new byte[initialSize + 777])),
 						111, 111 + initialSize, false
 					)
@@ -116,7 +116,7 @@ public class TestReactiveSubBytesIO {
 								f.setLength(initialSize + 777);
 							}
 							ReactiveBytesIO.ReadWrite fio = ReactiveFileIO.openReadWrite(path).block();
-							return ReactiveSubBytesIO.ofReadWrite(fio, 111, 111 + initialSize, true);
+							return ReactiveSubBytesIO.fromReadWrite(fio, 111, 111 + initialSize, true);
 						} catch (IOException e) {
 							throw new RuntimeException(e);
 						}

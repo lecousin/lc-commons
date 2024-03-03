@@ -26,7 +26,7 @@ public final class ReactiveSubBytesIO extends AbstractReactiveIO implements Reac
 	 * @param closeIoOnClose if true, the given IO will be closed when the sub-io is closed
 	 * @return the sub-io
 	 */
-	public static <T extends ReactiveBytesIO.Readable.Seekable & ReactiveBytesIO.Writable.Seekable> ReactiveBytesIO.ReadWrite ofReadWrite(T io, long start, long end, boolean closeIoOnClose) {
+	public static <T extends ReactiveBytesIO.Readable.Seekable & ReactiveBytesIO.Writable.Seekable> ReactiveBytesIO.ReadWrite fromReadWrite(T io, long start, long end, boolean closeIoOnClose) {
 		return new ReactiveSubBytesIO(io, start, end, closeIoOnClose);
 	}
 	
@@ -38,7 +38,7 @@ public final class ReactiveSubBytesIO extends AbstractReactiveIO implements Reac
 	 * @param closeIoOnClose if true, the given IO will be closed when the sub-io is closed
 	 * @return the sub-io
 	 */
-	public static ReactiveBytesIO.Readable.Seekable ofReadable(ReactiveBytesIO.Readable.Seekable io, long start, long end, boolean closeIoOnClose) {
+	public static ReactiveBytesIO.Readable.Seekable fromReadable(ReactiveBytesIO.Readable.Seekable io, long start, long end, boolean closeIoOnClose) {
 		return new ReactiveSubBytesIO(io, start, end, closeIoOnClose).asReadableSeekableBytesIO();
 	}
 	
@@ -50,7 +50,7 @@ public final class ReactiveSubBytesIO extends AbstractReactiveIO implements Reac
 	 * @param closeIoOnClose if true, the given IO will be closed when the sub-io is closed
 	 * @return the sub-io
 	 */
-	public static ReactiveBytesIO.Writable.Seekable ofWritable(ReactiveBytesIO.Writable.Seekable io, long start, long end, boolean closeIoOnClose) {
+	public static ReactiveBytesIO.Writable.Seekable fromWritable(ReactiveBytesIO.Writable.Seekable io, long start, long end, boolean closeIoOnClose) {
 		return new ReactiveSubBytesIO(io, start, end, closeIoOnClose).asWritableSeekableBytesIO();
 	}
 	
