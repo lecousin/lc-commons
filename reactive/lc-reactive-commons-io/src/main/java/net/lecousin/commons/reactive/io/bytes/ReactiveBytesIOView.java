@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Objects;
 
-import net.lecousin.commons.io.IO;
 import net.lecousin.commons.io.IO.Seekable.SeekFrom;
 import net.lecousin.commons.reactive.io.ReactiveIO;
 import net.lecousin.commons.reactive.io.ReactiveIOChecks;
@@ -150,7 +149,7 @@ public class ReactiveBytesIOView<T extends ReactiveBytesIO> extends ReactiveIOVi
 
 			@Override
 			public Mono<Long> seek(SeekFrom from, long offset) {
-				if (!(io instanceof IO.Writable.Appendable))
+				if (!(io instanceof ReactiveIO.Writable.Appendable))
 					return io.seek(from, offset);
 				// we need to secure the seek
 				return ReactiveIOChecks.deferNotClosed(io, () -> io.size())
@@ -407,6 +406,141 @@ public class ReactiveBytesIOView<T extends ReactiveBytesIO> extends ReactiveIOVi
 			@Override
 			public Mono<Void> writeBytesFullyAt(long pos, List<ByteBuffer> buffers) {
 				return io.writeBytesFullyAt(pos, buffers);
+			}
+
+			
+			/** Writable and Seekable and Resizable view of a ReactiveBytesIO. */
+			public static class Resizable extends ReactiveBytesIOView<ReactiveBytesIO.Writable.Seekable> implements ReactiveBytesIO.Writable.Seekable.Resizable {
+
+				/**
+				 * Create a Writable and Seekable view of the given IO.<br/>
+				 * If the IO is Appendable, the returned view will be also Appendable.
+				 * 
+				 * @param <T> type of given IO
+				 * @param io the IO to wrap
+				 * @return the Writable view
+				 */
+				public static <T extends ReactiveBytesIO.Writable.Seekable & ReactiveIO.Writable.Resizable> ReactiveBytesIOView.Writable.Seekable.Resizable of(T io) {
+					if (io instanceof ReactiveIO.Writable.Appendable)
+						return new Appendable(io);
+					return new ReactiveBytesIOView.Writable.Seekable.Resizable(io);
+				}
+				
+				private static final class Appendable extends ReactiveBytesIOView.Writable.Seekable.Resizable implements ReactiveIO.Writable.Appendable {
+					private Appendable(ReactiveBytesIO.Writable.Seekable io) {
+						super(io);
+					}
+				}
+
+				private Resizable(ReactiveBytesIO.Writable.Seekable io) {
+					super(io);
+				}
+				
+				@Override
+				public Mono<Void> setSize(long newSize) {
+					return ((ReactiveIO.Writable.Resizable) io).setSize(newSize);
+				}
+
+				@Override
+				public Mono<Void> flush() {
+					return io.flush();
+				}
+
+				@Override
+				public Mono<Long> size() {
+					return io.size();
+				}
+
+				@Override
+				public Mono<Long> position() {
+					return io.position();
+				}
+
+				@Override
+				public Mono<Long> seek(SeekFrom from, long offset) {
+					return io.seek(from, offset);
+				}
+
+				@Override
+				public Mono<Void> writeByte(byte value) {
+					return io.writeByte(value);
+				}
+
+				@Override
+				public Mono<Integer> writeBytes(ByteBuffer buffer) {
+					return io.writeBytes(buffer);
+				}
+
+				@Override
+				public Mono<Integer> writeBytes(byte[] buf, int off, int len) {
+					return io.writeBytes(buf, off, len);
+				}
+
+				@Override
+				public Mono<Integer> writeBytes(byte[] buf) {
+					return io.writeBytes(buf);
+				}
+
+				@Override
+				public Mono<Void> writeBytesFully(ByteBuffer buffer) {
+					return io.writeBytesFully(buffer);
+				}
+
+				@Override
+				public Mono<Void> writeBytesFully(List<ByteBuffer> buffers) {
+					return io.writeBytesFully(buffers);
+				}
+
+				@Override
+				public Mono<Void> writeBytesFully(byte[] buf, int off, int len) {
+					return io.writeBytesFully(buf, off, len);
+				}
+
+				@Override
+				public Mono<Void> writeBytesFully(byte[] buf) {
+					return io.writeBytesFully(buf);
+				}
+
+				@Override
+				public Mono<Void> writeByteAt(long pos, byte value) {
+					return io.writeByteAt(pos, value);
+				}
+
+				@Override
+				public Mono<Integer> writeBytesAt(long pos, ByteBuffer buffer) {
+					return io.writeBytesAt(pos, buffer);
+				}
+
+				@Override
+				public Mono<Integer> writeBytesAt(long pos, byte[] buf, int off, int len) {
+					return io.writeBytesAt(pos, buf, off, len);
+				}
+
+				@Override
+				public Mono<Integer> writeBytesAt(long pos, byte[] buf) {
+					return io.writeBytesAt(pos, buf);
+				}
+
+				@Override
+				public Mono<Void> writeBytesFullyAt(long pos, ByteBuffer buffer) {
+					return io.writeBytesFullyAt(pos, buffer);
+				}
+
+				@Override
+				public Mono<Void> writeBytesFullyAt(long pos, byte[] buf, int off, int len) {
+					return io.writeBytesFullyAt(pos, buf, off, len);
+				}
+
+				@Override
+				public Mono<Void> writeBytesFullyAt(long pos, byte[] buf) {
+					return io.writeBytesFullyAt(pos, buf);
+				}
+
+				@Override
+				public Mono<Void> writeBytesFullyAt(long pos, List<ByteBuffer> buffers) {
+					return io.writeBytesFullyAt(pos, buffers);
+				}
+				
 			}
 			
 		}

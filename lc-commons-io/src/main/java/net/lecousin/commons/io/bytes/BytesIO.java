@@ -738,6 +738,11 @@ public interface BytesIO extends IO {
 				return BytesIOView.ReadWrite.of(this);
 			}
 			
+			/** @return a writable, seekable and resizable BytesIO. */
+			default BytesIO.Writable.Seekable.Resizable asWritableSeekableResizableBytesIO() {
+				return BytesIOView.Writable.Seekable.Resizable.of(this);
+			}
+			
 		}
 		
 		/** Readable and Writable Seekable Appendable BytesIO. */

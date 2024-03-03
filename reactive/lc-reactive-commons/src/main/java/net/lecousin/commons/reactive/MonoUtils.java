@@ -3,6 +3,8 @@ package net.lecousin.commons.reactive;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.function.FailableRunnable;
+
 import reactor.core.publisher.Mono;
 
 /** Utilities for Mono. */
@@ -25,6 +27,18 @@ public final class MonoUtils {
 			Optional<Exception> error = check.get();
 			if (error.isPresent()) return Mono.error(error.get());
 			return doIfNoError.get();
+		});
+	}
+	
+	/**
+	 * Similar to {@link Mono#fromRunnable(Runnable)} but using a FailableRunnable.
+	 * @param runnable failable runnable
+	 * @return empty on success, or the error thrown by the runnable
+	 */
+	public static Mono<Void> fromFailableRunnable(FailableRunnable<? extends Exception> runnable) {
+		return Mono.fromCallable(() -> {
+			runnable.run();
+			return null;
 		});
 	}
 	

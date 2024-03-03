@@ -263,7 +263,7 @@ public abstract class AbstractReadableSeekableReactiveBytesIOTest implements Tes
 		StepVerifier.create(io.readBytesFullyAt(expected.length, new byte[1])).expectError(EOFException.class).verify();
 		StepVerifier.create(io.position()).expectNext(initialPos).verifyComplete();
 		
-		io.close();
+		io.close().block();
 		StepVerifier.create(io.readBytesFullyAt(0, buffer)).expectError(ClosedChannelException.class).verify();
 		StepVerifier.create(io.readBytesFullyAt(-1, buffer)).expectError(ClosedChannelException.class).verify();
 		StepVerifier.create(io.readBytesFullyAt(0, (byte[]) null)).expectError(ClosedChannelException.class).verify();
@@ -334,7 +334,7 @@ public abstract class AbstractReadableSeekableReactiveBytesIOTest implements Tes
 		StepVerifier.create(io.readBytesFullyAt(-1, ByteBuffer.allocate(1))).expectError(NegativeValueException.class).verify();
 		StepVerifier.create(io.position()).expectNext(initialPos).verifyComplete();
 
-		io.close();
+		io.close().block();
 		StepVerifier.create(io.readBytesFullyAt(0, buffer)).expectError(ClosedChannelException.class).verify();
 		StepVerifier.create(io.readBytesFullyAt(0, (ByteBuffer) null)).expectError(ClosedChannelException.class).verify();
 		StepVerifier.create(io.readBytesFullyAt(-1, ByteBuffer.allocate(1))).expectError(ClosedChannelException.class).verify();

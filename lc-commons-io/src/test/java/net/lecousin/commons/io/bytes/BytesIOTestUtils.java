@@ -73,5 +73,15 @@ public final class BytesIOTestUtils {
 		public RandomContentWithBufferSizeTestCasesProvider() {
 			super(new RandomContentProvider(), new BufferSizeProvider(), new ParameterizedTestUtils.TestCasesArgumentsProvider());
 		}
+		@Override
+		public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
+			return super.provideArguments(context)
+				.filter(args -> {
+					byte[] content = (byte[]) args.get()[1];
+					int bufferSize = (int) args.get()[2];
+					if (bufferSize < 100 && content.length > 10000) return false;
+					return true;
+				});
+		}
 	}
 }

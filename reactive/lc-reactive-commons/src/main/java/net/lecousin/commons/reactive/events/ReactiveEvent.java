@@ -72,6 +72,12 @@ public class ReactiveEvent<T> implements ReactiveObjectListenable<T> {
 		}));
 	}
 	
+	/**
+	 * Utility method that subscribe to a listener.
+	 * @param <T> type of event
+	 * @param ev event
+	 * @param listener listener
+	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static <T> void callListener(T ev, Function<T, Publisher<?>> listener) {
 		try {

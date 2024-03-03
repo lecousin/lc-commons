@@ -14,7 +14,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import lombok.Generated;
 import net.lecousin.commons.exceptions.NegativeValueException;
 import net.lecousin.commons.io.AbstractIO;
 import net.lecousin.commons.io.IO;
@@ -27,12 +26,26 @@ import net.lecousin.commons.io.bytes.BytesIO;
 // CHECKSTYLE DISABLE: MagicNumber
 public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable {
 
-	protected FileChannel channel;
-	protected boolean canAppend;
+	private FileChannel channel;
+	private boolean canAppend;
+	private long size = -1;
+	private long position = -1;
 	
 	protected FileIO(FileChannel channel, boolean canAppend) {
 		this.channel = channel;
 		this.canAppend = canAppend;
+	}
+	
+	private long cachedSize() throws IOException {
+		if (size == -1)
+			size = channel.size();
+		return size;
+	}
+	
+	private long cachedPosition() throws IOException {
+		if (position == -1)
+			position = channel.position();
+		return position;
 	}
 	
 	@Override
@@ -42,31 +55,36 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 	
 	@Override
 	public long size() throws IOException {
-		return channel.size();
+		if (!channel.isOpen()) throw new ClosedChannelException();
+		return cachedSize();
 	}
 	
 	@Override
 	public long position() throws IOException {
-		return channel.position();
+		if (!channel.isOpen()) throw new ClosedChannelException();
+		return cachedPosition();
 	}
 	
 	@Override
 	public long seek(SeekFrom from, long offset) throws IOException {
+		if (!channel.isOpen()) throw new ClosedChannelException();
 		Objects.requireNonNull(from, "from");
-		long s = channel.size();
+		long s = cachedSize();
 		long p = 0;
 		switch (from) {
 		case START: p = offset; break;
 		case END: p = s - offset; break;
-		case CURRENT: p = channel.position() + offset; break;
+		case CURRENT: p = cachedPosition() + offset; break;
 		}
 		if (p < 0) throw new IllegalArgumentException("Cannot move beyond the start: " + p);
 		if (p > s) {
 			if (!canAppend) throw new EOFException();
 			channel.position(p - 1);
 			channel.write(ByteBuffer.allocate(1));
+			size = position = p;
 		} else {
 			channel.position(p);
+			position = p;
 		}
 		return p;
 	}
@@ -76,6 +94,7 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 	protected byte readByte() throws IOException {
 		ByteBuffer b = ByteBuffer.allocate(1);
 		if (channel.read(b) <= 0) throw new EOFException();
+		if (position != -1) position++;
 		b.flip();
 		return b.get();
 	}
@@ -90,7 +109,9 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 	}
 	
 	protected int readBytes(ByteBuffer buffer) throws IOException {
-		return channel.read(buffer);
+		int nb = channel.read(buffer);
+		if (nb > 0 && position != -1) position += nb;
+		return nb;
 	}
 	
 	protected int readBytesAt(long pos, ByteBuffer buffer) throws IOException {
@@ -103,18 +124,21 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 		ByteBuffer b = ByteBuffer.allocate(8192);
 		int nb = channel.read(b);
 		if (nb <= 0) return Optional.empty();
+		if (position != -1) position += nb;
 		return Optional.of(b.flip());
 	}
 	
 	protected long skipUpTo(long toSkip) throws IOException {
-		long max = channel.size();
+		if (!channel.isOpen()) throw new ClosedChannelException();
 		if (toSkip == 0) return 0;
 		NegativeValueException.check(toSkip, "toSkip");
-		long pos = channel.position();
+		long max = cachedSize();
+		long pos = cachedPosition();
 		if (pos == max) return -1;
 		long target = pos + toSkip;
 		if (target > max) target = max;
 		channel.position(target);
+		position = target;
 		return target - pos;
 	}
 	
@@ -127,37 +151,58 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 	
 	protected void writeByte(byte value) throws IOException {
 		if (!canAppend) {
-			long s = channel.size();
-			long p = channel.position();
+			if (!channel.isOpen()) throw new ClosedChannelException();
+			long s = cachedSize();
+			long p = cachedPosition();
 			if (p >= s) throw new EOFException();
 		}
-		if (channel.write(ByteBuffer.wrap(new byte[] { value })) <= 0) throw new EOFException(); // impossible to reproduce in test (need disk full)
+		int nb = channel.write(ByteBuffer.wrap(new byte[] { value }));
+		if (nb > 0) {
+			if (position != -1) {
+				position += nb;
+				if (size != -1 && position > size) size = position;
+			}
+		} else throw new EOFException(); // impossible to reproduce in test (need disk full)
 	}
 	
 	protected void writeByteAt(long pos, byte value) throws IOException {
 		if (!canAppend) {
-			long s = channel.size();
+			if (!channel.isOpen()) throw new ClosedChannelException();
+			long s = cachedSize();
 			if (pos >= s) throw new EOFException();
 		}
-		if (channel.write(ByteBuffer.wrap(new byte[] { value }), pos) <= 0) throw new EOFException();  // impossible to reproduce in test (need disk full)
+		int nb = channel.write(ByteBuffer.wrap(new byte[] { value }), pos);
+		if (nb > 0) {
+			if (pos + nb > size && size != -1) size = pos + nb;
+		} else throw new EOFException();  // impossible to reproduce in test (need disk full)
 	}
 	
 	protected int writeBytes(ByteBuffer buffer) throws IOException {
 		if (!canAppend) {
-			long s = channel.size();
+			if (!channel.isOpen()) throw new ClosedChannelException();
+			long s = cachedSize();
 			if (buffer.remaining() == 0) return 0;
-			long p = channel.position();
+			long p = cachedPosition();
 			if (p + buffer.remaining() > s) {
 				int l = buffer.limit();
 				buffer.limit(buffer.position() + (int) (s - p));
 				int nb = channel.write(buffer);
 				buffer.limit(l);
-				return nb <= 0 ? -1 : nb;
+				if (nb > 0) {
+					position += nb;
+					return nb;
+				}
+				return -1;
 			}
 		}
 		int nb = channel.write(buffer);
-		if (nb > 0)
+		if (nb > 0) {
+			if (position != -1) {
+				position += nb;
+				if (position > size && size != -1) size = position;
+			}
 			return nb;
+		}
 		return buffer.remaining() == 0 ? 0 : -1;
 	}
 	
@@ -166,7 +211,7 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 		NegativeValueException.check(pos, IOChecks.FIELD_POS);
 		if (buffer.remaining() == 0) return 0;
 		if (!canAppend) {
-			long s = channel.size();
+			long s = cachedSize();
 			if (pos >= s) return -1;
 			if (pos + buffer.remaining() > s) {
 				int l = buffer.limit();
@@ -176,20 +221,26 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 				return nb;
 			}
 		}
-		return channel.write(buffer, pos);
+		int nb = channel.write(buffer, pos);
+		if (nb > 0 && pos + nb > size && size != -1) size = pos + nb;
+		return nb;
 	}
 	
 	protected void writeBytesFully(ByteBuffer buffer) throws IOException {
+		if (!channel.isOpen()) throw new ClosedChannelException();
 		if (!canAppend) {
-			long s = channel.size();
+			long s = cachedSize();
 			if (buffer.remaining() == 0) return;
-			long p = channel.position();
+			long p = cachedPosition();
 			if (p + buffer.remaining() > s) throw new EOFException();
-		} else if (!channel.isOpen())
-			throw new ClosedChannelException();
+		}
 		while (buffer.hasRemaining()) {
 			int nb = channel.write(buffer);
 			if (nb <= 0) throw new EOFException();
+			if (position != -1) {
+				position += nb;
+				if (position > size && size != -1) size = position;
+			}
 		}
 	}
 	
@@ -197,37 +248,32 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 		IOChecks.checkByteBufferOperation(this, pos, buffer);
 		if (buffer.remaining() == 0) return;
 		if (!canAppend) {
-			long s = channel.size();
+			long s = cachedSize();
 			if (pos + buffer.remaining() > s) throw new EOFException();
 		}
 		while (buffer.hasRemaining()) {
 			int nb = channel.write(buffer, pos);
 			if (nb <= 0) throw new EOFException();
 			pos += nb;
+			if (pos > size && size != -1) size = pos;
 		}
 	}
 	
 	// --- Resizable ---
 	
 	protected void setSize(long newSize) throws IOException {
+		if (!channel.isOpen()) throw new ClosedChannelException();
 		NegativeValueException.check(newSize, "newSize");
-		long current = channel.size();
+		long current = cachedSize();
 		if (current == newSize) return;
 		if (newSize < current) {
 			channel.truncate(newSize);
+			size = newSize;
+			if (position > size) position = size;
 			return;
 		}
-		writeAtEndAndWaitForSizeToBeUpdated(newSize);
-	}
-	
-	@Generated // all lines cannot be reproduced
-	private void writeAtEndAndWaitForSizeToBeUpdated(long newSize) throws IOException {
-		int trial = 1;
-		do {
-			channel.write(ByteBuffer.allocate(1), newSize - 1);
-			if (channel.size() == newSize) return;
-		} while (++trial < 10);
-		throw new IOException("FileIO.setSize failed");
+		channel.write(ByteBuffer.allocate(1), newSize - 1);
+		size = newSize;
 	}
 	
 	

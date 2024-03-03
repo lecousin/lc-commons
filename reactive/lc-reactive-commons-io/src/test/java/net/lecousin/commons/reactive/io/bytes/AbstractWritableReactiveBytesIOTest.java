@@ -232,7 +232,7 @@ public abstract class AbstractWritableReactiveBytesIOTest implements TestCasesPr
 			checkWrittenData(io, ioTuple.getObject(), toWrite);
 		}
 		
-		io.close();
+		io.close().block();
 		StepVerifier.create(io.writeBytesFully((ByteBuffer) null)).expectError(ClosedChannelException.class).verify();
 		StepVerifier.create(io.writeBytesFully(ByteBuffer.allocate(0))).expectError(ClosedChannelException.class).verify();
 		StepVerifier.create(io.writeBytesFully(ByteBuffer.allocate(1))).expectError(ClosedChannelException.class).verify();
@@ -253,7 +253,7 @@ public abstract class AbstractWritableReactiveBytesIOTest implements TestCasesPr
 		io.flush().block();
 		checkWrittenData(io, ioTuple.getObject(), toWrite);
 
-		io.close();
+		io.close().block();
 		StepVerifier.create(io.writeBytesFully(ByteBuffer.allocate(0))).expectError(ClosedChannelException.class).verify();
 		StepVerifier.create(io.writeBytesFully(ByteBuffer.allocate(1))).expectError(ClosedChannelException.class).verify();
 	}
@@ -288,7 +288,7 @@ public abstract class AbstractWritableReactiveBytesIOTest implements TestCasesPr
 		io.flush().block();
 		checkWrittenData(io, ioTuple.getObject(), toWrite);
 		
-		io.close();
+		io.close().block();
 		StepVerifier.create(io.writeBytesFully(List.of(ByteBuffer.allocate(1)))).expectError(ClosedChannelException.class).verify();
 		StepVerifier.create(io.writeBytesFully(List.of())).expectError(ClosedChannelException.class).verify();
 		StepVerifier.create(io.writeBytesFully(List.of(ByteBuffer.allocate(0)))).expectError(ClosedChannelException.class).verify();

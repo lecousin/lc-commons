@@ -40,8 +40,8 @@
             </goals>
             <configuration>
 			  <includes>
-				<include>**/Abstract*IOTest.*</include>
-				<include>**/*IOTestUtils.*</include>
+				<include>**/Abstract*IOTest*.*</include>
+				<include>**/*IOTestUtils*.*</include>
 			  </includes>
 			</configuration>
           </execution>

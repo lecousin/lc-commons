@@ -9,6 +9,8 @@ import java.util.Optional;
 import net.lecousin.commons.exceptions.ExceptionsUtils;
 import net.lecousin.commons.exceptions.NegativeValueException;
 import net.lecousin.commons.io.IOChecks;
+import net.lecousin.commons.io.bytes.memory.ByteArray;
+import net.lecousin.commons.io.bytes.memory.ByteArrayIO;
 import net.lecousin.commons.reactive.FluxUtils;
 import net.lecousin.commons.reactive.io.ReactiveIO;
 import net.lecousin.commons.reactive.io.ReactiveIOChecks;
@@ -19,7 +21,7 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 /**
- * IO working on bytes.
+ * Reactive I/O working on bytes.
  */
 public interface ReactiveBytesIO extends ReactiveIO {
 
@@ -141,7 +143,7 @@ public interface ReactiveBytesIO extends ReactiveIO {
 					if (nb <= 0) return Mono.error(new EOFException());
 					if (!buffer.hasRemaining()) return Mono.empty();
 					return readBytes(buffer);
-				}).then(Mono.just(buffer))
+				}).then(Mono.defer(() -> Mono.just(buffer)))
 			);
 		}
 		
@@ -170,7 +172,7 @@ public interface ReactiveBytesIO extends ReactiveIO {
 					nb += tuple.getT2();
 					if (len == nb) return Mono.empty();
 					return readBytes(buf, off + nb, len - nb).zipWith(Mono.just(nb));
-				}).then(Mono.just(buf))
+				}).then(Mono.defer(() -> Mono.just(buf)))
 			);
 		}
 		
@@ -212,16 +214,17 @@ public interface ReactiveBytesIO extends ReactiveIO {
 		 * </ul>
 		 */
 		default Mono<Void> skipFully(long toSkip) {
-			return ReactiveIOChecks.deferNotClosedAnd(this, () -> NegativeValueException.checker(toSkip, "toSkip"), () ->
-				skipUpTo(toSkip).zipWith(Mono.just(0L))
+			return ReactiveIOChecks.deferNotClosedAnd(this, () -> NegativeValueException.checker(toSkip, "toSkip"), () -> {
+				if (toSkip == 0) return Mono.empty();
+				return skipUpTo(toSkip).zipWith(Mono.just(0L))
 				.expand(tuple -> {
 					long nb = tuple.getT1();
 					if (nb <= 0) return Mono.error(new EOFException());
 					nb += tuple.getT2();
 					if (toSkip == nb) return Mono.empty();
 					return skipUpTo(toSkip - nb).zipWith(Mono.just(nb));
-				}).then()
-			);
+				}).then();
+			});
 		}
 		
 		/**
@@ -350,7 +353,7 @@ public interface ReactiveBytesIO extends ReactiveIO {
 						if (!buffer.hasRemaining()) return Mono.empty();
 						nb += tuple.getT2();
 						return readBytesAt(pos + nb, buffer).zipWith(Mono.just(nb));
-					}).then(Mono.just(buffer))
+					}).then(Mono.defer(() -> Mono.just(buffer)))
 				);
 			}
 			
@@ -380,7 +383,7 @@ public interface ReactiveBytesIO extends ReactiveIO {
 						nb += tuple.getT2();
 						if (nb == len) return Mono.empty();
 						return readBytesAt(pos + nb, buf, off + nb, len - nb).zipWith(Mono.just(nb));
-					}).then(Mono.just(buf))
+					}).then(Mono.defer(() -> Mono.just(buf)))
 				);
 			}
 			
@@ -811,22 +814,22 @@ public interface ReactiveBytesIO extends ReactiveIO {
 				return ReactiveBytesIOView.Writable.of(this);
 			}
 			
-			/** Writable Seekable and Appendable BytesIO. */
+			/** Writable Seekable and Appendable ReactiveBytesIO. */
 			interface Appendable extends ReactiveBytesIO.Writable.Seekable, ReactiveIO.Writable.Appendable {
 				
 			}
 			
-			/** Writable Seekable and Resizable BytesIO. */
+			/** Writable Seekable and Resizable ReactiveBytesIO. */
 			interface Resizable extends ReactiveBytesIO.Writable.Seekable, ReactiveIO.Writable.Resizable {
 				
-				/** @return a non-resizable view of this BytesIO. */
+				/** @return a non-resizable view of this ReactiveBytesIO. */
 				default ReactiveBytesIO.Writable.Seekable asNonResizableWritableSeekableBytesIO() {
 					return ReactiveBytesIOView.Writable.Seekable.of(this);
 				}
 				
 			}
 			
-			/** Writable Seekable Appendable and Resizable BytesIO. */
+			/** Writable Seekable Appendable and Resizable ReactiveBytesIO. */
 			interface AppendableResizable extends ReactiveBytesIO.Writable.Seekable.Appendable, ReactiveBytesIO.Writable.Seekable.Resizable {
 				
 			}
@@ -834,7 +837,7 @@ public interface ReactiveBytesIO extends ReactiveIO {
 		
 	}
 	
-	/** Readable and Writable Seekable BytesIO. */
+	/** Readable and Writable Seekable ReactiveBytesIO. */
 	interface ReadWrite extends ReactiveBytesIO.Readable.Seekable, ReactiveBytesIO.Writable.Seekable {
 		
 		/** @return a Readable and Seekable view of this IO. */
@@ -847,26 +850,62 @@ public interface ReactiveBytesIO extends ReactiveIO {
 			return ReactiveBytesIOView.Writable.Seekable.of(this);
 		}
 		
-		/** Readable and Writable Seekable Resizable BytesIO. */
+		/** Readable and Writable Seekable Resizable ReactiveBytesIO. */
 		interface Resizable extends ReadWrite, ReactiveBytesIO.Writable.Seekable.Resizable {
 			
-			/** @return a non-resizable view of this BytesIO. */
+			/** @return a non-resizable view of this ReactiveBytesIO. */
 			default ReactiveBytesIO.ReadWrite asNonResizableReadWriteBytesIO() {
 				return ReactiveBytesIOView.ReadWrite.of(this);
 			}
 			
+			/** @return a writable, seekable and resizable ReactiveBytesIO. */
+			default ReactiveBytesIO.Writable.Seekable.Resizable asWritableSeekableResizableBytesIO() {
+				return ReactiveBytesIOView.Writable.Seekable.Resizable.of(this);
+			}
+			
 		}
 		
-		/** Readable and Writable Seekable Appendable BytesIO. */
+		/** Readable and Writable Seekable Appendable ReactiveBytesIO. */
 		interface Appendable extends ReadWrite, ReactiveBytesIO.Writable.Seekable.Appendable {
 			
 		}
 		
-		/** Readable and Writable Seekable Appendable and Resizable BytesIO. */
+		/** Readable and Writable Seekable Appendable and Resizable ReactiveBytesIO. */
 		interface AppendableResizable extends ReadWrite.Appendable, ReadWrite.Resizable {
 			
 		}
 		
 	}
 
+	
+	
+	/**
+	 * Create a ReactiveBytesIO from the given ByteArrayIO.
+	 * @param io the ByteArrayIO
+	 * @return the Reactive IO
+	 */
+	static ReactiveBytesIO.ReadWrite.Resizable fromByteArray(ByteArrayIO io) {
+		return ReactiveBytesIOFromNonReactive.fromReadWriteResizable(io, Schedulers.parallel());
+	}
+
+	/**
+	 * Create a ReactiveBytesIO from the given ByteArray.
+	 * @param array the ByteArray
+	 * @return the Reactive IO
+	 */
+	static ReactiveBytesIO.ReadWrite.Resizable fromByteArray(ByteArray array) {
+		return fromByteArray(array.asBytesIO());
+	}
+
+	/**
+	 * Create a ReactiveBytesIO from the given ByteArray.
+	 * @param array the ByteArray
+	 * @param <R> Read-Write Resizable and Appendable ReactiveBytesIO
+	 * @return the Reactive IO
+	 */
+	@SuppressWarnings("unchecked")
+	static <R extends ReactiveBytesIO.ReadWrite.Resizable & ReactiveIO.Writable.Appendable> R fromByteArrayAppendable(ByteArray array) {
+		return (R) fromByteArray(array.asAppendableBytesIO());
+	}
+	
 }
