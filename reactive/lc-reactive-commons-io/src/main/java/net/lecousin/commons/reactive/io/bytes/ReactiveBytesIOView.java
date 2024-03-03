@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 
 import net.lecousin.commons.io.IO;
+import net.lecousin.commons.io.IO.Seekable.SeekFrom;
 import net.lecousin.commons.reactive.io.ReactiveIO;
 import net.lecousin.commons.reactive.io.ReactiveIOChecks;
 import net.lecousin.commons.reactive.io.ReactiveIOView;
@@ -57,17 +58,17 @@ public class ReactiveBytesIOView<T extends ReactiveBytesIO> extends ReactiveIOVi
 		}
 
 		@Override
-		public Mono<Void> readBytesFully(ByteBuffer buffer) {
+		public Mono<ByteBuffer> readBytesFully(ByteBuffer buffer) {
 			return io.readBytesFully(buffer);
 		}
 
 		@Override
-		public Mono<Void> readBytesFully(byte[] buf, int off, int len) {
+		public Mono<byte[]> readBytesFully(byte[] buf, int off, int len) {
 			return io.readBytesFully(buf, off, len);
 		}
 
 		@Override
-		public Mono<Void> readBytesFully(byte[] buf) {
+		public Mono<byte[]> readBytesFully(byte[] buf) {
 			return io.readBytesFully(buf);
 		}
 
@@ -118,17 +119,17 @@ public class ReactiveBytesIOView<T extends ReactiveBytesIO> extends ReactiveIOVi
 			}
 
 			@Override
-			public Mono<Void> readBytesFully(ByteBuffer buffer) {
+			public Mono<ByteBuffer> readBytesFully(ByteBuffer buffer) {
 				return io.readBytesFully(buffer);
 			}
 
 			@Override
-			public Mono<Void> readBytesFully(byte[] buf, int off, int len) {
+			public Mono<byte[]> readBytesFully(byte[] buf, int off, int len) {
 				return io.readBytesFully(buf, off, len);
 			}
 
 			@Override
-			public Mono<Void> readBytesFully(byte[] buf) {
+			public Mono<byte[]> readBytesFully(byte[] buf) {
 				return io.readBytesFully(buf);
 			}
 
@@ -189,17 +190,17 @@ public class ReactiveBytesIOView<T extends ReactiveBytesIO> extends ReactiveIOVi
 			}
 
 			@Override
-			public Mono<Void> readBytesFullyAt(long pos, ByteBuffer buffer) {
+			public Mono<ByteBuffer> readBytesFullyAt(long pos, ByteBuffer buffer) {
 				return io.readBytesFullyAt(pos, buffer);
 			}
 
 			@Override
-			public Mono<Void> readBytesFullyAt(long pos, byte[] buf, int off, int len) {
+			public Mono<byte[]> readBytesFullyAt(long pos, byte[] buf, int off, int len) {
 				return io.readBytesFullyAt(pos, buf, off, len);
 			}
 
 			@Override
-			public Mono<Void> readBytesFullyAt(long pos, byte[] buf) {
+			public Mono<byte[]> readBytesFullyAt(long pos, byte[] buf) {
 				return io.readBytesFullyAt(pos, buf);
 			}
 			
@@ -490,17 +491,17 @@ public class ReactiveBytesIOView<T extends ReactiveBytesIO> extends ReactiveIOVi
 		}
 
 		@Override
-		public Mono<Void> readBytesFully(ByteBuffer buffer) {
+		public Mono<ByteBuffer> readBytesFully(ByteBuffer buffer) {
 			return io.readBytesFully(buffer);
 		}
 
 		@Override
-		public Mono<Void> readBytesFully(byte[] buf, int off, int len) {
+		public Mono<byte[]> readBytesFully(byte[] buf, int off, int len) {
 			return io.readBytesFully(buf, off, len);
 		}
 
 		@Override
-		public Mono<Void> readBytesFully(byte[] buf) {
+		public Mono<byte[]> readBytesFully(byte[] buf) {
 			return io.readBytesFully(buf);
 		}
 
@@ -535,17 +536,17 @@ public class ReactiveBytesIOView<T extends ReactiveBytesIO> extends ReactiveIOVi
 		}
 
 		@Override
-		public Mono<Void> readBytesFullyAt(long pos, ByteBuffer buffer) {
+		public Mono<ByteBuffer> readBytesFullyAt(long pos, ByteBuffer buffer) {
 			return io.readBytesFullyAt(pos, buffer);
 		}
 
 		@Override
-		public Mono<Void> readBytesFullyAt(long pos, byte[] buf, int off, int len) {
+		public Mono<byte[]> readBytesFullyAt(long pos, byte[] buf, int off, int len) {
 			return io.readBytesFullyAt(pos, buf, off, len);
 		}
 
 		@Override
-		public Mono<Void> readBytesFullyAt(long pos, byte[] buf) {
+		public Mono<byte[]> readBytesFullyAt(long pos, byte[] buf) {
 			return io.readBytesFullyAt(pos, buf);
 		}
 

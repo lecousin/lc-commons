@@ -4,6 +4,7 @@ import java.io.EOFException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import net.lecousin.commons.exceptions.ExceptionsUtils;
 import net.lecousin.commons.exceptions.NegativeValueException;
@@ -13,6 +14,7 @@ import net.lecousin.commons.reactive.io.ReactiveIO;
 import net.lecousin.commons.reactive.io.ReactiveIOChecks;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -126,20 +128,20 @@ public interface ReactiveBytesIO extends ReactiveIO {
 		 * EOFException is thrown.
 		 * 
 		 * @param buffer the buffer to fill
-		 * @return empty on success, or<ul>
+		 * @return the buffer on success, or<ul>
 		 *  <li> ClosedChannelException if this IO is already closed</li>
 		 *  <li> EOFException if the buffer cannot be filled because it would reached the end</li>
 		 *  <li> IOException in case an error occurred while reading</li>
 		 * </ul>
 		 */
-		default Mono<Void> readBytesFully(ByteBuffer buffer) {
+		default Mono<ByteBuffer> readBytesFully(ByteBuffer buffer) {
 			return ReactiveIOChecks.deferByteBuffer(this, buffer, () ->
 				readBytes(buffer)
 				.expand(nb -> {
 					if (nb <= 0) return Mono.error(new EOFException());
 					if (!buffer.hasRemaining()) return Mono.empty();
 					return readBytes(buffer);
-				}).then()
+				}).then(Mono.just(buffer))
 			);
 		}
 		
@@ -151,7 +153,7 @@ public interface ReactiveBytesIO extends ReactiveIO {
 		 * @param buf the buffer to fill
 		 * @param off offset in the buffer
 		 * @param len number of bytes to read
-		 * @return empty on success, or<ul>
+		 * @return the byte array on success, or<ul>
 		 *  <li> ClosedChannelException if this IO is already closed</li>
 		 *  <li> EOFException if the buffer cannot be filled because it would reached the end</li>
 		 *  <li> NegativeValueException if off or len is negative</li>
@@ -159,7 +161,7 @@ public interface ReactiveBytesIO extends ReactiveIO {
 		 *  <li> IOException in case an error occurred while reading</li>
 		 * </ul>
 		 */
-		default Mono<Void> readBytesFully(byte[] buf, int off, int len) {
+		default Mono<byte[]> readBytesFully(byte[] buf, int off, int len) {
 			return ReactiveIOChecks.deferByteArray(this, buf, off, len, () ->
 				readBytes(buf, off, len).zipWith(Mono.just(0))
 				.expand(tuple -> {
@@ -168,7 +170,7 @@ public interface ReactiveBytesIO extends ReactiveIO {
 					nb += tuple.getT2();
 					if (len == nb) return Mono.empty();
 					return readBytes(buf, off + nb, len - nb).zipWith(Mono.just(nb));
-				}).then()
+				}).then(Mono.just(buf))
 			);
 		}
 		
@@ -178,13 +180,13 @@ public interface ReactiveBytesIO extends ReactiveIO {
 		 * EOFException is thrown.
 		 * 
 		 * @param buf the buffer to fill
-		 * @return empty on success, or<ul>
+		 * @return the byte array on success, or<ul>
 		 *  <li> ClosedChannelException if this IO is already closed</li>
 		 *  <li> EOFException if the buffer cannot be filled because it would reached the end</li>
 		 *  <li> IOException in case an error occurred while reading</li>
 		 * </ul>
 		 */
-		default Mono<Void> readBytesFully(byte[] buf) {
+		default Mono<byte[]> readBytesFully(byte[] buf) {
 			return ReactiveIOChecks.deferByteArray(this, buf, 0, 0, () -> readBytesFully(buf, 0, buf.length));
 		}
 		
@@ -220,6 +222,16 @@ public interface ReactiveBytesIO extends ReactiveIO {
 					return skipUpTo(toSkip - nb).zipWith(Mono.just(nb));
 				}).then()
 			);
+		}
+		
+		/**
+		 * Convert this readable I/O into a Flux of ByteBuffer providing all remaining bytes.<br/>
+		 * 
+		 * @param nbAdvancedBuffers maximum number of buffers to read in advance in case the consumption is slower than the production
+		 * @return the flux of buffers, or ClosedChannelException in case the IO is closed before the returned Flux is complete
+		 */
+		default Flux<ByteBuffer> toFlux(int nbAdvancedBuffers) {
+			return FluxUtils.createBuffered(nbAdvancedBuffers, () -> this.readBuffer().subscribeOn(getScheduler()).publishOn(Schedulers.parallel()));
 		}
 		
 		/**
@@ -329,7 +341,7 @@ public interface ReactiveBytesIO extends ReactiveIO {
 			 *  <li> IOException in case an error occurred while reading</li>
 			 * </ul>
 			 */
-			default Mono<Void> readBytesFullyAt(long pos, ByteBuffer buffer) {
+			default Mono<ByteBuffer> readBytesFullyAt(long pos, ByteBuffer buffer) {
 				return ReactiveIOChecks.deferByteBuffer(this, pos, buffer, () ->
 					readBytesAt(pos, buffer).zipWith(Mono.just(0L))
 					.expand(tuple -> {
@@ -338,7 +350,7 @@ public interface ReactiveBytesIO extends ReactiveIO {
 						if (!buffer.hasRemaining()) return Mono.empty();
 						nb += tuple.getT2();
 						return readBytesAt(pos + nb, buffer).zipWith(Mono.just(nb));
-					}).then()
+					}).then(Mono.just(buffer))
 				);
 			}
 			
@@ -359,7 +371,7 @@ public interface ReactiveBytesIO extends ReactiveIO {
 			 *  <li> IOException in case an error occurred while reading</li>
 			 * </ul>
 			 */
-			default Mono<Void> readBytesFullyAt(long pos, byte[] buf, int off, int len) {
+			default Mono<byte[]> readBytesFullyAt(long pos, byte[] buf, int off, int len) {
 				return ReactiveIOChecks.deferByteArray(this, pos, buf, off, len, () ->
 					readBytesAt(pos, buf, off, len).zipWith(Mono.just(0))
 					.expand(tuple -> {
@@ -368,7 +380,7 @@ public interface ReactiveBytesIO extends ReactiveIO {
 						nb += tuple.getT2();
 						if (nb == len) return Mono.empty();
 						return readBytesAt(pos + nb, buf, off + nb, len - nb).zipWith(Mono.just(nb));
-					}).then()
+					}).then(Mono.just(buf))
 				);
 			}
 			
@@ -386,7 +398,7 @@ public interface ReactiveBytesIO extends ReactiveIO {
 			 *  <li> IOException in case an error occurred while reading</li>
 			 * </ul>
 			 */
-			default Mono<Void> readBytesFullyAt(long pos, byte[] buf) {
+			default Mono<byte[]> readBytesFullyAt(long pos, byte[] buf) {
 				return ReactiveIOChecks.deferByteArray(this, pos, buf, () -> readBytesFullyAt(pos, buf, 0, buf.length));
 			}
 			
@@ -530,6 +542,23 @@ public interface ReactiveBytesIO extends ReactiveIO {
 			)
 			.concatMap(this::writeBytesFully)
 			.then();
+		}
+		
+		/**
+		 * Subscribe to the given Flux, and write all bytes from all emitted buffers.
+		 * 
+		 * @param buffers the buffers to write
+		 * @return empty on success, or<ul>
+		 *  <li> ClosedChannelException in case the IO is closed when the returned Mono is subscribed to</li>
+		 *  <li> NullPointerException in case buffers is null</li>
+		 *  <li> EOFException in case the end is reached before all bytes are written</li>
+		 * </ul>
+		 */
+		default Mono<Void> writeBytesFully(Flux<ByteBuffer> buffers) {
+			return ReactiveIOChecks.deferNotClosedAnd(this,
+				() -> buffers != null ? Optional.empty() : Optional.of(new NullPointerException("buffers")),
+				() -> buffers.publishOn(getScheduler()).concatMap(this::writeBytesFully).then().publishOn(Schedulers.parallel())
+			);
 		}
 		
 		/**

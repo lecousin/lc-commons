@@ -7,10 +7,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 
-import lombok.extern.slf4j.Slf4j;
 import net.lecousin.commons.function.FunctionWrapper;
 import reactor.core.publisher.Mono;
 
@@ -19,7 +16,6 @@ import reactor.core.publisher.Mono;
  * 
  * @param <T> type of event
  */
-@Slf4j
 public class ReactiveSingleEvent<T> implements ReactiveObjectListenable<T> {
 
 	private List<Function<T, Publisher<?>>> listeners = new LinkedList<>();
@@ -52,7 +48,7 @@ public class ReactiveSingleEvent<T> implements ReactiveObjectListenable<T> {
 				return;
 			}
 		}
-		callListener(listener);
+		ReactiveEvent.callListener(event, listener);
 	}
 	
 	@Override
@@ -63,7 +59,7 @@ public class ReactiveSingleEvent<T> implements ReactiveObjectListenable<T> {
 				return;
 			}
 		}
-		callListener(FunctionWrapper.asFunction(listener));
+		ReactiveEvent.callListener(event, FunctionWrapper.asFunction(listener));
 	}
 	
 	@SuppressWarnings({"unlikely-arg-type", "java:S2175"})
@@ -94,38 +90,8 @@ public class ReactiveSingleEvent<T> implements ReactiveObjectListenable<T> {
 				listeners = null;
 			}
 			for (Function<T, Publisher<?>> listener : list)
-				callListener(listener);
+				ReactiveEvent.callListener(value, listener);
 		}));
-	}
-	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private void callListener(Function<T, Publisher<?>> listener) {
-		try {
-			listener.apply(event).subscribe(new Subscriber() {
-				@Override
-				public void onSubscribe(Subscription s) {
-					// nothing
-				}
-
-				@Override
-				public void onNext(Object t) {
-					// nothing
-				}
-
-				@Override
-				public void onError(Throwable t) {
-					log.error("Event listener error", t);
-				}
-
-				@Override
-				public void onComplete() {
-					// nothing
-				}
-				
-			});
-		} catch (Exception e) {
-			log.error("Event listener error", e);
-		}
 	}
 	
 }

@@ -19,6 +19,13 @@
       <artifactId>reactor-core</artifactId>
       <version>${project-reactor.version}</version>
 	</dependency>
+	
+	<dependency>
+	  <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-test</artifactId>
+      <version>${project-reactor.version}</version>
+      <scope>test</scope>
+	</dependency>
   </dependencies>
   
   <modules>

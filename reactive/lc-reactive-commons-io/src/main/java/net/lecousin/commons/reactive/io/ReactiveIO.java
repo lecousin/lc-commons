@@ -1,6 +1,8 @@
 package net.lecousin.commons.reactive.io;
 
+import net.lecousin.commons.io.IO.Seekable.SeekFrom;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 
 /**
  * An I/O, the reactive way.
@@ -24,6 +26,9 @@ public interface ReactiveIO {
 	 * @param listener the listener
 	 */
 	void onClose(Mono<Void> listener);
+	
+	/** @return the scheduler in which operations on this IO should be performed. */
+	Scheduler getScheduler();
 	
 	/**
 	 * Marker interface for a Readable IO.
@@ -77,16 +82,6 @@ public interface ReactiveIO {
 	 * A Seekable IO.
 	 */
 	interface Seekable extends KnownSize {
-		
-		/** Type of seek. */
-		enum SeekFrom {
-			/** From the start of the IO. */
-			START,
-			/** From the end of the IO. */
-			END,
-			/** From the current position. */
-			CURRENT
-		}
 		
 		/**
 		 * @return the current position in the IO on success, or<ul>

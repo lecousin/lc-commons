@@ -48,7 +48,7 @@ public class ReactiveEvent<T> implements ReactiveObjectListenable<T> {
 		listen(FunctionWrapper.asFunction(listener));
 	}
 	
-	@SuppressWarnings("unlikely-arg-type")
+	@SuppressWarnings({"unlikely-arg-type", "java:S2175"})
 	@Override
 	public void unlisten(Supplier<Publisher<?>> listener) {
 		synchronized (listeners) {
@@ -61,7 +61,6 @@ public class ReactiveEvent<T> implements ReactiveObjectListenable<T> {
 	 * @param event the event to send to the listeners
 	 * @return a mono that subscribe to all listeners to signal the event
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Mono<Void> emit(Mono<T> event) {
 		return event.flatMap(value -> Mono.fromRunnable(() -> {
 			List<Function<T, Publisher<?>>> list;
@@ -69,33 +68,38 @@ public class ReactiveEvent<T> implements ReactiveObjectListenable<T> {
 				list = new ArrayList<>(listeners);
 			}
 			for (Function<T, Publisher<?>> listener : list)
-				try {
-					listener.apply(value).subscribe(new Subscriber() {
-						@Override
-						public void onSubscribe(Subscription s) {
-							// nothing
-						}
-
-						@Override
-						public void onNext(Object t) {
-							// nothing
-						}
-
-						@Override
-						public void onError(Throwable t) {
-							log.error("Event listener error", t);
-						}
-
-						@Override
-						public void onComplete() {
-							// nothing
-						}
-						
-					});
-				} catch (Exception e) {
-					log.error("Event listener error", e);
-				}
+				callListener(value, listener);
 		}));
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static <T> void callListener(T ev, Function<T, Publisher<?>> listener) {
+		try {
+			listener.apply(ev).subscribe(new Subscriber() {
+				@Override
+				public void onSubscribe(Subscription s) {
+					// nothing
+				}
+
+				@Override
+				public void onNext(Object t) {
+					// nothing
+				}
+
+				@Override
+				public void onError(Throwable t) {
+					log.error("Event listener error", t);
+				}
+
+				@Override
+				public void onComplete() {
+					// nothing
+				}
+				
+			});
+		} catch (Exception e) {
+			log.error("Event listener error", e);
+		}
 	}
 	
 }

@@ -18,6 +18,7 @@ import net.lecousin.commons.exceptions.LimitExceededException;
 import net.lecousin.commons.exceptions.NegativeValueException;
 import net.lecousin.commons.io.AbstractSeekableIOTest;
 import net.lecousin.commons.io.IO;
+import net.lecousin.commons.io.IO.Seekable.SeekFrom;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.RandomContentWithBufferSizeTestCasesProvider;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.SmallRandomContentTestCasesProvider;
 import net.lecousin.commons.test.TestCase;
@@ -49,15 +50,19 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 	@ArgumentsSource(SmallRandomContentTestCasesProvider.class)
 	void readByteAt(String displayName, byte[] expected, Function<byte[], BytesIO.Readable.Seekable> ioSupplier) throws Exception {
 		BytesIO.Readable.Seekable io = ioSupplier.apply(expected);
+		long initialPos = io.position();
 		for (int i = 0; i < expected.length; i++) {
 			assertThat(io.readByteAt(i)).as("Read byte " + i + "/" + expected.length).isEqualTo(expected[i]);
+			assertThat(io.position()).isEqualTo(initialPos);
 		}
 		assertThrows(EOFException.class, () -> io.readByteAt(expected.length));
 		assertThrows(EOFException.class, () -> io.readByteAt(expected.length + 1));
 		assertThrows(NegativeValueException.class, () -> io.readByteAt(-1));
+		assertThat(io.position()).isEqualTo(initialPos);
 		io.close();
 		assertThrows(ClosedChannelException.class, () -> io.readByteAt(0));
 		assertThrows(ClosedChannelException.class, () -> io.readByteAt(expected.length));
+		assertThrows(ClosedChannelException.class, () -> io.readByteAt(expected.length + 1));
 		assertThrows(ClosedChannelException.class, () -> io.readByteAt(-1));
 	}
 
@@ -66,6 +71,8 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 	void readByteArrayAt(String displayName, byte[] expected, int bufferSize, Function<byte[], BytesIO.Readable.Seekable> ioSupplier) throws Exception {
 		BytesIO.Readable.Seekable io = ioSupplier.apply(expected);
 		
+		long initialPos = io.position();
+				
 		assertThrows(NullPointerException.class, () -> io.readBytesAt(0, (byte[]) null));
 		assertThrows(NegativeValueException.class, () -> io.readBytesAt(-1, new byte[10], 0, 1));
 		assertThrows(NegativeValueException.class, () -> io.readBytesAt(0, new byte[10], -1, 5));
@@ -75,6 +82,8 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 		
 		assertThat(io.readBytesAt(0, new byte[0])).isZero();
 		assertThat(io.readBytesAt(0, new byte[10], 3, 0)).isZero();
+		
+		assertThat(io.position()).isEqualTo(initialPos);
 
 		byte[] buffer = new byte[bufferSize];
 		int pos = 0;
@@ -84,6 +93,7 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 			for (int i = 0; i < nb; ++i)
 				assertEquals(expected[pos + i], buffer[i]);
 			pos += nb;
+			assertThat(io.position()).isEqualTo(initialPos);
 		}
 		assertEquals(expected.length, pos);
 		assertEquals(-1, io.readBytesAt(expected.length, buffer));
@@ -99,6 +109,8 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 		assertThrows(NegativeValueException.class, () -> io.readBytesAt(0, new byte[10], 3, -5));
 		assertThrows(LimitExceededException.class, () -> io.readBytesAt(0, new byte[10], 3, 10));
 		assertThrows(LimitExceededException.class, () -> io.readBytesAt(0, new byte[10], 12, 1));
+		
+		assertThat(io.position()).isEqualTo(initialPos);
 		
 		io.close();
 		assertThrows(ClosedChannelException.class, () -> io.readBytesAt(0, buffer));
@@ -117,6 +129,8 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 	void readByteArrayAtWithOffset(String displayName, byte[] expected, int bufferSize, Function<byte[], BytesIO.Readable.Seekable> ioSupplier) throws Exception {
 		BytesIO.Readable.Seekable io = ioSupplier.apply(expected);
 		
+		long initialPos = io.position();
+		
 		byte[] buffer = new byte[bufferSize + 127];
 		int pos = 0;
 		while (pos < expected.length) {
@@ -127,6 +141,7 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 			pos += nb;
 		}
 		assertEquals(expected.length, pos);
+		assertThat(io.position()).isEqualTo(initialPos);
 		assertEquals(-1, io.readBytesAt(expected.length, buffer, 13, 1));
 		assertEquals(-1, io.readBytesAt(expected.length, buffer, 13, bufferSize));
 		
@@ -134,6 +149,7 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 		assertThat(io.readBytesAt(0, new byte[10], 3, 0)).isZero();
 		assertThat(io.readBytesAt(expected.length, new byte[0])).isZero();
 		assertThat(io.readBytesAt(expected.length, new byte[10], 3, 0)).isZero();
+		assertThat(io.position()).isEqualTo(initialPos);
 		
 		io.close();
 	}
@@ -144,10 +160,13 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 	void readByteBufferAt(String displayName, byte[] expected, int bufferSize, Function<byte[], BytesIO.Readable.Seekable> ioSupplier) throws Exception {
 		BytesIO.Readable.Seekable io = ioSupplier.apply(expected);
 		
+		long initialPos = io.position();
+		
 		assertThrows(NullPointerException.class, () -> io.readBytesAt(0, (ByteBuffer) null));
 		
 		assertThat(io.readBytesAt(0, ByteBuffer.allocate(0))).isZero();
 		assertThat(io.readBytesAt(0, ByteBuffer.wrap(new byte[10], 3, 0))).isZero();
+		assertThat(io.position()).isEqualTo(initialPos);
 
 		ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
 		int pos = 0;
@@ -162,6 +181,7 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 			buffer.limit(bufferSize);
 		}
 		assertEquals(expected.length, pos);
+		assertThat(io.position()).isEqualTo(initialPos);
 		assertEquals(-1, io.readBytesAt(expected.length, ByteBuffer.allocate(1)));
 		
 		assertThat(io.readBytesAt(0, ByteBuffer.allocate(0))).isZero();
@@ -169,6 +189,7 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 		
 		assertThrows(NullPointerException.class, () -> io.readBytesAt(0, (ByteBuffer) null));
 		assertThrows(NegativeValueException.class, () -> io.readBytesAt(-1, ByteBuffer.allocate(1)));
+		assertThat(io.position()).isEqualTo(initialPos);
 		
 		io.close();
 		assertThrows(ClosedChannelException.class, () -> io.readBytesAt(0, buffer));
@@ -182,10 +203,13 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 	void readBytesFullyAtByteArray(String displayName, byte[] expected, int bufferSize, Function<byte[], BytesIO.Readable.Seekable> ioSupplier) throws Exception {
 		BytesIO.Readable.Seekable io = ioSupplier.apply(expected);
 		
+		long initialPos = io.position();
+		
 		byte[] empty = new byte[0];
 		io.readBytesFullyAt(0, empty);
 		io.readBytesFullyAt(expected.length, empty);
 		
+		assertThrows(NullPointerException.class, () -> io.readBytesFullyAt(0, (byte[]) null));
 		assertThrows(NullPointerException.class, () -> io.readBytesFullyAt(0, null, 0, 1));
 		assertThrows(NegativeValueException.class, () -> io.readBytesFullyAt(0, new byte[10], -1, 1));
 		assertThrows(LimitExceededException.class, () -> io.readBytesFullyAt(0, new byte[10], 10, 1));
@@ -194,7 +218,8 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 		assertThrows(LimitExceededException.class, () -> io.readBytesFullyAt(0, new byte[10], 5, 6));
 		assertThrows(NegativeValueException.class, () -> io.readBytesFullyAt(0, new byte[10], 0, -1));
 		assertThrows(NegativeValueException.class, () -> io.readBytesFullyAt(-1, new byte[1], 0, 1));
-		assertThrows(NullPointerException.class, () -> io.readBytesFullyAt(0, (byte[]) null));
+		assertThrows(NegativeValueException.class, () -> io.readBytesFullyAt(-1, new byte[1]));
+		assertThat(io.position()).isEqualTo(initialPos);
 		
 		byte[] buffer = new byte[bufferSize];
 		int pos = 0;
@@ -212,6 +237,7 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 			}
 		}
 		assertEquals(expected.length, pos);
+		assertThat(io.position()).isEqualTo(initialPos);
 		
 		assertThrows(EOFException.class, () -> io.readBytesFullyAt(expected.length, new byte[1]));
 		assertThrows(EOFException.class, () -> io.readBytesFullyAt(expected.length, buffer));
@@ -225,6 +251,7 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 		assertThrows(NegativeValueException.class, () -> io.readBytesFullyAt(0, new byte[10], 0, -1));
 		assertThrows(NegativeValueException.class, () -> io.readBytesFullyAt(-1, new byte[1], 0, 1));
 		assertThrows(NullPointerException.class, () -> io.readBytesFullyAt(0, (byte[]) null));
+		assertThat(io.position()).isEqualTo(initialPos);
 		
 		io.close();
 		assertThrows(ClosedChannelException.class, () -> io.readBytesFullyAt(0, buffer));
@@ -244,11 +271,14 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 	void readBytesFullyAtByteBuffer(String displayName, byte[] expected, int bufferSize, Function<byte[], BytesIO.Readable.Seekable> ioSupplier) throws Exception {
 		BytesIO.Readable.Seekable io = ioSupplier.apply(expected);
 		
+		long initialPos = io.position();
+		
 		ByteBuffer empty = ByteBuffer.allocate(0);
 		io.readBytesFullyAt(0, empty);
 		io.readBytesFullyAt(expected.length, empty);
 		
 		assertThrows(NullPointerException.class, () -> io.readBytesFullyAt(0, (ByteBuffer) null));
+		assertThat(io.position()).isEqualTo(initialPos);
 		
 		ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
 		int pos = 0;
@@ -274,6 +304,7 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 			}
 		}
 		assertEquals(expected.length, pos);
+		assertThat(io.position()).isEqualTo(initialPos);
 		
 		buffer.position(0);
 		buffer.limit(bufferSize);
@@ -283,6 +314,7 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 		
 		assertThrows(NullPointerException.class, () -> io.readBytesFullyAt(0, (ByteBuffer) null));
 		assertThrows(NegativeValueException.class, () -> io.readBytesFullyAt(-1, ByteBuffer.allocate(1)));
+		assertThat(io.position()).isEqualTo(initialPos);
 
 		io.close();
 		assertThrows(ClosedChannelException.class, () -> io.readBytesFullyAt(0, buffer));
@@ -290,4 +322,68 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 		assertThrows(ClosedChannelException.class, () -> io.readBytesFullyAt(-1, ByteBuffer.allocate(1)));
 	}
 
+	@ParameterizedTest(name = "{0}")
+	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
+	void seekAndReadFullyByteArray(String displayName, byte[] expected, int bufferSize, Function<byte[], BytesIO.Readable.Seekable> ioSupplier) throws Exception {
+		BytesIO.Readable.Seekable io = ioSupplier.apply(expected);
+
+		byte[] buffer = new byte[bufferSize];
+		int step = expected.length > 10000 ? 1123 : 1;
+		
+		// SeekFrom.START
+		
+		// read forward
+		for (int i = 0; i < expected.length - bufferSize; i += step) {
+			assertThat(io.seek(SeekFrom.START, i)).isEqualTo(i);
+			assertThat(io.position()).isEqualTo(i);
+			io.readBytesFully(buffer);
+			for (int j = 0; j < bufferSize; j++)
+				assertEquals(expected[i + j], buffer[j]);
+		}
+		// read backward
+		for (int i = expected.length - bufferSize; i >= 0; i -= step) {
+			assertThat(io.seek(SeekFrom.START, i)).isEqualTo(i);
+			assertThat(io.position()).isEqualTo(i);
+			io.readBytesFully(buffer);
+			for (int j = 0; j < bufferSize; j++)
+				assertEquals(expected[i + j], buffer[j]);
+		}
+		
+		// SeekFrom.END
+		
+		// read forward
+		for (int i = 0; i < expected.length - bufferSize; i += step) {
+			assertThat(io.seek(SeekFrom.END, expected.length - i)).isEqualTo(i);
+			assertThat(io.position()).isEqualTo(i);
+			io.readBytesFully(buffer);
+			for (int j = 0; j < bufferSize; j++)
+				assertEquals(expected[i + j], buffer[j]);
+		}
+		// read backward
+		for (int i = expected.length - bufferSize; i >= 0; i -= step) {
+			assertThat(io.seek(SeekFrom.END, expected.length - i)).isEqualTo(i);
+			assertThat(io.position()).isEqualTo(i);
+			io.readBytesFully(buffer);
+			for (int j = 0; j < bufferSize; j++)
+				assertEquals(expected[i + j], buffer[j]);
+		}
+		
+		// SeekFrom.CURRENT
+
+		assertThat(io.seek(SeekFrom.CURRENT, -io.position())).isZero();
+		for (int i = 0; i < expected.length - bufferSize; i += step) {
+			assertThat(io.position()).isEqualTo(i);
+			io.readBytesFully(buffer);
+			for (int j = 0; j < bufferSize; j++)
+				assertEquals(expected[i + j], buffer[j]);
+			assertThat(io.position()).isEqualTo(i + bufferSize);
+			if (i + bufferSize + step <= expected.length) {
+				assertThat(io.seek(SeekFrom.CURRENT, -bufferSize + step)).isEqualTo(i + step);
+				assertThat(io.position()).isEqualTo(i + step);
+			}
+		}
+		
+		io.close();
+	}
+	
 }
