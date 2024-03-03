@@ -82,16 +82,19 @@ public class ReactiveSingleEvent<T> implements ReactiveObjectListenable<T> {
 	 * @return a Mono that emits the event and subscribe to all listeners
 	 */
 	public Mono<Void> emit(Mono<T> ev) {
-		return ev.flatMap(value -> Mono.fromRunnable(() -> {
-			this.event = value;
-			List<Function<T, Publisher<?>>> list;
-			synchronized (this) {
-				list = new ArrayList<>(listeners);
-				listeners = null;
-			}
-			for (Function<T, Publisher<?>> listener : list)
-				ReactiveEvent.callListener(value, listener);
-		}));
+		return Mono.defer(() -> {
+			if (this.event != null) return Mono.empty();
+			return ev.flatMap(value -> Mono.fromRunnable(() -> {
+				this.event = value;
+				List<Function<T, Publisher<?>>> list;
+				synchronized (this) {
+					list = new ArrayList<>(listeners);
+					listeners = null;
+				}
+				for (Function<T, Publisher<?>> listener : list)
+					ReactiveEvent.callListener(value, listener);
+			}));
+		});
 	}
 	
 }

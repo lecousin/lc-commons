@@ -5,7 +5,6 @@
     <artifactId>lc-commons-parent</artifactId>
     <version>1.0.0</version>
   </parent>
-  <groupId>net.lecousin.commons.reactive</groupId>
   <artifactId>lc-reactive-commons-parent</artifactId>
   <packaging>pom</packaging>
   

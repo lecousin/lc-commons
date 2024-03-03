@@ -8,11 +8,11 @@ import reactor.core.publisher.Mono;
  */
 public abstract class AbstractReactiveIO implements ReactiveIO {
 
-	protected ReactiveSingleEvent<Void> closeEvent = new ReactiveSingleEvent<>();
+	protected ReactiveSingleEvent<Integer> closeEvent = new ReactiveSingleEvent<>();
 	
 	@Override
 	public Mono<Void> close() {
-		return closeEvent.emit(this.closeInternal());
+		return closeEvent.emit(this.closeInternal().thenReturn(1));
 	}
 	
 	protected abstract Mono<Void> closeInternal();
