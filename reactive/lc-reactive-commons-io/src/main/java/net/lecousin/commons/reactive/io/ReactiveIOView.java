@@ -1,7 +1,6 @@
 package net.lecousin.commons.reactive.io;
 
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
 
 /**
 * Sub-view of a ReactiveIO, wrapping the original IO. 
@@ -28,11 +27,6 @@ public abstract class ReactiveIOView<T extends ReactiveIO> implements ReactiveIO
 	@Override
 	public void onClose(Mono<Void> listener) {
 		io.onClose(listener);
-	}
-	
-	@Override
-	public Scheduler getScheduler() {
-		return io.getScheduler();
 	}
 	
 }

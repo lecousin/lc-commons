@@ -234,7 +234,7 @@ public interface ReactiveBytesIO extends ReactiveIO {
 		 * @return the flux of buffers, or ClosedChannelException in case the IO is closed before the returned Flux is complete
 		 */
 		default Flux<ByteBuffer> toFlux(int nbAdvancedBuffers) {
-			return FluxUtils.createBuffered(nbAdvancedBuffers, () -> this.readBuffer().subscribeOn(getScheduler()).publishOn(Schedulers.parallel()));
+			return FluxUtils.createBuffered(nbAdvancedBuffers, this::readBuffer);
 		}
 		
 		/**
@@ -560,7 +560,7 @@ public interface ReactiveBytesIO extends ReactiveIO {
 		default Mono<Void> writeBytesFully(Flux<ByteBuffer> buffers) {
 			return ReactiveIOChecks.deferNotClosedAnd(this,
 				() -> buffers != null ? Optional.empty() : Optional.of(new NullPointerException("buffers")),
-				() -> buffers.publishOn(getScheduler()).concatMap(this::writeBytesFully).then().publishOn(Schedulers.parallel())
+				() -> buffers.concatMap(this::writeBytesFully).then()
 			);
 		}
 		

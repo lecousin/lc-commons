@@ -146,11 +146,6 @@ public interface ReactiveBytesIOFromNonReactive {
 		}
 		
 		@Override
-		public Scheduler getScheduler() {
-			return scheduler;
-		}
-		
-		@Override
 		public boolean isClosed() {
 			return io.isClosed();
 		}
