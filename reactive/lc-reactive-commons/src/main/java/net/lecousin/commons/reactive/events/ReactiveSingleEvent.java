@@ -20,6 +20,7 @@ public class ReactiveSingleEvent<T> implements ReactiveObjectListenable<T> {
 
 	private List<Function<T, Publisher<?>>> listeners = new LinkedList<>();
 	private T event;
+	private boolean emitted = false;
 	
 	/** Constructor. */
 	public ReactiveSingleEvent() {
@@ -32,7 +33,7 @@ public class ReactiveSingleEvent<T> implements ReactiveObjectListenable<T> {
 	 * @return true if the event has been emitted.
 	 */
 	public boolean isEmitted() {
-		return this.event != null;
+		return emitted;
 	}
 	
 	@Override
@@ -48,7 +49,7 @@ public class ReactiveSingleEvent<T> implements ReactiveObjectListenable<T> {
 				return;
 			}
 		}
-		ReactiveEvent.callListener(event, listener);
+		ReactiveEvent.callListeners(event, List.of(listener)).subscribe();
 	}
 	
 	@Override
@@ -59,14 +60,14 @@ public class ReactiveSingleEvent<T> implements ReactiveObjectListenable<T> {
 				return;
 			}
 		}
-		ReactiveEvent.callListener(event, FunctionWrapper.asFunction(listener));
+		ReactiveEvent.callListeners(event, List.of(FunctionWrapper.asFunction(listener))).subscribe();
 	}
 	
 	@SuppressWarnings({"unlikely-arg-type", "java:S2175"})
 	@Override
 	public synchronized void unlisten(Supplier<Publisher<?>> listener) {
 		if (listeners != null)
-			listeners.remove(listener);
+			listeners.removeIf(element -> element.equals(listener));
 	}
 
 	@Override
@@ -76,25 +77,23 @@ public class ReactiveSingleEvent<T> implements ReactiveObjectListenable<T> {
 	}
 
 	
-	/** Emit the event
+	/** Emit the event.
 	 * 
 	 * @param ev the event
-	 * @return a Mono that emits the event and subscribe to all listeners
+	 * @return a Mono that emits the event, call listeners, and complete when all listeners are completed.
 	 */
 	public Mono<Void> emit(Mono<T> ev) {
-		return Mono.defer(() -> {
-			if (this.event != null) return Mono.empty();
-			return ev.flatMap(value -> Mono.fromRunnable(() -> {
+		if (emitted) return Mono.empty();
+		this.emitted = true;
+		return Mono.defer(() -> ev.flatMap(value -> {
+			List<Function<T, Publisher<?>>> list;
+			synchronized (this) {
+				list = new ArrayList<>(listeners);
+				listeners = null;
 				this.event = value;
-				List<Function<T, Publisher<?>>> list;
-				synchronized (this) {
-					list = new ArrayList<>(listeners);
-					listeners = null;
-				}
-				for (Function<T, Publisher<?>> listener : list)
-					ReactiveEvent.callListener(value, listener);
-			}));
-		});
+			}
+			return ReactiveEvent.callListeners(value, list);
+		}));
 	}
 	
 }

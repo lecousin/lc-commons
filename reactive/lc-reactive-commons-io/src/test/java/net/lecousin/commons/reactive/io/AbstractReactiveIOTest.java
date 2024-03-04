@@ -1,5 +1,6 @@
 package net.lecousin.commons.reactive.io;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -20,6 +21,8 @@ public abstract class AbstractReactiveIOTest implements TestCasesProvider<Void, 
 	@ArgumentsSource(ParameterizedTestUtils.TestCasesArgumentsProvider.class)
 	void testIO(String displayName, Function<Void, ReactiveIO> ioSupplier) throws Exception {
 		ReactiveIO io = ioSupplier.apply(null);
+		
+		assertThat(io.getScheduler()).isNotNull();
 		
 		MutableInt listener1Called = new MutableInt(0);
 		Mono<Void> listener1 = Mono.fromRunnable(() -> listener1Called.increment());

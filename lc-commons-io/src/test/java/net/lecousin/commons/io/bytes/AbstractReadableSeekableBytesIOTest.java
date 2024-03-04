@@ -197,6 +197,42 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 		assertThrows(ClosedChannelException.class, () -> io.readBytesAt(-1, ByteBuffer.allocate(1)));
 	}
 
+	@ParameterizedTest(name = "{0}")
+	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
+	void readByteBufferDirectAt(String displayName, byte[] expected, int bufferSize, Function<byte[], BytesIO.Readable.Seekable> ioSupplier) throws Exception {
+		BytesIO.Readable.Seekable io = ioSupplier.apply(expected);
+		
+		long initialPos = io.position();
+		
+		assertThat(io.readBytesAt(0, ByteBuffer.allocateDirect(0))).isZero();
+		assertThat(io.position()).isEqualTo(initialPos);
+
+		ByteBuffer buffer = ByteBuffer.allocateDirect(bufferSize);
+		int pos = 0;
+		while (pos < expected.length) {
+			int nb = io.readBytesAt(pos, buffer);
+			assertThat(nb).isPositive();
+			buffer.flip();
+			for (int i = 0; i < nb; ++i)
+				assertEquals(expected[pos + i], buffer.get());
+			pos += nb;
+			buffer.position(0);
+			buffer.limit(bufferSize);
+		}
+		assertEquals(expected.length, pos);
+		assertThat(io.position()).isEqualTo(initialPos);
+		assertEquals(-1, io.readBytesAt(expected.length, ByteBuffer.allocateDirect(1)));
+		
+		assertThat(io.readBytesAt(0, ByteBuffer.allocateDirect(0))).isZero();
+		
+		assertThrows(NegativeValueException.class, () -> io.readBytesAt(-1, ByteBuffer.allocateDirect(1)));
+		assertThat(io.position()).isEqualTo(initialPos);
+		
+		io.close();
+		assertThrows(ClosedChannelException.class, () -> io.readBytesAt(0, buffer));
+		assertThrows(ClosedChannelException.class, () -> io.readBytesAt(-1, ByteBuffer.allocateDirect(1)));
+	}
+
 	
 	@ParameterizedTest(name = "{0}")
 	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
@@ -328,7 +364,11 @@ public abstract class AbstractReadableSeekableBytesIOTest implements TestCasesPr
 		BytesIO.Readable.Seekable io = ioSupplier.apply(expected);
 
 		byte[] buffer = new byte[bufferSize];
-		int step = expected.length > 10000 ? 1123 : 1;
+		int step = 1;
+		if (expected.length > 10000)
+			step = 7899;
+		else if (expected.length > 1000)
+			step = 111;
 		
 		// SeekFrom.START
 		

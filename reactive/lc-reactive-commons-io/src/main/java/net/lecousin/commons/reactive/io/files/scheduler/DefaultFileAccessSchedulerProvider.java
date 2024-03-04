@@ -1,4 +1,4 @@
-package net.lecousin.commons.reactive.io.bytes.file.scheduler;
+package net.lecousin.commons.reactive.io.files.scheduler;
 
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;

@@ -25,6 +25,7 @@ import net.lecousin.commons.io.IO;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.RandomContentTestCasesProvider;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.RandomContentWithBufferSizeTestCasesProvider;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.SmallRandomContentTestCasesProvider;
+import net.lecousin.commons.io.bytes.memory.ByteArray;
 import net.lecousin.commons.test.TestCase;
 import net.lecousin.commons.test.TestCasesProvider;
 
@@ -195,6 +196,37 @@ public abstract class AbstractReadableBytesIOTest implements TestCasesProvider<b
 		assertThrows(ClosedChannelException.class, () -> io.readBytes((ByteBuffer) null));
 	}
 
+
+	@ParameterizedTest(name = "{0}")
+	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
+	void readByteBufferDirect(String displayName, byte[] expected, int bufferSize, Function<byte[], BytesIO.Readable> ioSupplier) throws Exception {
+		BytesIO.Readable io = ioSupplier.apply(expected);
+		
+		assertThrows(NullPointerException.class, () -> io.readBytes((ByteBuffer) null));
+		
+		assertThat(io.readBytes(ByteBuffer.allocateDirect(0))).isZero();
+
+		ByteBuffer buffer = ByteBuffer.allocateDirect(bufferSize);
+		int pos = 0;
+		while (pos < expected.length) {
+			int nb = io.readBytes(buffer);
+			assertThat(nb).isPositive();
+			buffer.flip();
+			for (int i = 0; i < nb; ++i)
+				assertEquals(expected[pos + i], buffer.get());
+			pos += nb;
+			buffer.position(0);
+			buffer.limit(bufferSize);
+		}
+		assertEquals(expected.length, pos);
+		assertEquals(-1, io.readBytes(ByteBuffer.allocateDirect(1)));
+		
+		assertThat(io.readBytes(ByteBuffer.allocateDirect(0))).isZero();
+		
+		io.close();
+		assertThrows(ClosedChannelException.class, () -> io.readBytes(buffer));
+	}
+	
 	
 	@ParameterizedTest(name = "{0}")
 	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
@@ -361,6 +393,17 @@ public abstract class AbstractReadableBytesIOTest implements TestCasesProvider<b
 		assertThrows(ClosedChannelException.class, () -> io.skipFully(1));
 		assertThrows(ClosedChannelException.class, () -> io.skipFully(-1));
 	}
-	
+
+	@ParameterizedTest(name = "{0}")
+	@ArgumentsSource(RandomContentTestCasesProvider.class)
+	void transferFully(String displayName, byte[] expected, Function<byte[], BytesIO.Readable> ioSupplier) throws Exception {
+		BytesIO.Readable io = ioSupplier.apply(expected);
+		ByteArray ba = new ByteArray(new byte[expected.length]);
+		io.transferFully(ba.asBytesIO());
+		assertThat(io.readBuffer()).isEmpty();
+		assertThat(ba.getArray()).containsExactly(expected);
+		io.close();
+	}
+
 	
 }

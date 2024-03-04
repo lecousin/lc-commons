@@ -1,6 +1,10 @@
 package net.lecousin.commons.reactive.io.bytes;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,14 +12,22 @@ import java.util.Optional;
 
 import net.lecousin.commons.exceptions.ExceptionsUtils;
 import net.lecousin.commons.exceptions.NegativeValueException;
+import net.lecousin.commons.io.IO;
 import net.lecousin.commons.io.IOChecks;
+import net.lecousin.commons.io.bytes.BytesIO;
 import net.lecousin.commons.io.bytes.memory.ByteArray;
-import net.lecousin.commons.io.bytes.memory.ByteArrayIO;
+import net.lecousin.commons.io.bytes.utils.BytesIOFromInputStream;
+import net.lecousin.commons.io.bytes.utils.BytesIOFromOutputStream;
 import net.lecousin.commons.reactive.FluxUtils;
 import net.lecousin.commons.reactive.io.ReactiveIO;
 import net.lecousin.commons.reactive.io.ReactiveIOChecks;
+import net.lecousin.commons.reactive.io.bytes.utils.ReactiveBytesIOFromNonReactive;
+import net.lecousin.commons.reactive.io.bytes.utils.ReactiveCompositeBytesIO;
+import net.lecousin.commons.reactive.io.bytes.utils.ReactiveReadableBytesIOFromFlux;
+import net.lecousin.commons.reactive.io.bytes.utils.ReactiveSubBytesIO;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
@@ -231,12 +243,45 @@ public interface ReactiveBytesIO extends ReactiveIO {
 		
 		/**
 		 * Convert this readable I/O into a Flux of ByteBuffer providing all remaining bytes.<br/>
-		 * 
-		 * @param nbAdvancedBuffers maximum number of buffers to read in advance in case the consumption is slower than the production
-		 * @return the flux of buffers, or ClosedChannelException in case the IO is closed before the returned Flux is complete
+		 * @return the flux
 		 */
-		default Flux<ByteBuffer> toFlux(int nbAdvancedBuffers) {
-			return FluxUtils.createBuffered(nbAdvancedBuffers, this::readBuffer);
+		default Flux<ByteBuffer> toFlux() {
+			return this.readBuffer().expand(b -> this.readBuffer());
+		}
+		
+		/**
+		 * Copy all remaining bytes from this I/O to the given output.
+		 * 
+		 * @param to destination
+		 * @param advancedBuffers number of buffers to read in advance in case writing to the output is slower than reading
+		 * @return empty on success
+		 */
+		default Mono<Void> transferFully(ReactiveBytesIO.Writable to, int advancedBuffers) {
+			return to.writeBytesFully(toFlux().publishOn(Schedulers.parallel(), advancedBuffers));
+		}
+		
+		/**
+		 * Copy the requested number of bytes to the target, or less if no more bytes can be read.
+		 * 
+		 * @param to target
+		 * @param bytesToTransfer number of bytes to transfer
+		 * @param bufferSize buffer size to use
+		 * @return empty on success
+		 */
+		default Mono<Void> transferBytes(ReactiveBytesIO.Writable to, long bytesToTransfer, int bufferSize) {
+			return ReactiveIOChecks.deferNotClosedAnd(this,
+				() -> NegativeValueException.checker(bytesToTransfer, "bytesToTransfer")
+					.or(() -> NegativeValueException.checker(bufferSize, "bufferSize"))
+					.or(() -> Optional.ofNullable(bufferSize == 0 ? new IllegalArgumentException("bufferSize must be positive") : null)), 
+				() -> Mono.just(bytesToTransfer)
+				.publishOn(getScheduler())
+				.expand(remaining -> {
+					if (remaining == 0) return Mono.empty();
+					int l = (int) Math.min(remaining, bufferSize);
+					return readBytesFully(ByteBuffer.allocate(l))
+						.flatMap(b -> to.writeBytesFully(b.flip()))
+						.then(Mono.just(remaining - l).publishOn(getScheduler()));
+				}).then().publishOn(Schedulers.parallel()));
 		}
 		
 		/**
@@ -887,21 +932,98 @@ public interface ReactiveBytesIO extends ReactiveIO {
 	
 	
 	/**
-	 * Create a ReactiveBytesIO from the given ByteArrayIO.
-	 * @param io the ByteArrayIO
-	 * @return the Reactive IO
+	 * Create a Readable reactive IO from a non reactive IO.
+	 * 
+	 * @param io non reactive IO
+	 * @param scheduler scheduler to use
+	 * @return reactive IO
 	 */
-	static ReactiveBytesIO.ReadWrite.Resizable fromByteArray(ByteArrayIO io) {
-		return ReactiveBytesIOFromNonReactive.fromReadWriteResizable(io, Schedulers.parallel());
+	static ReactiveBytesIO.Readable fromIOReadable(BytesIO.Readable io, Scheduler scheduler) {
+		return ReactiveBytesIOFromNonReactive.fromReadable(io, scheduler);
 	}
-
+	
+	/**
+	 * Create a Readable and Seekable reactive IO from a non reactive IO.
+	 * 
+	 * @param io non reactive IO
+	 * @param scheduler scheduler to use
+	 * @return reactive IO
+	 */
+	static ReactiveBytesIO.Readable.Seekable fromIOReadableSeekable(BytesIO.Readable.Seekable io, Scheduler scheduler) {
+		return ReactiveBytesIOFromNonReactive.fromReadableSeekable(io, scheduler);
+	}
+	
+	/**
+	 * Create a Writable reactive IO from a non reactive IO.<br/>
+	 * If the given IO is Appendable, the returned reactive IO is also Appendable.
+	 * 
+	 * @param io non reactive IO
+	 * @param scheduler scheduler to use
+	 * @return reactive IO
+	 */
+	static ReactiveBytesIO.Writable fromIOWritable(BytesIO.Writable io, Scheduler scheduler) {
+		return ReactiveBytesIOFromNonReactive.fromWritable(io, scheduler);
+	}
+	
+	/**
+	 * Create a Writable and Seekable reactive IO from a non reactive IO.<br/>
+	 * If the given IO is Appendable, the returned reactive IO is also Appendable.
+	 * 
+	 * @param io non reactive IO
+	 * @param scheduler scheduler to use
+	 * @return reactive IO
+	 */
+	static ReactiveBytesIO.Writable.Seekable fromIOWritableSeekable(BytesIO.Writable.Seekable io, Scheduler scheduler) {
+		return ReactiveBytesIOFromNonReactive.fromWritableSeekable(io, scheduler);
+	}
+	
+	/**
+	 * Create a Writable Seekable and Resizable reactive IO from a non reactive IO.<br/>
+	 * If the given IO is Appendable, the returned reactive IO is also Appendable.
+	 * 
+	 * @param <T> type of non reactive IO
+	 * @param io non reactive IO
+	 * @param scheduler scheduler to use
+	 * @return reactive IO
+	 */
+	static <T extends BytesIO.Writable.Seekable & IO.Writable.Resizable> ReactiveBytesIO.Writable.Seekable.Resizable fromIOWritableSeekableResizable(T io, Scheduler scheduler) {
+		return ReactiveBytesIOFromNonReactive.fromWritableSeekableResizable(io, scheduler);
+	}
+	
+	/**
+	 * Create a Read-Write reactive IO from a non reactive IO.<br/>
+	 * If the given IO is Appendable, the returned reactive IO is also Appendable.
+	 * 
+	 * @param <T> type of non reactive IO
+	 * @param io non reactive IO
+	 * @param scheduler scheduler to use
+	 * @return reactive IO
+	 */
+	static <T extends BytesIO.Readable.Seekable & BytesIO.Writable.Seekable> ReactiveBytesIO.ReadWrite fromIOReadWrite(T io, Scheduler scheduler) {
+		return ReactiveBytesIOFromNonReactive.fromReadWrite(io, scheduler);
+	}
+	
+	/**
+	 * Create a Read-Write and Resizable reactive IO from a non reactive IO.<br/>
+	 * If the given IO is Appendable, the returned reactive IO is also Appendable.
+	 * 
+	 * @param <T> type of non reactive IO
+	 * @param io non reactive IO
+	 * @param scheduler scheduler to use
+	 * @return reactive IO
+	 */
+	static <T extends BytesIO.Readable.Seekable & BytesIO.Writable.Seekable & IO.Writable.Resizable> ReactiveBytesIOFromNonReactive.ReadWrite fromIOReadWriteResizable(T io, Scheduler scheduler) {
+		return ReactiveBytesIOFromNonReactive.fromReadWriteResizable(io, scheduler);
+	}
+	
+	
 	/**
 	 * Create a ReactiveBytesIO from the given ByteArray.
 	 * @param array the ByteArray
 	 * @return the Reactive IO
 	 */
 	static ReactiveBytesIO.ReadWrite.Resizable fromByteArray(ByteArray array) {
-		return fromByteArray(array.asBytesIO());
+		return fromIOReadWriteResizable(array.asBytesIO(), Schedulers.parallel());
 	}
 
 	/**
@@ -912,7 +1034,153 @@ public interface ReactiveBytesIO extends ReactiveIO {
 	 */
 	@SuppressWarnings("unchecked")
 	static <R extends ReactiveBytesIO.ReadWrite.Resizable & ReactiveIO.Writable.Appendable> R fromByteArrayAppendable(ByteArray array) {
-		return (R) fromByteArray(array.asAppendableBytesIO());
+		return (R) fromIOReadWriteResizable(array.asAppendableBytesIO(), Schedulers.parallel());
+	}
+	
+	
+	/**
+	 * Create a Readable sub-IO.
+	 * @param io IO
+	 * @param start start of the sub-io in the given IO
+	 * @param end end of the sub-io in the given IO
+	 * @param closeIoOnClose if true, the given IO will be closed when the sub-io is closed
+	 * @return the sub-io
+	 */
+	static ReactiveBytesIO.Readable.Seekable subOf(ReactiveBytesIO.Readable.Seekable io, long start, long end, boolean closeIoOnClose) {
+		return ReactiveSubBytesIO.fromReadable(io, start, end, closeIoOnClose);
+	}
+	
+	/**
+	 * Create a Writable sub-IO.
+	 * @param io IO
+	 * @param start start of the sub-io in the given IO
+	 * @param end end of the sub-io in the given IO
+	 * @param closeIoOnClose if true, the given IO will be closed when the sub-io is closed
+	 * @return the sub-io
+	 */
+	static ReactiveBytesIO.Writable.Seekable subOf(ReactiveBytesIO.Writable.Seekable io, long start, long end, boolean closeIoOnClose) {
+		return ReactiveSubBytesIO.fromWritable(io, start, end, closeIoOnClose);
+	}
+	
+	/**
+	 * Create a Read-Write sub-IO.
+	 * @param <T> type of IO
+	 * @param io IO
+	 * @param start start of the sub-io in the given IO
+	 * @param end end of the sub-io in the given IO
+	 * @param closeIoOnClose if true, the given IO will be closed when the sub-io is closed
+	 * @return the sub-io
+	 */
+	static <T extends ReactiveBytesIO.Readable.Seekable & ReactiveBytesIO.Writable.Seekable> ReactiveBytesIO.ReadWrite subOfReadWrite(T io, long start, long end, boolean closeIoOnClose) {
+		return ReactiveSubBytesIO.fromReadWrite(io, start, end, closeIoOnClose);
+	}
+	
+	
+	/**
+	 * Create a reactive readable I/O from a list of I/O.
+	 * @param ios list
+	 * @param closeIosOnClose if true, all IOs in the list will be closed when the composite IO is closed
+	 * @return the composite IO
+	 */
+	static Mono<ReactiveBytesIO.Readable> concatReadable(List<? extends ReactiveBytesIO.Readable> ios, boolean closeIosOnClose) {
+		return ReactiveCompositeBytesIO.fromReadable(ios, closeIosOnClose);
+	}
+	
+	/**
+	 * Create a reactive readable seekable I/O from a list of I/O.
+	 * @param ios list
+	 * @param closeIosOnClose if true, all IOs in the list will be closed when the composite IO is closed
+	 * @return the composite IO
+	 */
+	static Mono<ReactiveBytesIO.Readable.Seekable> concatReadableSeekable(List<? extends ReactiveBytesIO.Readable.Seekable> ios, boolean closeIosOnClose) {
+		return ReactiveCompositeBytesIO.fromReadableSeekable(ios, closeIosOnClose);
+	}
+	
+	/**
+	 * Create a reactive writable I/O from a list of I/O.
+	 * @param ios list
+	 * @param closeIosOnClose if true, all IOs in the list will be closed when the composite IO is closed
+	 * @return the composite IO
+	 */
+	static Mono<ReactiveBytesIO.Writable> concatWritable(List<? extends ReactiveBytesIO.Writable> ios, boolean closeIosOnClose) {
+		return ReactiveCompositeBytesIO.fromWritable(ios, closeIosOnClose);
+	}
+	
+	/**
+	 * Create a reactive writable seekable I/O from a list of I/O.
+	 * @param ios list
+	 * @param closeIosOnClose if true, all IOs in the list will be closed when the composite IO is closed
+	 * @return the composite IO
+	 */
+	static Mono<ReactiveBytesIO.Writable.Seekable> concatWritableSeekable(List<? extends ReactiveBytesIO.Writable.Seekable> ios, boolean closeIosOnClose) {
+		return ReactiveCompositeBytesIO.fromWritableSeekable(ios, closeIosOnClose);
+	}
+
+	/**
+	 * Create a reactive readable and writable I/O from a list of I/O.
+	 * @param <T> type of Read-Write IO
+	 * @param ios list
+	 * @param closeIosOnClose if true, all IOs in the list will be closed when the composite IO is closed
+	 * @return the composite IO
+	 */
+	static <T extends ReactiveBytesIO.Readable.Seekable & ReactiveBytesIO.Writable.Seekable> Mono<ReactiveBytesIO.ReadWrite> concatReadWrite(List<T> ios, boolean closeIosOnClose) {
+		return ReactiveCompositeBytesIO.fromReadWrite(ios, closeIosOnClose);
+	}
+	
+	
+	/**
+	 * Create a reactive readable IO from an InputStream.
+	 * @param stream input stream
+	 * @param closeStreamOnClose if true the stream will be closed together with the ReactiveBytesIO
+	 * @param scheduler the scheduler to use to perform operations on the input stream
+	 * @return readable ReactiveBytesIO
+	 */
+	static ReactiveBytesIO.Readable from(InputStream stream, boolean closeStreamOnClose, Scheduler scheduler) {
+		return ReactiveBytesIOFromNonReactive.fromReadable(new BytesIOFromInputStream(stream, closeStreamOnClose), scheduler);
+	}
+	
+	/**
+	 * Create a reactive readable IO from an InputStream.<br/>
+	 * If the stream is a ByteArrayInputStream, the parallel scheduler is used, else the boundedElsatic is used.
+	 * @param stream input stream
+	 * @param closeStreamOnClose if true the stream will be closed together with the ReactiveBytesIO
+	 * @return readable ReactiveBytesIO
+	 */
+	static ReactiveBytesIO.Readable from(InputStream stream, boolean closeStreamOnClose) {
+		if (stream instanceof ByteArrayInputStream) return from(stream, closeStreamOnClose, Schedulers.parallel());
+		return from(stream, closeStreamOnClose, Schedulers.boundedElastic());
+	}
+	
+	/**
+	 * Create a reactive writable and appendable IO from an OutputStream.
+	 * @param stream the output stream
+	 * @param closeStreamOnClose if true the stream will be closed together with the ReactiveBytesIO
+	 * @param scheduler the scheduler to use to perform operations on the output stream
+	 * @return writable and appendable ReactiveBytesIO
+	 */
+	static ReactiveBytesIO.Writable from(OutputStream stream, boolean closeStreamOnClose, Scheduler scheduler) {
+		return ReactiveBytesIOFromNonReactive.fromWritable(new BytesIOFromOutputStream(stream, closeStreamOnClose), scheduler);
+	}
+
+	/**
+	 * Create a reactive writable and appendable IO from an OutputStream.<br/>
+	 * If the stream is a ByteArrayOutputStream, the parallel scheduler is used, else the boundedElsatic is used.
+	 * @param stream the output stream
+	 * @param closeStreamOnClose if true the stream will be closed together with the ReactiveBytesIO
+	 * @return writable and appendable ReactiveBytesIO
+	 */
+	static ReactiveBytesIO.Writable from(OutputStream stream, boolean closeStreamOnClose) {
+		if (stream instanceof ByteArrayOutputStream) return from(stream, closeStreamOnClose, Schedulers.parallel());
+		return from(stream, closeStreamOnClose, Schedulers.boundedElastic());
+	}
+	
+	/**
+	 * Create a readable reactive IO from a Flux of ByteBuffer.
+	 * @param flux Flux of ByteBuffer
+	 * @return a readable reactive bytes IO
+	 */
+	static ReactiveBytesIO.Readable from(Flux<ByteBuffer> flux) {
+		return new ReactiveReadableBytesIOFromFlux(flux);
 	}
 	
 }

@@ -138,6 +138,11 @@ public class ReactiveBytesIOView<T extends ReactiveBytesIO> extends ReactiveIOVi
 			}
 			
 			@Override
+			public Mono<Void> skipFully(long toSkip) {
+				return io.skipFully(toSkip);
+			}
+			
+			@Override
 			public Mono<Long> size() {
 				return io.size();
 			}

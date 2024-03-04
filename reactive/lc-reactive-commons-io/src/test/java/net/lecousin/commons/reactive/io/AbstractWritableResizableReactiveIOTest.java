@@ -60,7 +60,7 @@ public abstract class AbstractWritableResizableReactiveIOTest implements TestCas
 		
 		StepVerifier.create(io.setSize(-1)).expectError(NegativeValueException.class).verify();
 		
-		io.close();
+		io.close().block();
 		StepVerifier.create(io.setSize(1)).expectError(ClosedChannelException.class).verify();
 	}
 	

@@ -268,7 +268,10 @@ public final class ReactiveCompositeBytesIO extends AbstractReactiveIO implement
 	
 	@Override
 	public Mono<Long> position() {
-		return ReactiveIOChecks.fromCallableNotClosed(this, () -> posCursor.posGlobal);
+		return Mono.fromCallable(() -> {
+			if (isClosed()) throw new ClosedChannelException();
+			return posCursor.posGlobal;
+		});
 	}
 	
 	@Override

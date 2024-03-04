@@ -14,10 +14,12 @@ public class ReactiveDeflater {
 	
 	/** Default buffer size. */
 	public static final int DEFAULT_BUFFER_SIZE = 4096;
+	/** Minimum buffer size. */
+	public static final int MINIMUM_BUFFER_SIZE = 256;
 
 	private final int level;
 	private final boolean nowrap;
-	private int outputBufferSize;
+	private final int outputBufferSize;
 	private Deflater deflater = null;
 	
 	/**
@@ -30,7 +32,7 @@ public class ReactiveDeflater {
 	public ReactiveDeflater(int level, boolean nowrap, int outputBufferSize) {
 		this.level = level;
 		this.nowrap = nowrap;
-		this.outputBufferSize = outputBufferSize;
+		this.outputBufferSize = Math.max(outputBufferSize, MINIMUM_BUFFER_SIZE);
 	}
 	
 	/**
@@ -72,11 +74,6 @@ public class ReactiveDeflater {
 				while (n-- > 0) {
 					ByteBuffer out = ByteBuffer.allocate(outputBufferSize);
 					if (deflater.deflate(out) == 0) {
-						if (!deflater.needsInput()) {
-							outputBufferSize *= 2;
-							n++;
-							continue;
-						}
 						sink.complete();
 						break;
 					}

@@ -12,8 +12,9 @@ public class TestByteArray extends AbstractReadWriteReactiveBytesIOTest<Reactive
 	@Override
 	public List<? extends TestCase<Integer, ReactiveBytesIO.ReadWrite>> getTestCases() {
 		return List.of(
-			new TestCase<>("fromByteArray", size -> ReactiveBytesIO.fromByteArray(new ByteArray(new byte[size]))),
-			new TestCase<>("fromByteArrayAppendable", size -> ReactiveBytesIO.fromByteArrayAppendable(new ByteArray(new byte[size])))
+			new TestCase<>("fromByteArray", size -> ReactiveBytesIO.fromByteArray(new ByteArray(new byte[size])).asNonResizableReadWriteBytesIO()),
+			new TestCase<>("fromByteArray Resizable", size -> ReactiveBytesIO.fromByteArray(new ByteArray(new byte[size]))),
+			new TestCase<>("fromByteArray Appendable", size -> ReactiveBytesIO.fromByteArrayAppendable(new ByteArray(new byte[size])))
 		);
 	}
 	

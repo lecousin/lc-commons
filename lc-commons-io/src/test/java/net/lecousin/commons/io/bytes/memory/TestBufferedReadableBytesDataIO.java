@@ -1,15 +1,18 @@
 package net.lecousin.commons.io.bytes.memory;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.LinkedList;
 import java.util.List;
 
 import net.lecousin.commons.io.bytes.data.AbstractReadableBytesDataIOTest;
 import net.lecousin.commons.io.bytes.data.BytesDataIO;
 import net.lecousin.commons.io.bytes.file.FileIO;
+import net.lecousin.commons.io.bytes.utils.CompositeBytesDataIO;
 import net.lecousin.commons.test.TestCase;
 
 public class TestBufferedReadableBytesDataIO extends AbstractReadableBytesDataIOTest {
@@ -37,7 +40,22 @@ public class TestBufferedReadableBytesDataIO extends AbstractReadableBytesDataIO
 					throw new RuntimeException(e);
 				}
 			}),
-			new TestCase<>("Using ByteArrayIO and default Little-Endian order", content -> new BufferedReadableBytesDataIO(new ByteArray(content).asBytesDataIO(), false))
+			new TestCase<>("Using ByteArrayIO and default Little-Endian order", content -> new BufferedReadableBytesDataIO(new ByteArray(content).asBytesDataIO(), false)),
+			new TestCase<>("Using Composite of ByteArray of 3 bytes", content -> {
+				List<BytesDataIO.Readable> list = new LinkedList<>();
+				int pos = 0;
+				while (pos + 3 <= content.length) {
+					list.add(new ByteArray(content, pos, 3).asBytesDataIO());
+					pos += 3;
+				}
+				if (pos < content.length)
+					list.add(new ByteArray(content, pos, content.length - pos).asBytesDataIO());
+				try {
+					return new BufferedReadableBytesDataIO(CompositeBytesDataIO.fromReadable(list, ByteOrder.BIG_ENDIAN, true, true), true);
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			})
 		);
 	}
 	

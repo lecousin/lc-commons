@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
@@ -69,9 +70,9 @@ public final class BytesIOTestUtils {
 		}
 	}
 	
-	public static class RandomContentWithBufferSizeTestCasesProvider extends CompositeArgumentsProvider {
-		public RandomContentWithBufferSizeTestCasesProvider() {
-			super(new RandomContentProvider(), new BufferSizeProvider(), new ParameterizedTestUtils.TestCasesArgumentsProvider());
+	public static class RandomContentWithBufferSizeProvider extends CompositeArgumentsProvider {
+		public RandomContentWithBufferSizeProvider() {
+			super(new RandomContentProvider(), new BufferSizeProvider());
 		}
 		@Override
 		public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
@@ -79,9 +80,19 @@ public final class BytesIOTestUtils {
 				.filter(args -> {
 					byte[] content = (byte[]) args.get()[1];
 					int bufferSize = (int) args.get()[2];
+					if (bufferSize > content.length) {
+						int i = ArrayUtils.indexOf(TEST_CASE_BUFFER_SIZE, bufferSize);
+						if (i > 0 && TEST_CASE_BUFFER_SIZE[i - 1] > content.length) return false;
+					}
 					if (bufferSize < 100 && content.length > 10000) return false;
 					return true;
 				});
+		}
+	}
+	
+	public static class RandomContentWithBufferSizeTestCasesProvider extends CompositeArgumentsProvider {
+		public RandomContentWithBufferSizeTestCasesProvider() {
+			super(new RandomContentWithBufferSizeProvider(), new ParameterizedTestUtils.TestCasesArgumentsProvider());
 		}
 	}
 }

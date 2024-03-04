@@ -1,6 +1,7 @@
 package net.lecousin.commons.io.bytes.data;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.ByteOrder;
 import java.util.LinkedList;
@@ -90,7 +91,14 @@ public abstract class AbstractReadableBytesDataBufferTest implements TestCasesPr
 		assertThat(buffer.remaining()).isEqualTo(content.length);
 		
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> BytesData.of(order).readSignedBytes(nbBytes, b, o) : (b,o) -> BytesData.of(order).readUnsignedBytes(nbBytes, b, o);
-		
+
+		assertThrows(IllegalArgumentException.class, () -> buffer.readSignedBytes(0));
+		assertThrows(IllegalArgumentException.class, () -> buffer.readSignedBytes(-1));
+		assertThrows(IllegalArgumentException.class, () -> buffer.readSignedBytes(9));
+		assertThrows(IllegalArgumentException.class, () -> buffer.readUnsignedBytes(0));
+		assertThrows(IllegalArgumentException.class, () -> buffer.readUnsignedBytes(-1));
+		assertThrows(IllegalArgumentException.class, () -> buffer.readUnsignedBytes(8));
+
 		for (int i = 0; i < content.length; i += nbBytes) {
 			long value = signed ? buffer.readSignedBytes(nbBytes) : buffer.readUnsignedBytes(nbBytes);
 			assertThat(value).as("Byte " + i + "/" + content.length).isEqualTo(dataReader.apply(content, i));

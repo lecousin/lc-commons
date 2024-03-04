@@ -40,10 +40,17 @@ public abstract class AbstractWritableSeekableReactiveBytesIOTest implements Tes
 				.map(tc -> new TestCase<>(tc.getName(), (Function<Integer, WritableTestCase<?,?>>) (size) -> {
 					WritableTestCase<? extends ReactiveBytesIO.Writable.Seekable, ?> wtc = tc.getArgumentProvider().apply(size);
 					ReactiveBytesIO.Writable.Seekable seekable = wtc.getIo();
-					ReactiveBytesIO.Writable writable = seekable.asWritableBytesIO();
+					ReactiveBytesIO.Writable writable = convert(seekable);
 					return new WritableTestCase<>(writable, Pair.of(seekable, wtc.getObject()));
 				}))
 				.toList();
+		}
+		
+		@SuppressWarnings("unchecked")
+		private <U extends ReactiveBytesIO.Writable.Seekable & ReactiveIO.Writable.Resizable> ReactiveBytesIO.Writable convert(ReactiveBytesIO.Writable.Seekable seekable) {
+			if (seekable instanceof ReactiveIO.Writable.Resizable)
+				return ReactiveBytesIOView.Writable.Seekable.Resizable.of((U) seekable);
+			return seekable.asWritableBytesIO();
 		}
 		
 		@Override
@@ -388,6 +395,48 @@ public abstract class AbstractWritableSeekableReactiveBytesIOTest implements Tes
 		StepVerifier.create(io.writeBytesAt(-1, ByteBuffer.allocate(1))).expectError(ClosedChannelException.class).verify();
 		StepVerifier.create(io.writeBytesAt(toWrite.length + 1, ByteBuffer.allocate(1))).expectError(ClosedChannelException.class).verify();
 		StepVerifier.create(io.writeBytesAt(toWrite.length, ByteBuffer.allocate(1))).expectError(ClosedChannelException.class).verify();
+	}
+	
+	@ParameterizedTest(name = "{0}")
+	@ArgumentsSource(RandomContentTestCasesProvider.class)
+	void writeByteBufferDirectAt(String displayName, byte[] toWrite, Function<Integer, WritableTestCase<? extends ReactiveBytesIO.Writable.Seekable, ?>> ioSupplier) throws Exception {
+		WritableTestCase<? extends ReactiveBytesIO.Writable.Seekable, ?> ioTuple = ioSupplier.apply(toWrite.length);
+		ReactiveBytesIO.Writable.Seekable io = ioTuple.getIo();
+
+		StepVerifier.create(io.writeBytesAt(-1, ByteBuffer.allocateDirect(1))).expectError(NegativeValueException.class).verify();
+		StepVerifier.create(io.writeBytesAt(0, ByteBuffer.allocateDirect(0))).expectNext(0).verifyComplete();
+
+		int step = toWrite.length > 10000 ? 1111 : 3;
+		byte[] b;
+		if (io instanceof ReactiveIO.Writable.Appendable)
+			b = toWrite;
+		else {
+			// we generate a bigger array, so at one point we try to write more than the size
+			b = new byte[toWrite.length + 20];
+			System.arraycopy(toWrite, 0, b, 0, toWrite.length);
+		}
+		for (int i = 0; i < toWrite.length;) {
+			int l = Math.min(step, b.length - i);
+			ByteBuffer bb = ByteBuffer.allocateDirect(l);
+			bb.put(b, i, l);
+			int nb = io.writeBytesAt(i, bb.flip()).block();
+			assertThat(nb).isPositive();
+			i += nb;
+		}
+
+		if (!(io instanceof ReactiveIO.Writable.Appendable))
+			StepVerifier.create(io.writeBytesAt(toWrite.length, ByteBuffer.allocateDirect(1))).expectNext(-1).verifyComplete();
+		StepVerifier.create(io.writeBytesAt(toWrite.length, ByteBuffer.allocateDirect(0))).expectNext(0).verifyComplete();
+
+		io.flush().block();
+		checkWrittenData(io, ioTuple.getObject(), toWrite);
+		
+		io.close().block();
+		StepVerifier.create(io.writeBytesAt(0, ByteBuffer.allocateDirect(0))).expectError(ClosedChannelException.class).verify();
+		StepVerifier.create(io.writeBytesAt(0, ByteBuffer.allocateDirect(1))).expectError(ClosedChannelException.class).verify();
+		StepVerifier.create(io.writeBytesAt(-1, ByteBuffer.allocateDirect(1))).expectError(ClosedChannelException.class).verify();
+		StepVerifier.create(io.writeBytesAt(toWrite.length + 1, ByteBuffer.allocateDirect(1))).expectError(ClosedChannelException.class).verify();
+		StepVerifier.create(io.writeBytesAt(toWrite.length, ByteBuffer.allocateDirect(1))).expectError(ClosedChannelException.class).verify();
 	}
 	
 	@ParameterizedTest(name = "{0}")

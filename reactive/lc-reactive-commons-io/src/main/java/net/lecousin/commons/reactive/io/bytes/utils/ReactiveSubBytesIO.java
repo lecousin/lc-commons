@@ -271,6 +271,7 @@ public final class ReactiveSubBytesIO extends AbstractReactiveIO implements Reac
 	// Writable
 	
 	@Override
+	@SuppressWarnings("java:S1612") // false positive because io may be null
 	public Mono<Void> flush() {
 		return ReactiveIOChecks.deferNotClosed(this, () -> ((ReactiveBytesIO.Writable.Seekable) io).flush());
 	}

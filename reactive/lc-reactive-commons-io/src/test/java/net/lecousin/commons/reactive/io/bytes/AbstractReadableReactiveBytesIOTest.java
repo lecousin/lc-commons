@@ -14,7 +14,6 @@ import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import net.lecousin.commons.exceptions.LimitExceededException;
@@ -22,6 +21,7 @@ import net.lecousin.commons.exceptions.NegativeValueException;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.RandomContentTestCasesProvider;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.RandomContentWithBufferSizeTestCasesProvider;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.SmallRandomContentTestCasesProvider;
+import net.lecousin.commons.io.bytes.memory.ByteArray;
 import net.lecousin.commons.reactive.io.AbstractKnownSizeReactiveIOTest;
 import net.lecousin.commons.reactive.io.AbstractReadableReactiveIOTest;
 import net.lecousin.commons.reactive.io.ReactiveIO;
@@ -76,31 +76,25 @@ public abstract class AbstractReadableReactiveBytesIOTest implements TestCasesPr
 		StepVerifier.create(io.readBuffer()).expectError(ClosedChannelException.class).verify();
 	}
 	
-	static class FluxArgs extends RandomContentTestCasesProvider {
-		public FluxArgs() {
-			add(List.of(0, 1, 2, 3).stream().map(nbBuffers -> Arguments.of("with " + nbBuffers + " advanced buffers", nbBuffers)));
-		}
-	}
-	
 	@ParameterizedTest(name = "{0}")
-	@ArgumentsSource(FluxArgs.class)
-	void toFlux(String displayName, byte[] expected, Function<byte[], ReactiveBytesIO.Readable> ioSupplier, int nbBuffers) throws Exception {
+	@ArgumentsSource(RandomContentTestCasesProvider.class)
+	void toFlux(String displayName, byte[] expected, Function<byte[], ReactiveBytesIO.Readable> ioSupplier) throws Exception {
 		ReactiveBytesIO.Readable io = ioSupplier.apply(expected);
-		List<ByteBuffer> buffers = io.toFlux(nbBuffers).collectList().block();
+		List<ByteBuffer> buffers = io.toFlux().collectList().block();
 		Iterator<ByteBuffer> it = buffers.iterator();
 		int done = 0;
 		while (done < expected.length) {
 			ByteBuffer b = it.next();
 			assertThat(b.hasRemaining()).isTrue();
 			while (b.hasRemaining()) {
-				assertThat(b.get()).as("Byte " + done + "/" + expected.length + " (with " + nbBuffers + " advanced buffers)").isEqualTo(expected[done]);
+				assertThat(b.get()).as("Byte " + done + "/" + expected.length).isEqualTo(expected[done]);
 				done++;
 			}
 		}
 		assertThat(it.hasNext()).isFalse();
 
 		io.close().block();
-		StepVerifier.create(io.toFlux(nbBuffers)).expectError(ClosedChannelException.class).verify();
+		StepVerifier.create(io.toFlux()).expectError(ClosedChannelException.class).verify();
 	}
 	
 	@ParameterizedTest(name = "{0}")
@@ -222,6 +216,34 @@ public abstract class AbstractReadableReactiveBytesIOTest implements TestCasesPr
 		io.close().block();
 		StepVerifier.create(io.readBytes(buffer)).expectError(ClosedChannelException.class).verify();
 		StepVerifier.create(io.readBytes((ByteBuffer) null)).expectError(ClosedChannelException.class).verify();
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
+	void readByteBufferDirect(String displayName, byte[] expected, int bufferSize, Function<byte[], ReactiveBytesIO.Readable> ioSupplier) throws Exception {
+		ReactiveBytesIO.Readable io = ioSupplier.apply(expected);
+		
+		StepVerifier.create(io.readBytes(ByteBuffer.allocateDirect(0))).expectNext(0).verifyComplete();
+
+		ByteBuffer buffer = ByteBuffer.allocateDirect(bufferSize);
+		int pos = 0;
+		while (pos < expected.length) {
+			int nb = io.readBytes(buffer).block();
+			assertThat(nb).isPositive();
+			buffer.flip();
+			for (int i = 0; i < nb; ++i)
+				assertEquals(expected[pos + i], buffer.get());
+			pos += nb;
+			buffer.position(0);
+			buffer.limit(bufferSize);
+		}
+		assertEquals(expected.length, pos);
+		assertEquals(-1, io.readBytes(ByteBuffer.allocateDirect(1)).block());
+		
+		StepVerifier.create(io.readBytes(ByteBuffer.allocateDirect(0))).expectNext(0).verifyComplete();
+		
+		io.close().block();
+		StepVerifier.create(io.readBytes(buffer)).expectError(ClosedChannelException.class).verify();
 	}
 
 	
@@ -392,5 +414,40 @@ public abstract class AbstractReadableReactiveBytesIOTest implements TestCasesPr
 		StepVerifier.create(io.skipFully(-1)).expectError(ClosedChannelException.class).verify();
 	}
 	
+	@ParameterizedTest(name = "{0}")
+	@ArgumentsSource(RandomContentTestCasesProvider.class)
+	void transferFully(String displayName, byte[] expected, Function<byte[], ReactiveBytesIO.Readable> ioSupplier) throws Exception {
+		ReactiveBytesIO.Readable io = ioSupplier.apply(expected);
+		ByteArray ba = new ByteArray(new byte[0]);
+		ReactiveBytesIO.Writable out = ReactiveBytesIO.fromByteArrayAppendable(ba);
+		io.transferFully(out, 2).block();
+		ba.trim();
+		assertThat(ba.getArray()).containsExactly(expected);
+
+		io.close().block();
+		StepVerifier.create(io.transferFully(out, 2)).expectError(ClosedChannelException.class).verify();
+	}
 	
+	@ParameterizedTest(name = "{0}")
+	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
+	void transferBytes(String displayName, byte[] expected, int bufferSize, Function<byte[], ReactiveBytesIO.Readable> ioSupplier) throws Exception {
+		ReactiveBytesIO.Readable io = ioSupplier.apply(expected);
+		ByteArray ba = new ByteArray(new byte[0]);
+		ReactiveBytesIO.Writable out = ReactiveBytesIO.fromByteArrayAppendable(ba);
+		io.transferBytes(out, expected.length / 2, bufferSize).block();
+		assertThat(ba.getPosition()).isEqualTo(expected.length / 2);
+		
+		io.transferBytes(out, expected.length - expected.length / 2, bufferSize).block();
+		ba.trim();
+		assertThat(ba.getArray()).containsExactly(expected);
+		
+		StepVerifier.create(io.transferBytes(out, 10, bufferSize)).expectError(EOFException.class).verify();
+		
+		StepVerifier.create(io.transferBytes(out, -1, bufferSize)).expectError(NegativeValueException.class).verify();
+		StepVerifier.create(io.transferBytes(out, 10, -1)).expectError(NegativeValueException.class).verify();
+		StepVerifier.create(io.transferBytes(out, 10, 0)).expectError(IllegalArgumentException.class).verify();
+		
+		io.close().block();
+		StepVerifier.create(io.transferBytes(out, 1, bufferSize)).expectError(ClosedChannelException.class).verify();
+	}
 }

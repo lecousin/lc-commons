@@ -20,6 +20,8 @@ import net.lecousin.commons.collections.LcArrayUtils;
 import net.lecousin.commons.exceptions.NegativeValueException;
 import net.lecousin.commons.io.IO;
 import net.lecousin.commons.io.bytes.AbstractWritableBytesIOTest.WritableTestCase;
+import net.lecousin.commons.io.bytes.AbstractWritableSeekableBytesIOTest;
+import net.lecousin.commons.io.bytes.BytesIO;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils;
 import net.lecousin.commons.io.bytes.data.BytesDataIOTestUtils.DataTestCasesProvider;
 import net.lecousin.commons.test.TestCase;
@@ -38,13 +40,32 @@ public abstract class AbstractWritableSeekableBytesDataIOTest implements TestCas
 				.map(tc -> new TestCase<>(tc.getName(),
 					(Function<Integer, WritableTestCase<? extends BytesDataIO.Writable, ?>>) (size) -> {
 						WritableTestCase<? extends BytesDataIO.Writable.Seekable, ?> wtc = tc.getArgumentProvider().apply(size);
-						return new WritableTestCase<>((BytesDataIO.Writable) wtc.getIo(), wtc.getObject());
+						return new WritableTestCase<>(wtc.getIo().asWritableBytesDataIO(), wtc);
 					}))
 				.toList();
 		}
 
 		@Override
 		protected void checkWrittenData(BytesDataIO.Writable io, Object object, byte[] expected) throws Exception {
+			@SuppressWarnings("unchecked")
+			WritableTestCase<? extends BytesDataIO.Writable.Seekable, ?> wtc = (WritableTestCase<? extends BytesDataIO.Writable.Seekable, ?>) object;
+			AbstractWritableSeekableBytesDataIOTest.this.checkWrittenData(wtc.getIo(), wtc.getObject(), expected);
+		}
+	}
+	
+	@Nested
+	public class AsWritableSeekableBytesIO extends AbstractWritableSeekableBytesIOTest {
+		@Override
+		public List<? extends TestCase<Integer, WritableTestCase<? extends BytesIO.Writable.Seekable, ?>>> getTestCases() {
+			return AbstractWritableSeekableBytesDataIOTest.this.getTestCases().stream()
+				.map(tc -> new TestCase<>(tc.getName(), (Function<Integer, WritableTestCase<? extends BytesIO.Writable.Seekable, ?>>) (size) -> {
+					WritableTestCase<? extends BytesDataIO.Writable.Seekable, ?> wtc = tc.getArgumentProvider().apply(size);
+					return new WritableTestCase<>((BytesIO.Writable.Seekable) wtc.getIo(), wtc.getObject());
+				}))
+				.toList();
+		}
+		@Override
+		protected void checkWrittenData(BytesIO.Writable.Seekable io, Object object, byte[] expected) throws Exception {
 			AbstractWritableSeekableBytesDataIOTest.this.checkWrittenData((BytesDataIO.Writable.Seekable) io, object, expected);
 		}
 	}

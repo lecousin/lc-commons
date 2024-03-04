@@ -8,6 +8,7 @@ import java.util.function.Function;
 import org.junit.jupiter.api.Nested;
 
 import net.lecousin.commons.io.IO.Seekable.SeekFrom;
+import net.lecousin.commons.reactive.io.ReactiveIO;
 import net.lecousin.commons.reactive.io.bytes.AbstractWritableReactiveBytesIOTest.WritableTestCase;
 import net.lecousin.commons.test.TestCase;
 import net.lecousin.commons.test.TestCasesProvider;
@@ -39,9 +40,19 @@ public abstract class AbstractReadWriteReactiveBytesIOTest<T extends ReactiveByt
 			return AbstractReadWriteReactiveBytesIOTest.this.getTestCases().stream()
 				.map(tc -> new TestCase<>(tc.getName(), (Function<Integer, WritableTestCase<? extends ReactiveBytesIO.Writable.Seekable, ?>>) (size) -> {
 					T io = tc.getArgumentProvider().apply(size);
-					return new WritableTestCase<>(ReactiveBytesIOView.Writable.Seekable.of(io), io);
+					ReactiveBytesIO.Writable.Seekable newIo;
+					if (io instanceof ReactiveIO.Writable.Resizable)
+						newIo = convertResizable(io);
+					else
+						newIo = ReactiveBytesIOView.Writable.Seekable.of(io);
+					return new WritableTestCase<>(newIo, io);
 				}))
 				.toList();
+		}
+		
+		@SuppressWarnings("unchecked")
+		private <U extends ReactiveBytesIO.Writable.Seekable & ReactiveIO.Writable.Resizable> ReactiveBytesIO.Writable.Seekable convertResizable(T io) {
+			return ReactiveBytesIOView.Writable.Seekable.Resizable.of((U) io);
 		}
 		
 		@Override

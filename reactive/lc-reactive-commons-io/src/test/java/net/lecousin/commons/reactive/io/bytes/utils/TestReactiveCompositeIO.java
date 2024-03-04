@@ -58,11 +58,11 @@ public class TestReactiveCompositeIO {
 			return List.of(
 				new TestCase<>(
 					"Single ByteArrayIO",
-					data -> ReactiveCompositeBytesIO.fromReadable(List.of(ReactiveBytesIO.fromByteArray(new ByteArray(data))), false).block()
+					data -> ReactiveBytesIO.concatReadable(List.of(ReactiveBytesIO.fromByteArray(new ByteArray(data))), false).block()
 				),
 				new TestCase<>(
 					"3 ByteArrayIO sharing the buffer",
-					data -> ReactiveCompositeBytesIO.fromReadable(List.of(
+					data -> ReactiveBytesIO.concatReadable(List.of(
 						ReactiveBytesIO.fromByteArray(new ByteArray(data, 0, data.length / 3)),
 						ReactiveBytesIO.fromByteArray(new ByteArray(data, data.length / 3, data.length / 3)),
 						ReactiveBytesIO.fromByteArray(new ByteArray(data, (data.length / 3) * 2, data.length - ((data.length / 3) * 2)))
@@ -70,11 +70,11 @@ public class TestReactiveCompositeIO {
 				),
 				new TestCase<>(
 					"Single FileIO",
-					data -> ReactiveCompositeBytesIO.fromReadable(List.of(createReadableFile(data, 0, data.length)), true).block()
+					data -> ReactiveBytesIO.concatReadable(List.of(createReadableFile(data, 0, data.length)), true).block()
 				),
 				new TestCase<>(
 					"3 FileIO",
-					data -> ReactiveCompositeBytesIO.fromReadable(List.of(
+					data -> ReactiveBytesIO.concatReadable(List.of(
 						createReadableFile(data, 0, data.length / 3),
 						createReadableFile(data, data.length / 3, data.length / 3),
 						createReadableFile(data, (data.length / 3) * 2, data.length - ((data.length / 3) * 2))
@@ -82,7 +82,7 @@ public class TestReactiveCompositeIO {
 				),
 				new TestCase<>(
 					"Mixed FileIO and ByteArrayIO",
-					data -> ReactiveCompositeBytesIO.fromReadable(List.of(
+					data -> ReactiveBytesIO.concatReadable(List.of(
 						ReactiveBytesIO.fromByteArray(new ByteArray(data, 0, data.length / 3)),
 						createReadableFile(data, data.length / 3, data.length / 3),
 						ReactiveBytesIO.fromByteArray(new ByteArray(data, (data.length / 3) * 2, data.length - ((data.length / 3) * 2)))
@@ -100,11 +100,11 @@ public class TestReactiveCompositeIO {
 			return List.of(
 				new TestCase<>(
 					"Single ByteArrayIO",
-					data -> ReactiveCompositeBytesIO.fromReadableSeekable(List.of(ReactiveBytesIO.fromByteArray(new ByteArray(data))), false).block()
+					data -> ReactiveBytesIO.concatReadableSeekable(List.of(ReactiveBytesIO.fromByteArray(new ByteArray(data))), false).block()
 				),
 				new TestCase<>(
 					"3 ByteArrayIO sharing the buffer",
-					data -> ReactiveCompositeBytesIO.fromReadableSeekable(List.of(
+					data -> ReactiveBytesIO.concatReadableSeekable(List.of(
 						ReactiveBytesIO.fromByteArray(new ByteArray(data, 0, data.length / 3)),
 						ReactiveBytesIO.fromByteArray(new ByteArray(data, data.length / 3, data.length / 3)),
 						ReactiveBytesIO.fromByteArray(new ByteArray(data, (data.length / 3) * 2, data.length - ((data.length / 3) * 2)))
@@ -112,11 +112,11 @@ public class TestReactiveCompositeIO {
 				),
 				new TestCase<>(
 					"Single FileIO",
-					data -> ReactiveCompositeBytesIO.fromReadableSeekable(List.of(createReadableSeekableFile(data, 0, data.length)), true).block()
+					data -> ReactiveBytesIO.concatReadableSeekable(List.of(createReadableSeekableFile(data, 0, data.length)), true).block()
 				),
 				new TestCase<>(
 					"3 FileIO",
-					data -> ReactiveCompositeBytesIO.fromReadableSeekable(List.of(
+					data -> ReactiveBytesIO.concatReadableSeekable(List.of(
 						createReadableSeekableFile(data, 0, data.length / 3),
 						createReadableSeekableFile(data, data.length / 3, data.length / 3),
 						createReadableSeekableFile(data, (data.length / 3) * 2, data.length - ((data.length / 3) * 2))
@@ -124,7 +124,7 @@ public class TestReactiveCompositeIO {
 				),
 				new TestCase<>(
 					"Mixed FileIO and ByteArrayIO",
-					data -> ReactiveCompositeBytesIO.fromReadableSeekable(List.of(
+					data -> ReactiveBytesIO.concatReadableSeekable(List.of(
 						ReactiveBytesIO.fromByteArray(new ByteArray(data, 0, data.length / 3)),
 						createReadableSeekableFile(data, data.length / 3, data.length / 3),
 						ReactiveBytesIO.fromByteArray(new ByteArray(data, (data.length / 3) * 2, data.length - ((data.length / 3) * 2)))
@@ -183,7 +183,7 @@ public class TestReactiveCompositeIO {
 					expectedWriteSize -> {
 						byte[] buffer = new byte[expectedWriteSize];
 						ReactiveBytesIO.Writable bio = ReactiveBytesIO.fromByteArray(new ByteArray(buffer));
-						ReactiveBytesIO.Writable cio = ReactiveCompositeBytesIO.fromWritable(List.of(bio), false).block();
+						ReactiveBytesIO.Writable cio = ReactiveBytesIO.concatWritable(List.of(bio), false).block();
 						return new WritableTestCase<>(cio, List.of(buffer));
 					}
 				),
@@ -194,7 +194,7 @@ public class TestReactiveCompositeIO {
 						byte[] buffer2 = new byte[expectedWriteSize / 3];
 						byte[] buffer3 = new byte[expectedWriteSize - ((expectedWriteSize / 3) * 2)];
 						return new WritableTestCase<>(
-							ReactiveCompositeBytesIO.fromWritable(List.of(
+								ReactiveBytesIO.concatWritable(List.of(
 								ReactiveBytesIO.fromByteArray(new ByteArray(buffer1)),
 								ReactiveBytesIO.fromByteArray(new ByteArray(buffer2)),
 								ReactiveBytesIO.fromByteArray(new ByteArray(buffer3))
@@ -208,7 +208,7 @@ public class TestReactiveCompositeIO {
 					expectedWriteSize -> {
 						Path path = createFile(expectedWriteSize);
 						return new WritableTestCase<>(
-							ReactiveCompositeBytesIO.fromWritable(List.of(ReactiveFileIO.openWritable(path).block()), true).block(),
+								ReactiveBytesIO.concatWritable(List.of(ReactiveFileIO.openWritable(path).block()), true).block(),
 							List.of(path)
 						);
 					}
@@ -220,7 +220,7 @@ public class TestReactiveCompositeIO {
 						Path path2 = createFile(expectedWriteSize / 3);
 						Path path3 = createFile(expectedWriteSize - ((expectedWriteSize / 3) * 2));
 						return new WritableTestCase<>(
-							ReactiveCompositeBytesIO.fromWritable(List.of(
+							ReactiveBytesIO.concatWritable(List.of(
 								ReactiveFileIO.openWritable(path1).block(),
 								ReactiveFileIO.openWritable(path2).block(),
 								ReactiveFileIO.openWritable(path3).block()
@@ -236,7 +236,7 @@ public class TestReactiveCompositeIO {
 						Path path2 = createFile(expectedWriteSize / 3);
 						byte[] buffer3 = new byte[expectedWriteSize - ((expectedWriteSize / 3) * 2)];
 						return new WritableTestCase<>(
-							ReactiveCompositeBytesIO.fromWritable(List.of(
+							ReactiveBytesIO.concatWritable(List.of(
 								ReactiveBytesIO.fromByteArray(new ByteArray(buffer1)),
 								ReactiveFileIO.openWritable(path2).block(),
 								ReactiveBytesIO.fromByteArray(new ByteArray(buffer3))
@@ -265,7 +265,7 @@ public class TestReactiveCompositeIO {
 					size -> {
 						byte[] buffer = new byte[size];
 						ReactiveBytesIO.Writable.Seekable bio = ReactiveBytesIO.fromByteArray(new ByteArray(buffer));
-						ReactiveBytesIO.Writable.Seekable cio = ReactiveCompositeBytesIO.fromWritableSeekable(List.of(bio), false).block();
+						ReactiveBytesIO.Writable.Seekable cio = ReactiveBytesIO.concatWritableSeekable(List.of(bio), false).block();
 						return new WritableTestCase<>(cio, List.of(buffer));
 					}
 				),
@@ -276,7 +276,7 @@ public class TestReactiveCompositeIO {
 						byte[] buffer2 = new byte[size / 3];
 						byte[] buffer3 = new byte[size - ((size / 3) * 2)];
 						return new WritableTestCase<>(
-							ReactiveCompositeBytesIO.fromWritableSeekable(List.of(
+							ReactiveBytesIO.concatWritableSeekable(List.of(
 								ReactiveBytesIO.fromByteArray(new ByteArray(buffer1)),
 								ReactiveBytesIO.fromByteArray(new ByteArray(buffer2)),
 								ReactiveBytesIO.fromByteArray(new ByteArray(buffer3))
@@ -290,7 +290,7 @@ public class TestReactiveCompositeIO {
 					size -> {
 						Path path = createFile(size);
 						return new WritableTestCase<>(
-							ReactiveCompositeBytesIO.fromWritableSeekable(List.of(ReactiveFileIO.openWritableSeekable(path).block()), true).block(),
+							ReactiveBytesIO.concatWritableSeekable(List.of(ReactiveFileIO.openWritableSeekable(path).block()), true).block(),
 							List.of(path)
 						);
 					}
@@ -302,7 +302,7 @@ public class TestReactiveCompositeIO {
 						Path path2 = createFile(size / 3);
 						Path path3 = createFile(size - ((size / 3) * 2));
 						return new WritableTestCase<>(
-							ReactiveCompositeBytesIO.fromWritableSeekable(List.of(
+							ReactiveBytesIO.concatWritableSeekable(List.of(
 								ReactiveFileIO.openWritableSeekable(path1).block(),
 								ReactiveFileIO.openWritableSeekable(path2).block(),
 								ReactiveFileIO.openWritableSeekable(path3).block()
@@ -318,7 +318,7 @@ public class TestReactiveCompositeIO {
 						Path path2 = createFile(size / 3);
 						byte[] buffer3 = new byte[size - ((size / 3) * 2)];
 						return new WritableTestCase<>(
-							ReactiveCompositeBytesIO.fromWritableSeekable(List.of(
+							ReactiveBytesIO.concatWritableSeekable(List.of(
 								ReactiveBytesIO.fromByteArray(new ByteArray(buffer1)),
 								ReactiveFileIO.openWritableSeekable(path2).block(),
 								ReactiveBytesIO.fromByteArray(new ByteArray(buffer3))
@@ -347,7 +347,7 @@ public class TestReactiveCompositeIO {
 					size -> {
 						byte[] buffer = new byte[size];
 						ReactiveBytesIO.ReadWrite bio = ReactiveBytesIO.fromByteArray(new ByteArray(buffer));
-						return ReactiveCompositeBytesIO.fromReadWrite(List.of(bio), false).block();
+						return ReactiveBytesIO.concatReadWrite(List.of(bio), false).block();
 					}
 				),
 				new TestCase<>(
@@ -356,7 +356,7 @@ public class TestReactiveCompositeIO {
 						byte[] buffer1 = new byte[size / 3];
 						byte[] buffer2 = new byte[size / 3];
 						byte[] buffer3 = new byte[size - ((size / 3) * 2)];
-						return ReactiveCompositeBytesIO.fromReadWrite(List.of(
+						return ReactiveBytesIO.concatReadWrite(List.of(
 							ReactiveBytesIO.fromByteArray(new ByteArray(buffer1)),
 							ReactiveBytesIO.fromByteArray(new ByteArray(buffer2)),
 							ReactiveBytesIO.fromByteArray(new ByteArray(buffer3))
@@ -367,7 +367,7 @@ public class TestReactiveCompositeIO {
 					"Single FileIO",
 					size -> {
 						Path path = createFile(size);
-						return ReactiveCompositeBytesIO.fromReadWrite(List.of(ReactiveFileIO.openReadWrite(path).block()), true).block();
+						return ReactiveBytesIO.concatReadWrite(List.of(ReactiveFileIO.openReadWrite(path).block()), true).block();
 					}
 				),
 				new TestCase<>(
@@ -376,7 +376,7 @@ public class TestReactiveCompositeIO {
 						Path path1 = createFile(size / 3);
 						Path path2 = createFile(size / 3);
 						Path path3 = createFile(size - ((size / 3) * 2));
-						return ReactiveCompositeBytesIO.fromReadWrite(List.of(
+						return ReactiveBytesIO.concatReadWrite(List.of(
 							ReactiveFileIO.openReadWrite(path1).block(),
 							ReactiveFileIO.openReadWrite(path2).block(),
 							ReactiveFileIO.openReadWrite(path3).block()
@@ -389,7 +389,7 @@ public class TestReactiveCompositeIO {
 						byte[] buffer1 = new byte[size / 3];
 						Path path2 = createFile(size / 3);
 						byte[] buffer3 = new byte[size - ((size / 3) * 2)];
-						return ReactiveCompositeBytesIO.fromReadWrite(List.of(
+						return ReactiveBytesIO.concatReadWrite(List.of(
 							ReactiveBytesIO.fromByteArray(new ByteArray(buffer1)),
 							ReactiveFileIO.openReadWrite(path2).block(),
 							ReactiveBytesIO.fromByteArray(new ByteArray(buffer3))

@@ -372,8 +372,6 @@ public class ByteArrayIO extends AbstractIO implements BytesIO.ReadWrite.Resizab
 		// CHECKSTYLE DISABLE: MagicNumber
 		public static final IntBinaryOperator DEFAULT_EXTENSION_STRATEGY =
 			(currentSize, additionalSizeRequested) -> {
-				if (((long) currentSize) + additionalSizeRequested > Integer.MAX_VALUE)
-					throw new IllegalStateException("Cannot extend");
 				int minimum = currentSize + additionalSizeRequested;
 				if (minimum < currentSize * 2) return currentSize * 2;
 				return minimum + Math.max(additionalSizeRequested, 1024);
@@ -385,7 +383,7 @@ public class ByteArrayIO extends AbstractIO implements BytesIO.ReadWrite.Resizab
 		 * @return the extension strategy
 		 */
 		public static IntBinaryOperator extensionStrategyWithMinimumAppendSize(int minimum) {
-			return (currentSize, additionalSizeRequested) -> currentSize + Math.min(additionalSizeRequested, minimum);
+			return (currentSize, additionalSizeRequested) -> currentSize + Math.max(additionalSizeRequested, minimum);
 		}
 		
 	}

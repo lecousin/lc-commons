@@ -23,6 +23,7 @@ import net.lecousin.commons.exceptions.NegativeValueException;
 import net.lecousin.commons.io.LcByteBufferUtils;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.RandomContentTestCasesProvider;
+import net.lecousin.commons.io.bytes.BytesIOTestUtils.RandomContentWithBufferSizeTestCasesProvider;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.SmallRandomContentTestCasesProvider;
 import net.lecousin.commons.reactive.io.AbstractWritableReactiveIOTest;
 import net.lecousin.commons.reactive.io.AbstractWritableResizableReactiveIOTest;
@@ -334,15 +335,14 @@ public abstract class AbstractWritableReactiveBytesIOTest implements TestCasesPr
 	}
 	
 	@ParameterizedTest(name = "{0}")
-	@ArgumentsSource(RandomContentTestCasesProvider.class)
-	void writeByteBuffer(String displayName, byte[] toWrite, Function<Integer, WritableTestCase<?, ?>> ioSupplier) throws Exception {
+	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
+	void writeByteBuffer(String displayName, byte[] toWrite, int bufferSize, Function<Integer, WritableTestCase<?, ?>> ioSupplier) throws Exception {
 		WritableTestCase<?, ?> ioTuple = ioSupplier.apply(toWrite.length);
 		ReactiveBytesIO.Writable io = ioTuple.getIo();
 
 		StepVerifier.create(io.writeBytes((ByteBuffer) null)).expectError(NullPointerException.class).verify();
 		StepVerifier.create(io.writeBytes(ByteBuffer.allocate(0))).expectNext(0).verifyComplete();
 
-		int step = toWrite.length > 10000 ? 1111 : 3;
 		byte[] b;
 		if (io instanceof ReactiveIO.Writable.Appendable)
 			b = toWrite;
@@ -351,7 +351,10 @@ public abstract class AbstractWritableReactiveBytesIOTest implements TestCasesPr
 			b = new byte[toWrite.length + 20];
 			System.arraycopy(toWrite, 0, b, 0, toWrite.length);
 		}
+		boolean smallStep = true;
 		for (int i = 0; i < toWrite.length;) {
+			int step = smallStep ? 3 : bufferSize;
+			smallStep = !smallStep;
 			int l = Math.min(step, b.length - i);
 			int nb = io.writeBytes(ByteBuffer.wrap(b, i, l)).block();
 			assertThat(nb).isPositive();
@@ -402,15 +405,13 @@ public abstract class AbstractWritableReactiveBytesIOTest implements TestCasesPr
 	}
 	
 	@ParameterizedTest(name = "{0}")
-	@ArgumentsSource(RandomContentTestCasesProvider.class)
-	void writeByteArray(String displayName, byte[] toWrite, Function<Integer, WritableTestCase<?, ?>> ioSupplier) throws Exception {
+	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
+	void writeByteBufferDirect(String displayName, byte[] toWrite, int bufferSize, Function<Integer, WritableTestCase<?, ?>> ioSupplier) throws Exception {
 		WritableTestCase<?, ?> ioTuple = ioSupplier.apply(toWrite.length);
 		ReactiveBytesIO.Writable io = ioTuple.getIo();
 
-		StepVerifier.create(io.writeBytes((byte[]) null)).expectError(NullPointerException.class).verify();
-		StepVerifier.create(io.writeBytes(new byte[0])).expectNext(0).verifyComplete();
+		StepVerifier.create(io.writeBytes(ByteBuffer.allocateDirect(0))).expectNext(0).verifyComplete();
 
-		int step = toWrite.length > 10000 ? 1111 : 3;
 		byte[] b;
 		if (io instanceof ReactiveIO.Writable.Appendable)
 			b = toWrite;
@@ -419,7 +420,51 @@ public abstract class AbstractWritableReactiveBytesIOTest implements TestCasesPr
 			b = new byte[toWrite.length + 20];
 			System.arraycopy(toWrite, 0, b, 0, toWrite.length);
 		}
+		boolean smallStep = true;
 		for (int i = 0; i < toWrite.length;) {
+			int step = smallStep ? 3 : bufferSize;
+			smallStep = !smallStep;
+			int l = Math.min(step, b.length - i);
+			ByteBuffer bb = ByteBuffer.allocateDirect(l);
+			bb.put(b, i, l);
+			int nb = io.writeBytes(bb.flip()).block();
+			assertThat(nb).isPositive();
+			i += nb;
+		}
+
+		if (!(io instanceof ReactiveIO.Writable.Appendable))
+			StepVerifier.create(io.writeBytes(ByteBuffer.allocateDirect(1))).expectNext(-1).verifyComplete();
+		StepVerifier.create(io.writeBytes(ByteBuffer.allocateDirect(0))).expectNext(0).verifyComplete();
+
+		io.flush().block();
+		checkWrittenData(io, ioTuple.getObject(), toWrite);
+		
+		io.close().block();
+		StepVerifier.create(io.writeBytes(ByteBuffer.allocateDirect(1))).expectError(ClosedChannelException.class).verify();
+		StepVerifier.create(io.writeBytes(ByteBuffer.allocateDirect(0))).expectError(ClosedChannelException.class).verify();
+	}
+	
+	@ParameterizedTest(name = "{0}")
+	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
+	void writeByteArray(String displayName, byte[] toWrite, int bufferSize, Function<Integer, WritableTestCase<?, ?>> ioSupplier) throws Exception {
+		WritableTestCase<?, ?> ioTuple = ioSupplier.apply(toWrite.length);
+		ReactiveBytesIO.Writable io = ioTuple.getIo();
+
+		StepVerifier.create(io.writeBytes((byte[]) null)).expectError(NullPointerException.class).verify();
+		StepVerifier.create(io.writeBytes(new byte[0])).expectNext(0).verifyComplete();
+
+		byte[] b;
+		if (io instanceof ReactiveIO.Writable.Appendable)
+			b = toWrite;
+		else {
+			// we generate a bigger array, so at one point we try to write more than the size
+			b = new byte[toWrite.length + 20];
+			System.arraycopy(toWrite, 0, b, 0, toWrite.length);
+		}
+		boolean smallStep = true;
+		for (int i = 0; i < toWrite.length;) {
+			int step = smallStep ? 3 : bufferSize;
+			smallStep = !smallStep;
 			int l = Math.min(step, b.length - i);
 			byte[] bb = new byte[l];
 			System.arraycopy(b, i, bb, 0, l);
@@ -472,8 +517,8 @@ public abstract class AbstractWritableReactiveBytesIOTest implements TestCasesPr
 	}
 	
 	@ParameterizedTest(name = "{0}")
-	@ArgumentsSource(RandomContentTestCasesProvider.class)
-	void writeByteArrayWithOffset(String displayName, byte[] toWrite, Function<Integer, WritableTestCase<?, ?>> ioSupplier) throws Exception {
+	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
+	void writeByteArrayWithOffset(String displayName, byte[] toWrite, int bufferSize, Function<Integer, WritableTestCase<?, ?>> ioSupplier) throws Exception {
 		WritableTestCase<?, ?> ioTuple = ioSupplier.apply(toWrite.length);
 		ReactiveBytesIO.Writable io = ioTuple.getIo();
 
@@ -484,7 +529,6 @@ public abstract class AbstractWritableReactiveBytesIOTest implements TestCasesPr
 		StepVerifier.create(io.writeBytes(new byte[10], 11, 1)).expectError(LimitExceededException.class).verify();
 		StepVerifier.create(io.writeBytes(new byte[10], 7, 0)).expectNext(0).verifyComplete();
 
-		int step = toWrite.length > 10000 ? 1111 : 3;
 		byte[] b;
 		if (io instanceof ReactiveIO.Writable.Appendable)
 			b = toWrite;
@@ -493,7 +537,10 @@ public abstract class AbstractWritableReactiveBytesIOTest implements TestCasesPr
 			b = new byte[toWrite.length + 20];
 			System.arraycopy(toWrite, 0, b, 0, toWrite.length);
 		}
+		boolean smallStep = true;
 		for (int i = 0; i < toWrite.length;) {
+			int step = smallStep ? 3 : bufferSize;
+			smallStep = !smallStep;
 			int l = Math.min(step, b.length - i);
 			int nb = io.writeBytes(b, i, l).block();
 			assertThat(nb).as("Write up to " + l + " at " + i + "/" + toWrite.length).isPositive();

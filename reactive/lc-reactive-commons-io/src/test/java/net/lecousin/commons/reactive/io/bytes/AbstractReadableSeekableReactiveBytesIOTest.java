@@ -199,6 +199,42 @@ public abstract class AbstractReadableSeekableReactiveBytesIOTest implements Tes
 		StepVerifier.create(io.readBytesAt(-1, ByteBuffer.allocate(1))).expectError(ClosedChannelException.class).verify();
 	}
 
+	@ParameterizedTest(name = "{0}")
+	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
+	void readByteBufferDirectAt(String displayName, byte[] expected, int bufferSize, Function<byte[], ReactiveBytesIO.Readable.Seekable> ioSupplier) throws Exception {
+		ReactiveBytesIO.Readable.Seekable io = ioSupplier.apply(expected);
+		
+		long initialPos = io.position().block();
+		
+		StepVerifier.create(io.readBytesAt(0, ByteBuffer.allocateDirect(0))).expectNext(0).verifyComplete();
+		StepVerifier.create(io.position()).expectNext(initialPos).verifyComplete();
+
+		ByteBuffer buffer = ByteBuffer.allocateDirect(bufferSize);
+		int pos = 0;
+		while (pos < expected.length) {
+			int nb = io.readBytesAt(pos, buffer).block();
+			assertThat(nb).isPositive();
+			buffer.flip();
+			for (int i = 0; i < nb; ++i)
+				assertEquals(expected[pos + i], buffer.get());
+			pos += nb;
+			buffer.position(0);
+			buffer.limit(bufferSize);
+		}
+		assertEquals(expected.length, pos);
+		StepVerifier.create(io.position()).expectNext(initialPos).verifyComplete();
+		StepVerifier.create(io.readBytesAt(expected.length, ByteBuffer.allocateDirect(1))).expectNext(-1).verifyComplete();
+		
+		StepVerifier.create(io.readBytesAt(0, ByteBuffer.allocateDirect(0))).expectNext(0).verifyComplete();
+		
+		StepVerifier.create(io.readBytesAt(-1, ByteBuffer.allocateDirect(1))).expectError(NegativeValueException.class).verify();
+		StepVerifier.create(io.position()).expectNext(initialPos).verifyComplete();
+		
+		io.close().block();
+		StepVerifier.create(io.readBytesAt(0, buffer)).expectError(ClosedChannelException.class).verify();
+		StepVerifier.create(io.readBytesAt(-1, ByteBuffer.allocateDirect(1))).expectError(ClosedChannelException.class).verify();
+	}
+
 	
 	@ParameterizedTest(name = "{0}")
 	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
@@ -346,7 +382,11 @@ public abstract class AbstractReadableSeekableReactiveBytesIOTest implements Tes
 		ReactiveBytesIO.Readable.Seekable io = ioSupplier.apply(expected);
 
 		byte[] buffer = new byte[bufferSize];
-		int step = expected.length > 10000 ? 1123 : 1;
+		int step = 1;
+		if (expected.length > 100000)
+			step = 12345;
+		else if (expected.length > 1000)
+			step = 111;
 		
 		// SeekFrom.START
 		

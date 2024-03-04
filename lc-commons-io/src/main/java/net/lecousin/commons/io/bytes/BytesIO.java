@@ -199,6 +199,17 @@ public interface BytesIO extends IO {
 		}
 		
 		/**
+		 * Write all remaining bytes from this I/O to the given writable.
+		 * @param to output
+		 * @throws IOException if an error occurs during the transfer
+		 */
+		default void transferFully(BytesIO.Writable to) throws IOException {
+			Optional<ByteBuffer> b;
+			while ((b = readBuffer()).isPresent())
+				to.writeBytesFully(b.get());
+		}
+		
+		/**
 		 * Readable and Seekable bytes IO.
 		 */
 		interface Seekable extends BytesIO.Readable, IO.Seekable {

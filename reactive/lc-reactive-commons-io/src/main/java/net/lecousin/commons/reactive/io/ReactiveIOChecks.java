@@ -2,9 +2,7 @@ package net.lecousin.commons.reactive.io;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import lombok.AccessLevel;
@@ -42,62 +40,6 @@ public final class ReactiveIOChecks {
 	 */
 	public static <T> Mono<T> deferNotClosed(ReactiveIO io, Supplier<Mono<T>> deferred) {
 		return MonoUtils.deferWithCheck(() -> checkNotClosed(io), deferred);
-	}
-	
-	/**
-	 * Create a deferred Mono, that first checks that the I/O is not closed when subscribed, then return
-	 * a Mono from the given Callable.
-	 * 
-	 * @param <T> type of result
-	 * @param io I/O
-	 * @param operation the operation to wrap into a Mono
-	 * @return the deferred Mono
-	 */
-	public static <T> Mono<T> fromCallableNotClosed(ReactiveIO io, Callable<T> operation) {
-		return Mono.fromCallable(() -> {
-			if (io.isClosed()) throw new ClosedChannelException();
-			return operation.call();
-		});
-	}
-	
-	/**
-	 * Create a deferred Mono, that first checks that the I/O is not closed when subscribed,
-	 * then checks the given buffer is not null, and finally return a Mono from the given Callable.
-	 * 
-	 * @param <T> type of result
-	 * @param io I/O
-	 * @param buffer buffer
-	 * @param operation the operation to wrap into a Mono
-	 * @return the deferred Mono
-	 */
-	public static <T> Mono<T> fromCallableByteBuffer(ReactiveIO io, ByteBuffer buffer, Callable<T> operation) {
-		return Mono.fromCallable(() -> {
-			if (io.isClosed()) throw new ClosedChannelException();
-			Objects.requireNonNull(buffer, IOChecks.FIELD_BUFFER);
-			return operation.call();
-		});
-	}
-	
-	/**
-	 * Create a deferred Mono, that first checks that the I/O is not closed when subscribed,
-	 * then checks the given byte array arguments are valid, and finally return a Mono from the given Callable.
-	 * 
-	 * @param <T> type of result
-	 * @param io I/O
-	 * @param buf buffer
-	 * @param off offset
-	 * @param len length
-	 * @param operation the operation to wrap into a Mono
-	 * @return the deferred Mono
-	 */
-	public static <T> Mono<T> fromCallableByteArray(ReactiveIO io, byte[] buf, int off, int len, Callable<T> operation) {
-		return Mono.fromCallable(() -> {
-			if (io.isClosed()) throw new ClosedChannelException();
-			Optional<Exception> check = IOChecks.byteArrayChecker(buf, off, len);
-			if (check.isPresent())
-				throw check.get();
-			return operation.call();
-		});
 	}
 	
 	/**

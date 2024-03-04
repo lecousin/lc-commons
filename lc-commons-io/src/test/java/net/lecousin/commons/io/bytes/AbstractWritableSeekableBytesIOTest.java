@@ -39,10 +39,18 @@ public abstract class AbstractWritableSeekableBytesIOTest implements TestCasesPr
 				.map(tc -> new TestCase<>(tc.getName(), (Function<Integer, WritableTestCase<?,?>>) (size) -> {
 					WritableTestCase<? extends BytesIO.Writable.Seekable, ?> wtc = tc.getArgumentProvider().apply(size);
 					BytesIO.Writable.Seekable seekable = wtc.getIo();
-					BytesIO.Writable writable = seekable.asWritableBytesIO();
+					BytesIO.Writable writable = convert(seekable);
 					return new WritableTestCase<>(writable, Pair.of(seekable, wtc.getObject()));
 				}))
 				.toList();
+		}
+		
+		@SuppressWarnings("unchecked")
+		private <U extends BytesIO.Writable.Seekable & IO.Writable.Resizable> BytesIO.Writable convert(BytesIO.Writable.Seekable seekable) {
+			if (seekable instanceof IO.Writable.Resizable) {
+				return BytesIOView.Writable.Seekable.Resizable.of((U) seekable);
+			}
+			return seekable.asWritableBytesIO();
 		}
 		
 		@Override
@@ -377,6 +385,45 @@ public abstract class AbstractWritableSeekableBytesIOTest implements TestCasesPr
 		io.close();
 		assertThrows(ClosedChannelException.class, () -> io.writeBytesAt(0, ByteBuffer.allocate(1)));
 		assertThrows(ClosedChannelException.class, () -> io.writeBytesAt(0, ByteBuffer.allocate(0)));
+	}
+	
+	@ParameterizedTest(name = "{0}")
+	@ArgumentsSource(RandomContentTestCasesProvider.class)
+	void writeByteBufferDirectAt(String displayName, byte[] toWrite, Function<Integer, WritableTestCase<? extends BytesIO.Writable.Seekable, ?>> ioSupplier) throws Exception {
+		WritableTestCase<? extends BytesIO.Writable.Seekable, ?> ioTuple = ioSupplier.apply(toWrite.length);
+		BytesIO.Writable.Seekable io = ioTuple.getIo();
+
+		assertThrows(NegativeValueException.class, () -> io.writeBytesAt(-1, ByteBuffer.allocateDirect(1)));
+		assertThat(io.writeBytesAt(0, ByteBuffer.allocateDirect(0))).isZero();
+
+		int step = toWrite.length > 10000 ? 1111 : 3;
+		byte[] b;
+		if (io instanceof IO.Writable.Appendable)
+			b = toWrite;
+		else {
+			// we generate a bigger array, so at one point we try to write more than the size
+			b = new byte[toWrite.length + 20];
+			System.arraycopy(toWrite, 0, b, 0, toWrite.length);
+		}
+		for (int i = 0; i < toWrite.length;) {
+			int l = Math.min(step, b.length - i);
+			ByteBuffer bb = ByteBuffer.allocateDirect(l);
+			bb.put(b, i, l);
+			int nb = io.writeBytesAt(i, bb.flip());
+			assertThat(nb).isPositive();
+			i += nb;
+		}
+
+		if (!(io instanceof IO.Writable.Appendable))
+			assertThat(io.writeBytesAt(toWrite.length, ByteBuffer.allocateDirect(1))).isEqualTo(-1);
+		assertThat(io.writeBytesAt(toWrite.length, ByteBuffer.allocateDirect(0))).isZero();
+
+		io.flush();
+		checkWrittenData(io, ioTuple.getObject(), toWrite);
+
+		io.close();
+		assertThrows(ClosedChannelException.class, () -> io.writeBytesAt(0, ByteBuffer.allocateDirect(1)));
+		assertThrows(ClosedChannelException.class, () -> io.writeBytesAt(0, ByteBuffer.allocateDirect(0)));
 	}
 	
 	@ParameterizedTest(name = "{0}")

@@ -1,5 +1,7 @@
 package net.lecousin.commons.io.bytes.data;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.nio.ByteOrder;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -82,6 +84,13 @@ public abstract class AbstractWritableBytesDataBufferTest implements TestCasesPr
 		buffer.setByteOrder(order);
 		
 		BiFunction<byte[], Integer, Long> dataReader = signed ? (b,o) -> BytesData.of(order).readSignedBytes(nbBytes, b, o) : (b,o) -> BytesData.of(order).readUnsignedBytes(nbBytes, b, o);
+		
+		assertThrows(IllegalArgumentException.class, () -> buffer.writeSignedBytes(0, 0));
+		assertThrows(IllegalArgumentException.class, () -> buffer.writeSignedBytes(-1, 0));
+		assertThrows(IllegalArgumentException.class, () -> buffer.writeSignedBytes(9, 0));
+		assertThrows(IllegalArgumentException.class, () -> buffer.writeUnsignedBytes(0, 0));
+		assertThrows(IllegalArgumentException.class, () -> buffer.writeUnsignedBytes(-1, 0));
+		assertThrows(IllegalArgumentException.class, () -> buffer.writeUnsignedBytes(8, 0));
 		
 		for (int i = 0; i < content.length; i += nbBytes) {
 			long value = dataReader.apply(content, i);

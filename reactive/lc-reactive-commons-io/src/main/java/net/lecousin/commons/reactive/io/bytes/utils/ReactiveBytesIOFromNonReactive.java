@@ -1,4 +1,4 @@
-package net.lecousin.commons.reactive.io.bytes;
+package net.lecousin.commons.reactive.io.bytes.utils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -11,8 +11,9 @@ import net.lecousin.commons.io.IO;
 import net.lecousin.commons.io.IO.Seekable.SeekFrom;
 import net.lecousin.commons.io.bytes.BytesIO;
 import net.lecousin.commons.reactive.MonoUtils;
-import net.lecousin.commons.reactive.events.ReactiveEvent;
 import net.lecousin.commons.reactive.io.ReactiveIO;
+import net.lecousin.commons.reactive.io.bytes.ReactiveBytesIO;
+import net.lecousin.commons.reactive.io.bytes.ReactiveBytesIOView;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
@@ -157,12 +158,13 @@ public interface ReactiveBytesIOFromNonReactive {
 		
 		@Override
 		public Mono<Void> close() {
-			return delegateVoid(io::close);
+			// do close on bounded elastic so listeners can be blocking
+			return MonoUtils.fromFailableRunnable(io::close).subscribeOn(Schedulers.boundedElastic()).publishOn(Schedulers.parallel());
 		}
 		
 		@Override
 		public void onClose(Mono<Void> listener) {
-			io.onClose(() -> ReactiveEvent.callListener(null, v -> listener));
+			io.onClose(listener::block);
 		}
 		
 		@Override

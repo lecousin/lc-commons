@@ -12,8 +12,7 @@ import java.util.Set;
 
 import net.lecousin.commons.io.bytes.file.FileIO;
 import net.lecousin.commons.reactive.io.bytes.ReactiveBytesIO;
-import net.lecousin.commons.reactive.io.bytes.ReactiveBytesIOFromNonReactive;
-import net.lecousin.commons.reactive.io.bytes.file.scheduler.FileAccessSchedulerProvider;
+import net.lecousin.commons.reactive.io.files.scheduler.FileAccessSchedulerProvider;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
@@ -37,7 +36,7 @@ public final class ReactiveFileIO {
 		Scheduler scheduler = FileAccessSchedulerProvider.get().getFileAccessScheduler(path);
 		return Mono.fromCallable(() -> Files.newByteChannel(path, options))
 				.subscribeOn(scheduler).publishOn(Schedulers.parallel())
-				.map(channel -> ReactiveBytesIOFromNonReactive.fromReadable(new FileIO.Readable((FileChannel) channel).asReadableBytesIO(), scheduler));
+				.map(channel -> ReactiveBytesIO.fromIOReadable(new FileIO.Readable((FileChannel) channel).asReadableBytesIO(), scheduler));
 	}
 	
 	/**
@@ -63,7 +62,7 @@ public final class ReactiveFileIO {
 		Scheduler scheduler = FileAccessSchedulerProvider.get().getFileAccessScheduler(path);
 		return Mono.fromCallable(() -> Files.newByteChannel(path, options))
 				.subscribeOn(scheduler).publishOn(Schedulers.parallel())
-				.map(channel -> ReactiveBytesIOFromNonReactive.fromReadableSeekable(new FileIO.Readable((FileChannel) channel), scheduler));
+				.map(channel -> ReactiveBytesIO.fromIOReadableSeekable(new FileIO.Readable((FileChannel) channel), scheduler));
 	}
 	
 	/**
@@ -90,7 +89,7 @@ public final class ReactiveFileIO {
 		Scheduler scheduler = FileAccessSchedulerProvider.get().getFileAccessScheduler(path);
 		return Mono.fromCallable(() -> Files.newByteChannel(path, options))
 				.subscribeOn(scheduler).publishOn(Schedulers.parallel())
-				.map(channel -> ReactiveBytesIOFromNonReactive.fromWritable(new FileIO.Writable((FileChannel) channel).asWritableBytesIO(), scheduler));
+				.map(channel -> ReactiveBytesIO.fromIOWritable(new FileIO.Writable((FileChannel) channel).asWritableBytesIO(), scheduler));
 	}
 	
 	/**
@@ -118,7 +117,7 @@ public final class ReactiveFileIO {
 		Scheduler scheduler = FileAccessSchedulerProvider.get().getFileAccessScheduler(path);
 		return Mono.fromCallable(() -> Files.newByteChannel(path, options, attrs))
 				.subscribeOn(scheduler).publishOn(Schedulers.parallel())
-				.map(channel -> ReactiveBytesIOFromNonReactive.fromWritable(new FileIO.Writable.Appendable((FileChannel) channel).asWritableBytesIO(), scheduler));
+				.map(channel -> ReactiveBytesIO.fromIOWritable(new FileIO.Writable.Appendable((FileChannel) channel).asWritableBytesIO(), scheduler));
 	}
 	
 	/**
@@ -145,7 +144,7 @@ public final class ReactiveFileIO {
 		Scheduler scheduler = FileAccessSchedulerProvider.get().getFileAccessScheduler(path);
 		return Mono.fromCallable(() -> Files.newByteChannel(path, options))
 				.subscribeOn(scheduler).publishOn(Schedulers.parallel())
-				.map(channel -> ReactiveBytesIOFromNonReactive.fromWritableSeekable(new FileIO.Writable((FileChannel) channel), scheduler));
+				.map(channel -> ReactiveBytesIO.fromIOWritableSeekable(new FileIO.Writable((FileChannel) channel), scheduler));
 	}
 	
 	/**
@@ -173,7 +172,7 @@ public final class ReactiveFileIO {
 		Scheduler scheduler = FileAccessSchedulerProvider.get().getFileAccessScheduler(path);
 		return Mono.fromCallable(() -> Files.newByteChannel(path, options, attrs))
 				.subscribeOn(scheduler).publishOn(Schedulers.parallel())
-				.map(channel -> ReactiveBytesIOFromNonReactive.fromWritableSeekable(new FileIO.Writable.Appendable((FileChannel) channel), scheduler));
+				.map(channel -> ReactiveBytesIO.fromIOWritableSeekable(new FileIO.Writable.Appendable((FileChannel) channel), scheduler));
 	}
 	
 	/**
@@ -201,7 +200,7 @@ public final class ReactiveFileIO {
 		Scheduler scheduler = FileAccessSchedulerProvider.get().getFileAccessScheduler(path);
 		return Mono.fromCallable(() -> Files.newByteChannel(path, options, attrs))
 				.subscribeOn(scheduler).publishOn(Schedulers.parallel())
-				.map(channel -> ReactiveBytesIOFromNonReactive.fromWritableSeekableResizable(new FileIO.Writable.Resizable((FileChannel) channel), scheduler));
+				.map(channel -> ReactiveBytesIO.fromIOWritableSeekableResizable(new FileIO.Writable.Resizable((FileChannel) channel), scheduler));
 	}
 	
 	/**
@@ -229,7 +228,7 @@ public final class ReactiveFileIO {
 		Scheduler scheduler = FileAccessSchedulerProvider.get().getFileAccessScheduler(path);
 		return Mono.fromCallable(() -> Files.newByteChannel(path, options, attrs))
 				.subscribeOn(scheduler).publishOn(Schedulers.parallel())
-				.map(channel -> ReactiveBytesIOFromNonReactive.fromWritableSeekableResizable(new FileIO.Writable.AppendableResizable((FileChannel) channel), scheduler));
+				.map(channel -> ReactiveBytesIO.fromIOWritableSeekableResizable(new FileIO.Writable.AppendableResizable((FileChannel) channel), scheduler));
 	}
 	
 	/**
@@ -257,7 +256,7 @@ public final class ReactiveFileIO {
 		Scheduler scheduler = FileAccessSchedulerProvider.get().getFileAccessScheduler(path);
 		return Mono.fromCallable(() -> Files.newByteChannel(path, options))
 				.subscribeOn(scheduler).publishOn(Schedulers.parallel())
-				.map(channel -> ReactiveBytesIOFromNonReactive.fromReadWrite(new FileIO.ReadWrite((FileChannel) channel), scheduler));
+				.map(channel -> ReactiveBytesIO.fromIOReadWrite(new FileIO.ReadWrite((FileChannel) channel), scheduler));
 	}
 	
 	/**
@@ -286,7 +285,7 @@ public final class ReactiveFileIO {
 		Scheduler scheduler = FileAccessSchedulerProvider.get().getFileAccessScheduler(path);
 		return Mono.fromCallable(() -> Files.newByteChannel(path, options, attrs))
 				.subscribeOn(scheduler).publishOn(Schedulers.parallel())
-				.map(channel -> ReactiveBytesIOFromNonReactive.fromReadWrite(new FileIO.ReadWrite.Appendable((FileChannel) channel), scheduler));
+				.map(channel -> ReactiveBytesIO.fromIOReadWrite(new FileIO.ReadWrite.Appendable((FileChannel) channel), scheduler));
 	}
 	
 	/**
@@ -315,7 +314,7 @@ public final class ReactiveFileIO {
 		Scheduler scheduler = FileAccessSchedulerProvider.get().getFileAccessScheduler(path);
 		return Mono.fromCallable(() -> Files.newByteChannel(path, options, attrs))
 				.subscribeOn(scheduler).publishOn(Schedulers.parallel())
-				.map(channel -> ReactiveBytesIOFromNonReactive.fromReadWriteResizable(new FileIO.ReadWrite.Resizable((FileChannel) channel), scheduler));
+				.map(channel -> ReactiveBytesIO.fromIOReadWriteResizable(new FileIO.ReadWrite.Resizable((FileChannel) channel), scheduler));
 	}
 	
 	/**
@@ -344,7 +343,7 @@ public final class ReactiveFileIO {
 		Scheduler scheduler = FileAccessSchedulerProvider.get().getFileAccessScheduler(path);
 		return Mono.fromCallable(() -> Files.newByteChannel(path, options, attrs))
 				.subscribeOn(scheduler).publishOn(Schedulers.parallel())
-				.map(channel -> ReactiveBytesIOFromNonReactive.fromReadWriteResizable(new FileIO.ReadWrite.AppendableResizable((FileChannel) channel), scheduler));
+				.map(channel -> ReactiveBytesIO.fromIOReadWriteResizable(new FileIO.ReadWrite.AppendableResizable((FileChannel) channel), scheduler));
 	}
 	
 	/**

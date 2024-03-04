@@ -3,7 +3,6 @@ package net.lecousin.commons.reactive.io.compress;
 import java.nio.ByteBuffer;
 import java.util.zip.Inflater;
 
-import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -11,12 +10,32 @@ import reactor.core.scheduler.Schedulers;
 /**
  * Inflater (uncompress), the reactive way.
  */
-@RequiredArgsConstructor
 public class ReactiveInflater {
+	
+	/** Default output buffer size. */
+	public static final int DEFAULT_OUTPUT_BUFFER_SIZE = 8192;
+	/** Minimum buffer size. */
+	public static final int MINIMUM_OUTPUT_BUFFER_SIZE = 256;
 
 	private final boolean nowrap;
 	private final int outputBufferSize;
 	private Inflater inflater = null;
+	
+	/** Constructor.
+	 * @param nowrap if true then support GZIP compatible compression
+	 * @param outputBufferSize buffer size to use to generate output
+	 */
+	public ReactiveInflater(boolean nowrap, int outputBufferSize) {
+		this.nowrap = nowrap;
+		this.outputBufferSize = Math.max(outputBufferSize, MINIMUM_OUTPUT_BUFFER_SIZE);
+	}
+	
+	/** Constructor with default output buffer size.
+	 * @param nowrap if true then support GZIP compatible compression
+	 */
+	public ReactiveInflater(boolean nowrap) {
+		this(nowrap, DEFAULT_OUTPUT_BUFFER_SIZE);
+	}
 	
 	/**
 	 * Uncompress the given source.
