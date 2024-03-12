@@ -10,7 +10,7 @@ import net.lecousin.commons.io.IOChecks;
 import net.lecousin.commons.io.memory.DataArray;
 
 /** Wrapper for a char[] as a DataArray. */
-public class CharArray implements DataArray<char[]> {
+public class CharArray implements DataArray<char[]>, CharSequence {
 
 	protected char[] chars;
 	protected int start;
@@ -177,6 +177,26 @@ public class CharArray implements DataArray<char[]> {
 	 */
 	public CharArrayIO.Appendable asAppendableCharsIO(IntBinaryOperator extensionStrategy) {
 		return new CharArrayIO.Appendable(this, extensionStrategy);
+	}
+
+	@Override
+	public int length() {
+		return getSize();
+	}
+
+	@Override
+	public char charAt(int index) {
+		return chars[start + index];
+	}
+
+	@Override
+	public CharSequence subSequence(int startOffset, int endOffset) {
+		return new CharArray(chars, this.start + startOffset, endOffset - startOffset);
+	}
+	
+	@Override
+	public String toString() {
+		return new String(chars, start, end - start);
 	}
 
 }

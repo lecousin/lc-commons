@@ -12,6 +12,8 @@ import net.lecousin.commons.exceptions.LimitExceededException;
 import net.lecousin.commons.exceptions.NegativeValueException;
 import net.lecousin.commons.io.IO;
 import net.lecousin.commons.io.IOChecks;
+import net.lecousin.commons.io.chars.memory.CharArray;
+import net.lecousin.commons.io.chars.memory.ReadableSeekableCharsIOFromCharSequence;
 
 /**
  * IO working on characters.
@@ -764,6 +766,11 @@ public interface CharsIO extends IO {
 			
 		}
 		
+	}
+	
+	static CharsIO.Readable.Seekable asReadableSeekable(CharSequence chars) {
+		if (chars instanceof CharArray ca) return ca.asCharsIO().asReadableSeekableCharsIO();
+		return new ReadableSeekableCharsIOFromCharSequence(chars);
 	}
 	
 }
