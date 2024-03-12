@@ -24,7 +24,7 @@ public class TestCompositeBytesDataIO {
 			return List.of(
 				new TestCase<>("Single IO LE from ByteArray garbageOnConsumed=false", content -> {
 					try {
-						BytesDataIO.ReadWrite io = new ByteArray(content).asBytesDataIO();
+						BytesDataIO.Readable io = new ByteArray(content).asBytesDataIO().asReadableBytesDataIO();
 						return CompositeBytesDataIO.fromReadable(List.of(io), ByteOrder.LITTLE_ENDIAN, true, false);
 					} catch (Exception e) {
 						throw new RuntimeException(e);
@@ -32,31 +32,29 @@ public class TestCompositeBytesDataIO {
 				}),
 				new TestCase<>("Single IO LE from ByteArray garbageOnConsumed=true", content -> {
 					try {
-						BytesDataIO.ReadWrite io = new ByteArray(content).asBytesDataIO();
+						BytesDataIO.Readable io = new ByteArray(content).asBytesDataIO().asReadableBytesDataIO();
 						return CompositeBytesDataIO.fromReadable(List.of(io), ByteOrder.LITTLE_ENDIAN, true, true);
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}
 				}),
-				new TestCase<>("3 SubIO LE from ByteArray garbageOnConsumed=false", content -> {
+				new TestCase<>("3 ByteArray LE from ByteArray garbageOnConsumed=false", content -> {
 					try {
 						if (content.length == 0) return CompositeBytesDataIO.fromReadable(List.of(), ByteOrder.LITTLE_ENDIAN, true, false);
-						BytesDataIO.ReadWrite io = new ByteArray(content).asBytesDataIO();
-						BytesDataIO.ReadWrite sub1 = SubBytesDataIO.fromReadWrite(io, 0, content.length / 3, false);
-						BytesDataIO.ReadWrite sub2 = SubBytesDataIO.fromReadWrite(io, content.length / 3, content.length / 3, false);
-						BytesDataIO.ReadWrite sub3 = SubBytesDataIO.fromReadWrite(io, 2 * (content.length / 3), content.length - (2 * (content.length / 3)), false);
+						BytesDataIO.Readable sub1 = new ByteArray(content, 0, content.length / 3).asBytesDataIO().asReadableBytesDataIO();
+						BytesDataIO.Readable sub2 = new ByteArray(content, content.length / 3, content.length / 3).asBytesDataIO().asReadableBytesDataIO();
+						BytesDataIO.Readable sub3 = new ByteArray(content, 2 * (content.length / 3), content.length - (2 * (content.length / 3))).asBytesDataIO().asReadableBytesDataIO();
 						return CompositeBytesDataIO.fromReadable(List.of(sub1, sub2, sub3), ByteOrder.LITTLE_ENDIAN, true, false);
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}
 				}),
-				new TestCase<>("3 SubIO LE from ByteArray garbageOnConsumed=true", content -> {
+				new TestCase<>("3 ByteArray LE from ByteArray garbageOnConsumed=true", content -> {
 					try {
 						if (content.length == 0) return CompositeBytesDataIO.fromReadable(List.of(), ByteOrder.LITTLE_ENDIAN, true, true);
-						BytesDataIO.ReadWrite io = new ByteArray(content).asBytesDataIO();
-						BytesDataIO.ReadWrite sub1 = SubBytesDataIO.fromReadWrite(io, 0, content.length / 3, false);
-						BytesDataIO.ReadWrite sub2 = SubBytesDataIO.fromReadWrite(io, content.length / 3, content.length / 3, false);
-						BytesDataIO.ReadWrite sub3 = SubBytesDataIO.fromReadWrite(io, 2 * (content.length / 3), content.length - (2 * (content.length / 3)), false);
+						BytesDataIO.Readable sub1 = new ByteArray(content, 0, content.length / 3).asBytesDataIO().asReadableBytesDataIO();
+						BytesDataIO.Readable sub2 = new ByteArray(content, content.length / 3, content.length / 3).asBytesDataIO().asReadableBytesDataIO();
+						BytesDataIO.Readable sub3 = new ByteArray(content, 2 * (content.length / 3), content.length - (2 * (content.length / 3))).asBytesDataIO().asReadableBytesDataIO();
 						return CompositeBytesDataIO.fromReadable(List.of(sub1, sub2, sub3), ByteOrder.LITTLE_ENDIAN, true, true);
 					} catch (Exception e) {
 						throw new RuntimeException(e);
@@ -64,7 +62,7 @@ public class TestCompositeBytesDataIO {
 				}),
 				new TestCase<>("Single IO BE from ByteArray garbageOnConsumed=false", content -> {
 					try {
-						BytesDataIO.ReadWrite io = new ByteArray(content).asBytesDataIO();
+						BytesDataIO.Readable io = new ByteArray(content).asBytesDataIO().asReadableBytesDataIO();
 						return CompositeBytesDataIO.fromReadable(List.of(io), ByteOrder.BIG_ENDIAN, true, false);
 					} catch (Exception e) {
 						throw new RuntimeException(e);
@@ -72,31 +70,29 @@ public class TestCompositeBytesDataIO {
 				}),
 				new TestCase<>("Single IO BE from ByteArray garbageOnConsumed=true", content -> {
 					try {
-						BytesDataIO.ReadWrite io = new ByteArray(content).asBytesDataIO();
+						BytesDataIO.Readable io = new ByteArray(content).asBytesDataIO().asReadableBytesDataIO();
 						return CompositeBytesDataIO.fromReadable(List.of(io), ByteOrder.BIG_ENDIAN, true, true);
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}
 				}),
-				new TestCase<>("3 SubIO BE from ByteArray garbageOnConsumed=false", content -> {
+				new TestCase<>("3 ByteArray BE from ByteArray garbageOnConsumed=false", content -> {
 					try {
 						if (content.length == 0) return CompositeBytesDataIO.fromReadable(List.of(), ByteOrder.BIG_ENDIAN, true, false);
-						BytesDataIO.ReadWrite io = new ByteArray(content).asBytesDataIO();
-						BytesDataIO.ReadWrite sub1 = SubBytesDataIO.fromReadWrite(io, 0, content.length / 3, false);
-						BytesDataIO.ReadWrite sub2 = SubBytesDataIO.fromReadWrite(io, content.length / 3, content.length / 3, false);
-						BytesDataIO.ReadWrite sub3 = SubBytesDataIO.fromReadWrite(io, 2 * (content.length / 3), content.length - (2 * (content.length / 3)), false);
+						BytesDataIO.Readable sub1 = new ByteArray(content, 0, content.length / 3).asBytesDataIO().asReadableBytesDataIO();
+						BytesDataIO.Readable sub2 = new ByteArray(content, content.length / 3, content.length / 3).asBytesDataIO().asReadableBytesDataIO();
+						BytesDataIO.Readable sub3 = new ByteArray(content, 2 * (content.length / 3), content.length - (2 * (content.length / 3))).asBytesDataIO().asReadableBytesDataIO();
 						return CompositeBytesDataIO.fromReadable(List.of(sub1, sub2, sub3), ByteOrder.BIG_ENDIAN, true, false);
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}
 				}),
-				new TestCase<>("3 SubIO BE from ByteArray garbageOnConsumed=true", content -> {
+				new TestCase<>("3 ByteArray BE from ByteArray garbageOnConsumed=true", content -> {
 					try {
 						if (content.length == 0) return CompositeBytesDataIO.fromReadable(List.of(), ByteOrder.BIG_ENDIAN, true, true);
-						BytesDataIO.ReadWrite io = new ByteArray(content).asBytesDataIO();
-						BytesDataIO.ReadWrite sub1 = SubBytesDataIO.fromReadWrite(io, 0, content.length / 3, false);
-						BytesDataIO.ReadWrite sub2 = SubBytesDataIO.fromReadWrite(io, content.length / 3, content.length / 3, false);
-						BytesDataIO.ReadWrite sub3 = SubBytesDataIO.fromReadWrite(io, 2 * (content.length / 3), content.length - (2 * (content.length / 3)), false);
+						BytesDataIO.Readable sub1 = new ByteArray(content, 0, content.length / 3).asBytesDataIO().asReadableBytesDataIO();
+						BytesDataIO.Readable sub2 = new ByteArray(content, content.length / 3, content.length / 3).asBytesDataIO().asReadableBytesDataIO();
+						BytesDataIO.Readable sub3 = new ByteArray(content, 2 * (content.length / 3), content.length - (2 * (content.length / 3))).asBytesDataIO().asReadableBytesDataIO();
 						return CompositeBytesDataIO.fromReadable(List.of(sub1, sub2, sub3), ByteOrder.BIG_ENDIAN, true, true);
 					} catch (Exception e) {
 						throw new RuntimeException(e);

@@ -26,6 +26,7 @@ import net.lecousin.commons.io.AbstractWritableResizableIOTest;
 import net.lecousin.commons.io.IO;
 import net.lecousin.commons.io.LcByteBufferUtils;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.RandomContentTestCasesProvider;
+import net.lecousin.commons.io.bytes.BytesIOTestUtils.RandomContentWithBufferSizeTestCasesProvider;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.SmallRandomContentTestCasesProvider;
 import net.lecousin.commons.test.TestCase;
 import net.lecousin.commons.test.TestCasesProvider;
@@ -295,15 +296,14 @@ public abstract class AbstractWritableBytesIOTest implements TestCasesProvider<I
 	
 	
 	@ParameterizedTest(name = "{0}")
-	@ArgumentsSource(RandomContentTestCasesProvider.class)
-	void writeByteBuffer(String displayName, byte[] toWrite, Function<Integer, WritableTestCase<?, ?>> ioSupplier) throws Exception {
+	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
+	void writeByteBuffer(String displayName, byte[] toWrite, int bufferSize, Function<Integer, WritableTestCase<?, ?>> ioSupplier) throws Exception {
 		WritableTestCase<?, ?> ioTuple = ioSupplier.apply(toWrite.length);
 		BytesIO.Writable io = ioTuple.getIo();
 
 		assertThrows(NullPointerException.class, () -> io.writeBytes((ByteBuffer) null));
 		assertThat(io.writeBytes(ByteBuffer.allocate(0))).isZero();
 
-		int step = toWrite.length > 10000 ? 1111 : 3;
 		byte[] b;
 		if (io instanceof IO.Writable.Appendable)
 			b = toWrite;
@@ -312,7 +312,10 @@ public abstract class AbstractWritableBytesIOTest implements TestCasesProvider<I
 			b = new byte[toWrite.length + 20];
 			System.arraycopy(toWrite, 0, b, 0, toWrite.length);
 		}
+		boolean smallStep = true;
 		for (int i = 0; i < toWrite.length;) {
+			int step = smallStep ? 3 : bufferSize;
+			smallStep = !smallStep;
 			int l = Math.min(step, b.length - i);
 			int nb = io.writeBytes(ByteBuffer.wrap(b, i, l));
 			assertThat(nb).isPositive();
@@ -361,17 +364,16 @@ public abstract class AbstractWritableBytesIOTest implements TestCasesProvider<I
 		assertThrows(ClosedChannelException.class, () -> io.writeBytes(ByteBuffer.allocate(1)));
 		assertThrows(ClosedChannelException.class, () -> io.writeBytes(ByteBuffer.allocate(0)));
 	}
+
 	
 	@ParameterizedTest(name = "{0}")
-	@ArgumentsSource(RandomContentTestCasesProvider.class)
-	void writeByteArray(String displayName, byte[] toWrite, Function<Integer, WritableTestCase<?, ?>> ioSupplier) throws Exception {
+	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
+	void writeByteBufferDirect(String displayName, byte[] toWrite, int bufferSize, Function<Integer, WritableTestCase<?, ?>> ioSupplier) throws Exception {
 		WritableTestCase<?, ?> ioTuple = ioSupplier.apply(toWrite.length);
 		BytesIO.Writable io = ioTuple.getIo();
 
-		assertThrows(NullPointerException.class, () -> io.writeBytes((byte[]) null));
-		assertThat(io.writeBytes(new byte[0])).isZero();
+		assertThat(io.writeBytes(ByteBuffer.allocateDirect(0))).isZero();
 
-		int step = toWrite.length > 10000 ? 1111 : 3;
 		byte[] b;
 		if (io instanceof IO.Writable.Appendable)
 			b = toWrite;
@@ -380,7 +382,51 @@ public abstract class AbstractWritableBytesIOTest implements TestCasesProvider<I
 			b = new byte[toWrite.length + 20];
 			System.arraycopy(toWrite, 0, b, 0, toWrite.length);
 		}
+		boolean smallStep = true;
 		for (int i = 0; i < toWrite.length;) {
+			int step = smallStep ? 3 : bufferSize;
+			smallStep = !smallStep;
+			int l = Math.min(step, b.length - i);
+			ByteBuffer bb = ByteBuffer.allocateDirect(l);
+			bb.put(b, i, l);
+			int nb = io.writeBytes(bb.flip());
+			assertThat(nb).isPositive();
+			i += nb;
+		}
+
+		if (!(io instanceof IO.Writable.Appendable))
+			assertThat(io.writeBytes(ByteBuffer.allocateDirect(1))).isEqualTo(-1);
+		assertThat(io.writeBytes(ByteBuffer.allocateDirect(0))).isZero();
+
+		io.flush();
+		checkWrittenData(io, ioTuple.getObject(), toWrite);
+
+		io.close();
+		assertThrows(ClosedChannelException.class, () -> io.writeBytes(ByteBuffer.allocateDirect(1)));
+		assertThrows(ClosedChannelException.class, () -> io.writeBytes(ByteBuffer.allocateDirect(0)));
+	}
+	
+	@ParameterizedTest(name = "{0}")
+	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
+	void writeByteArray(String displayName, byte[] toWrite, int bufferSize, Function<Integer, WritableTestCase<?, ?>> ioSupplier) throws Exception {
+		WritableTestCase<?, ?> ioTuple = ioSupplier.apply(toWrite.length);
+		BytesIO.Writable io = ioTuple.getIo();
+
+		assertThrows(NullPointerException.class, () -> io.writeBytes((byte[]) null));
+		assertThat(io.writeBytes(new byte[0])).isZero();
+
+		byte[] b;
+		if (io instanceof IO.Writable.Appendable)
+			b = toWrite;
+		else {
+			// we generate a bigger array, so at one point we try to write more than the size
+			b = new byte[toWrite.length + 20];
+			System.arraycopy(toWrite, 0, b, 0, toWrite.length);
+		}
+		boolean smallStep = true;
+		for (int i = 0; i < toWrite.length;) {
+			int step = smallStep ? 3 : bufferSize;
+			smallStep = !smallStep;
 			int l = Math.min(step, b.length - i);
 			byte[] bb = new byte[l];
 			System.arraycopy(b, i, bb, 0, l);
@@ -433,8 +479,8 @@ public abstract class AbstractWritableBytesIOTest implements TestCasesProvider<I
 	}
 	
 	@ParameterizedTest(name = "{0}")
-	@ArgumentsSource(RandomContentTestCasesProvider.class)
-	void writeByteArrayWithOffset(String displayName, byte[] toWrite, Function<Integer, WritableTestCase<?, ?>> ioSupplier) throws Exception {
+	@ArgumentsSource(RandomContentWithBufferSizeTestCasesProvider.class)
+	void writeByteArrayWithOffset(String displayName, byte[] toWrite, int bufferSize, Function<Integer, WritableTestCase<?, ?>> ioSupplier) throws Exception {
 		WritableTestCase<?, ?> ioTuple = ioSupplier.apply(toWrite.length);
 		BytesIO.Writable io = ioTuple.getIo();
 
@@ -445,7 +491,6 @@ public abstract class AbstractWritableBytesIOTest implements TestCasesProvider<I
 		assertThrows(LimitExceededException.class, () -> io.writeBytes(new byte[10], 11, 1));
 		assertThat(io.writeBytes(new byte[10], 7, 0)).isZero();
 
-		int step = toWrite.length > 10000 ? 1111 : 3;
 		byte[] b;
 		if (io instanceof IO.Writable.Appendable)
 			b = toWrite;
@@ -454,7 +499,10 @@ public abstract class AbstractWritableBytesIOTest implements TestCasesProvider<I
 			b = new byte[toWrite.length + 20];
 			System.arraycopy(toWrite, 0, b, 0, toWrite.length);
 		}
+		boolean smallStep = true;
 		for (int i = 0; i < toWrite.length;) {
+			int step = smallStep ? 3 : bufferSize;
+			smallStep = !smallStep;
 			int l = Math.min(step, b.length - i);
 			int nb = io.writeBytes(b, i, l);
 			assertThat(nb).as("Write up to " + l + " at " + i + "/" + toWrite.length).isPositive();
@@ -530,8 +578,11 @@ public abstract class AbstractWritableBytesIOTest implements TestCasesProvider<I
 		
 		if (io instanceof IO.Writable.Appendable) {
 			byte[] additional = BytesIOTestUtils.generateContent(23);
-			for (int i = 0; i < additional.length; ++i)
+			for (int i = 0; i < additional.length; ++i) {
 				io.writeByte(additional[i]);
+				if (io instanceof IO.KnownSize ks) assertThat(ks.size()).as("Size after adding " + (i+1) + " bytes").isEqualTo(toWrite.length + i + 1);
+			}
+			if (io instanceof IO.Seekable s) assertThat(s.position()).isEqualTo(toWrite.length + additional.length);
 			io.flush();
 			checkWrittenData(io, ioTuple.getObject(), LcArrayUtils.concat(toWrite, additional));
 			if (io instanceof IO.Writable.Resizable r) {

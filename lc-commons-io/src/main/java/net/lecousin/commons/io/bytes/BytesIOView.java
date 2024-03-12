@@ -409,6 +409,139 @@ public abstract class BytesIOView<T extends BytesIO> extends IOView<T> {
 				io.writeBytesFullyAt(pos, buffers);
 			}
 			
+			
+			/** Writable and Seekable and Resizable view of a BytesIO. */
+			public static class Resizable extends BytesIOView<BytesIO.Writable.Seekable> implements BytesIO.Writable.Seekable.Resizable {
+
+				/**
+				 * Create a Writable and Seekable view of the given IO.<br/>
+				 * If the IO is Appendable, the returned view will be also Appendable.
+				 * 
+				 * @param <T> type of given IO
+				 * @param io the IO to wrap
+				 * @return the Writable view
+				 */
+				public static <T extends BytesIO.Writable.Seekable & IO.Writable.Resizable> BytesIOView.Writable.Seekable.Resizable of(T io) {
+					if (io instanceof IO.Writable.Appendable)
+						return new Appendable(io);
+					return new BytesIOView.Writable.Seekable.Resizable(io);
+				}
+				
+				private static final class Appendable extends BytesIOView.Writable.Seekable.Resizable implements IO.Writable.Appendable {
+					private Appendable(BytesIO.Writable.Seekable io) {
+						super(io);
+					}
+				}
+
+				private Resizable(BytesIO.Writable.Seekable io) {
+					super(io);
+				}
+				
+				@Override
+				public void setSize(long newSize) throws IOException {
+					((IO.Writable.Resizable) io).setSize(newSize);
+				}
+
+				@Override
+				public void flush() throws IOException {
+					io.flush();
+				}
+
+				@Override
+				public void writeByte(byte value) throws IOException {
+					io.writeByte(value);
+				}
+
+				@Override
+				public int writeBytes(ByteBuffer buffer) throws IOException {
+					return io.writeBytes(buffer);
+				}
+
+				@Override
+				public int writeBytes(byte[] buf, int off, int len) throws IOException {
+					return io.writeBytes(buf, off, len);
+				}
+
+				@Override
+				public int writeBytes(byte[] buf) throws IOException {
+					return io.writeBytes(buf);
+				}
+
+				@Override
+				public void writeBytesFully(ByteBuffer buffer) throws IOException {
+					io.writeBytesFully(buffer);
+				}
+
+				@Override
+				public void writeBytesFully(List<ByteBuffer> buffers) throws IOException {
+					io.writeBytesFully(buffers);
+				}
+
+				@Override
+				public void writeBytesFully(byte[] buf, int off, int len) throws IOException {
+					io.writeBytesFully(buf, off, len);
+				}
+
+				@Override
+				public void writeBytesFully(byte[] buf) throws IOException {
+					io.writeBytesFully(buf);
+				}
+				
+				@Override
+				public long size() throws IOException {
+					return io.size();
+				}
+
+				@Override
+				public long position() throws IOException {
+					return io.position();
+				}
+
+				@Override
+				public long seek(SeekFrom from, long offset) throws IOException {
+					return io.seek(from, offset);
+				}
+
+				@Override
+				public void writeByteAt(long pos, byte value) throws IOException {
+					io.writeByteAt(pos, value);
+				}
+
+				@Override
+				public int writeBytesAt(long pos, ByteBuffer buffer) throws IOException {
+					return io.writeBytesAt(pos, buffer);
+				}
+
+				@Override
+				public int writeBytesAt(long pos, byte[] buf, int off, int len) throws IOException {
+					return io.writeBytesAt(pos, buf, off, len);
+				}
+
+				@Override
+				public int writeBytesAt(long pos, byte[] buf) throws IOException {
+					return io.writeBytesAt(pos, buf);
+				}
+
+				@Override
+				public void writeBytesFullyAt(long pos, ByteBuffer buffer) throws IOException {
+					io.writeBytesFullyAt(pos, buffer);
+				}
+
+				@Override
+				public void writeBytesFullyAt(long pos, byte[] buf, int off, int len) throws IOException {
+					io.writeBytesFullyAt(pos, buf, off, len);
+				}
+
+				@Override
+				public void writeBytesFullyAt(long pos, byte[] buf) throws IOException {
+					io.writeBytesFullyAt(pos, buf);
+				}
+
+				@Override
+				public void writeBytesFullyAt(long pos, List<ByteBuffer> buffers) throws IOException {
+					io.writeBytesFullyAt(pos, buffers);
+				}
+			} 
 		}
 
 	}

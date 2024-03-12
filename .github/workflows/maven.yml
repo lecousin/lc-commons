@@ -22,10 +22,10 @@ jobs:
         distribution: ${{ matrix.distribution }}
         java-version: ${{ matrix.java }}
         cache: maven
-    - name: Build
-      run: mvn -B compile --file pom.xml
-    - name: Test and analysis
-      run: mvn -B verify --file pom.xml
+    - name: Build and check
+      run: mvn -B install --file pom.xml -DskipTests
+    - name: Test
+      run: mvn -B install --file pom.xml -DskipJavadoc -DskipCheckstyle
     - name: Upload to Codecov
       uses: codecov/codecov-action@v4
       with:

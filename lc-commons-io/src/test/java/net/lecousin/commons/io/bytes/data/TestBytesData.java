@@ -40,7 +40,10 @@ public abstract class TestBytesData {
 			assertEquals(i, data.readUnsigned2Bytes(b));
 			data.writeUnsigned2Bytes(buf, 3, i);
 			assertEquals(i, data.readUnsigned2Bytes(buf, 3));
-			assertEquals(i, data.readUnsigned2Bytes(data.getUnsigned2Bytes(i)));
+
+			byte[] bytes = data.getUnsigned2Bytes(i);
+			assertEquals(i, data.readUnsigned2Bytes(bytes));
+			assertEquals(i, data.readUnsigned2Bytes(bytes[0], bytes[1]));
 		}
 	}
 	

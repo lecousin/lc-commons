@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.util.List;
 
 import net.lecousin.commons.io.bytes.AbstractWritableBytesIOTest.WritableTestCase;
-import net.lecousin.commons.io.bytes.BytesIO;
 import net.lecousin.commons.io.bytes.data.AbstractWritableBytesDataIOTest;
 import net.lecousin.commons.io.bytes.data.BytesDataIO;
 import net.lecousin.commons.io.bytes.file.FileIO;
@@ -27,8 +26,8 @@ public class TestBufferedWritableBytesDataIO extends AbstractWritableBytesDataIO
 					try (RandomAccessFile f = new RandomAccessFile(path.toFile(), "rw")) {
 						f.setLength(size);
 					}
-					BytesIO.Writable io = new FileIO.Writable.Appendable(path);
-					BufferedWritableBytesDataIO buffered = new BufferedWritableBytesDataIO(io, true);
+					FileIO.Writable.Appendable io = new FileIO.Writable.Appendable(path);
+					BufferedWritableBytesDataIO<FileIO.Writable.Appendable> buffered = new BufferedWritableBytesDataIO<>(io, true);
 					return new WritableTestCase<>(buffered, path);
 				} catch (Exception e) {
 					throw new RuntimeException(e);
@@ -41,8 +40,8 @@ public class TestBufferedWritableBytesDataIO extends AbstractWritableBytesDataIO
 					try (RandomAccessFile f = new RandomAccessFile(path.toFile(), "rw")) {
 						f.setLength(size);
 					}
-					BytesIO.Writable io = new FileIO.Writable.Appendable(path);
-					BufferedWritableBytesDataIO buffered = new BufferedWritableBytesDataIO(io, 0, true);
+					FileIO.Writable.Appendable io = new FileIO.Writable.Appendable(path);
+					BufferedWritableBytesDataIO<FileIO.Writable.Appendable> buffered = new BufferedWritableBytesDataIO<>(io, 0, true);
 					return new WritableTestCase<>(buffered, path);
 				} catch (Exception e) {
 					throw new RuntimeException(e);
@@ -55,8 +54,8 @@ public class TestBufferedWritableBytesDataIO extends AbstractWritableBytesDataIO
 					try (RandomAccessFile f = new RandomAccessFile(path.toFile(), "rw")) {
 						f.setLength(size);
 					}
-					BytesIO.Writable io = new FileIO.Writable.Appendable(path);
-					BufferedWritableBytesDataIO buffered = new BufferedWritableBytesDataIO(io, ByteOrder.BIG_ENDIAN, false);
+					FileIO.Writable.Appendable io = new FileIO.Writable.Appendable(path);
+					BufferedWritableBytesDataIO<FileIO.Writable.Appendable> buffered = new BufferedWritableBytesDataIO<>(io, ByteOrder.BIG_ENDIAN, false);
 					buffered.onClose(() -> {
 						try {
 							io.close();
@@ -68,6 +67,11 @@ public class TestBufferedWritableBytesDataIO extends AbstractWritableBytesDataIO
 				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}
+			}),
+			new TestCase<>("Using ByteArray, with default buffer size and Big-Endian", size -> {
+				ByteArray ba = new ByteArray(new byte[Math.min(size, 1)]);
+				BufferedWritableBytesDataIO<ByteArrayIO.Appendable> buffered = new BufferedWritableBytesDataIO<>(ba.asAppendableBytesIO(11), ByteOrder.BIG_ENDIAN, false);
+				return new WritableTestCase<>(buffered, ba);
 			})
 		);
 	}
@@ -77,6 +81,10 @@ public class TestBufferedWritableBytesDataIO extends AbstractWritableBytesDataIO
 		byte[] found = null;
 		if (object instanceof Path path) {
 			found = Files.readAllBytes(path);
+		} else {
+			ByteArray ba = (ByteArray) object;
+			found = new byte[ba.getSize()];
+			System.arraycopy(ba.getArray(), ba.getArrayStartOffset(), found, 0, found.length);
 		}
 		assertThat(found).containsExactly(expected);
 	}

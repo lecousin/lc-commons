@@ -121,6 +121,37 @@ public class ByteArray implements DataArray<byte[]> {
         position = 0;
         return this;
 	}
+	
+	/** Read a byte from the current position, and increment the position.
+	 * @return the byte
+	 */
+	public byte readByte() {
+		return bytes[position++];
+	}
+	
+	/**
+	 * Write a byte at the current position, and increment the position.
+	 * @param b the byte
+	 */
+	public void writeByte(byte b) {
+		bytes[position++] = b;
+	}
+	
+	/**
+	 * Write bytes at the current position
+	 * @param src bytes to write
+	 * @param off offset in src
+	 * @param len number of bytes
+	 */
+	public void write(byte[] src, int off, int len) {
+		System.arraycopy(src, off, bytes, position, len);
+		position += len;
+	}
+	
+	/** @return a ByteBuffer from this ByteArray. */
+	public ByteBuffer toByteBuffer() {
+		return ByteBuffer.wrap(bytes, start + position, end - start - position);
+	}
 
 	/** @return a ByteArrayIO based on this byte array. */
 	public ByteArrayIO asBytesIO() {

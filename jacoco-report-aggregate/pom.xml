@@ -19,6 +19,16 @@
 	  <artifactId>lc-commons-io</artifactId>
 	  <version>${project.version}</version>
 	</dependency>
+	<dependency>
+	  <groupId>${project.groupId}</groupId>
+	  <artifactId>lc-reactive-commons</artifactId>
+	  <version>${project.version}</version>
+	</dependency>
+	<dependency>
+	  <groupId>${project.groupId}</groupId>
+	  <artifactId>lc-reactive-commons-io</artifactId>
+	  <version>${project.version}</version>
+	</dependency>
   </dependencies>
   
   <build>

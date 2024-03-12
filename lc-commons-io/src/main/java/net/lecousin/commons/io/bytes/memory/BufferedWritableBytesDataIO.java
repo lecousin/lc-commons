@@ -17,15 +17,17 @@ import net.lecousin.commons.io.bytes.data.BytesDataIO;
 
 // CHECKSTYLE DISABLE: MagicNumber
 
-/** Buffered writable bytes data IO. */
-public class BufferedWritableBytesDataIO extends AbstractIO implements BytesDataIO.Writable, IO.Writable.Appendable {
+/** Buffered writable bytes data IO.
+ * @param <I> type of wrapped IO
+ */
+public class BufferedWritableBytesDataIO<I extends BytesIO.Writable & IO.Writable.Appendable> extends AbstractIO implements BytesDataIO.Writable, IO.Writable.Appendable {
 
 	/** Minimum buffer size. */
 	public static final int MINIMUM_BUFFER_SIZE = 64;
 	/** Default buffer size. */
 	public static final int DEFAULT_BUFFER_SIZE = 8192;
 	
-	private BytesIO.Writable io;
+	private I io;
 	private boolean closeIoOnClose;
 	private ByteOrder order;
 	private int bufferSize;
@@ -39,7 +41,7 @@ public class BufferedWritableBytesDataIO extends AbstractIO implements BytesData
 	 * @param order byte order
 	 * @param closeIoOnClose if true, the underlying I/O will be closed together with this I/O
 	 */
-	public BufferedWritableBytesDataIO(BytesIO.Writable io, int bufferSize, ByteOrder order, boolean closeIoOnClose) {
+	public BufferedWritableBytesDataIO(I io, int bufferSize, ByteOrder order, boolean closeIoOnClose) {
 		this.io = Objects.requireNonNull(io, "io");
 		this.bufferSize = Math.max(MINIMUM_BUFFER_SIZE, bufferSize);
 		this.order = Objects.requireNonNull(order, "order");
@@ -52,7 +54,7 @@ public class BufferedWritableBytesDataIO extends AbstractIO implements BytesData
 	 * @param bufferSize buffer size
 	 * @param closeIoOnClose if true, the underlying I/O will be closed together with this I/O
 	 */
-	public BufferedWritableBytesDataIO(BytesIO.Writable io, int bufferSize, boolean closeIoOnClose) {
+	public BufferedWritableBytesDataIO(I io, int bufferSize, boolean closeIoOnClose) {
 		this(io, bufferSize, ByteOrder.LITTLE_ENDIAN, closeIoOnClose);
 	}
 	
@@ -62,7 +64,7 @@ public class BufferedWritableBytesDataIO extends AbstractIO implements BytesData
 	 * @param order byte order
 	 * @param closeIoOnClose if true, the underlying I/O will be closed together with this I/O
 	 */
-	public BufferedWritableBytesDataIO(BytesIO.Writable io, ByteOrder order, boolean closeIoOnClose) {
+	public BufferedWritableBytesDataIO(I io, ByteOrder order, boolean closeIoOnClose) {
 		this(io, DEFAULT_BUFFER_SIZE, order, closeIoOnClose);
 	}
 	
@@ -71,7 +73,7 @@ public class BufferedWritableBytesDataIO extends AbstractIO implements BytesData
 	 * @param io I/O
 	 * @param closeIoOnClose if true, the underlying I/O will be closed together with this I/O
 	 */
-	public BufferedWritableBytesDataIO(BytesIO.Writable io, boolean closeIoOnClose) {
+	public BufferedWritableBytesDataIO(I io, boolean closeIoOnClose) {
 		this(io, DEFAULT_BUFFER_SIZE, ByteOrder.LITTLE_ENDIAN, closeIoOnClose);
 	}
 	
@@ -146,6 +148,7 @@ public class BufferedWritableBytesDataIO extends AbstractIO implements BytesData
 				// but we have a current buffer => first fill the buffer
 				int r = currentBuffer.remaining();
 				System.arraycopy(buf, off, currentBuffer.bytes, currentBuffer.start + currentBuffer.position, r);
+				currentBuffer.position += r;
 				checkCurrentBuffer();
 				return r;
 			}
@@ -179,6 +182,7 @@ public class BufferedWritableBytesDataIO extends AbstractIO implements BytesData
 				// but we have a current buffer => first fill the buffer
 				int r = currentBuffer.remaining();
 				buffer.get(currentBuffer.bytes, currentBuffer.start + currentBuffer.position, r);
+				currentBuffer.position += r;
 				checkCurrentBuffer();
 				return r;
 			}

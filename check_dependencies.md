@@ -14,7 +14,7 @@
   </tr>
   <tr>
     <td>Lombok</td>
-    <td>1.18.28</td>
+    <td>1.18.30</td>
     <td><img src="https://img.shields.io/maven-central/v/org.projectlombok/lombok.svg"></td>
   </tr>
   <tr>
@@ -26,12 +26,12 @@
   <tr><th colspan="3">Test</th></tr>
   <tr>
     <td>JUnit</td>
-    <td>5.10.1</td>
+    <td>5.10.2</td>
     <td><img src="https://img.shields.io/maven-central/v/org.junit.jupiter/junit-jupiter.svg"></td>
   </tr>
   <tr>
     <td>assertj</td>
-    <td>3.25.2</td>
+    <td>3.25.3</td>
     <td><img src="https://img.shields.io/maven-central/v/org.assertj/assertj-core.svg"></td>
   </tr>
   
@@ -88,7 +88,7 @@
   </tr>
   <tr>
     <td>Checkstyle</td>
-    <td>10.13.0</td>
+    <td>10.14.0</td>
     <td><img src="https://img.shields.io/maven-central/v/com.puppycrawl.tools/checkstyle.svg"></td>
   </tr>
 </table>
