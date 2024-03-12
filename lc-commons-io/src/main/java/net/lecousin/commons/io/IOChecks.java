@@ -27,6 +27,8 @@ public final class IOChecks {
 	public static final String FIELD_POS = "pos";
 	/** Parameter buffer. */
 	public static final String FIELD_BUFFER = "buffer";
+	
+	private static final String LENGTH = ".length";
 
 	/**
 	 * Check byte array parameters.
@@ -42,7 +44,7 @@ public final class IOChecks {
 		if (buf == null) throw new NullPointerException(FIELD_BUF);
 		NegativeValueException.check(off, FIELD_OFF);
 		NegativeValueException.check(len, FIELD_LEN);
-		LimitExceededException.check((long) off + len, buf.length, FIELD_OFF + " + " + FIELD_LEN, FIELD_BUF + ".length");
+		LimitExceededException.check((long) off + len, buf.length, FIELD_OFF + " + " + FIELD_LEN, FIELD_BUF + LENGTH);
 	}
 	
 	/**
@@ -132,7 +134,7 @@ public final class IOChecks {
 		if (buf == null) return Optional.of(new NullPointerException(FIELD_BUF));
 		if (off < 0) return Optional.of(new NegativeValueException(off, FIELD_OFF));
 		if (len < 0) return Optional.of(new NegativeValueException(len, FIELD_LEN));
-		if (off + len > buf.length) return Optional.of(new LimitExceededException(off + len, buf.length, FIELD_OFF + " + " + FIELD_LEN, FIELD_BUF + ".length"));
+		if (off + len > buf.length) return Optional.of(new LimitExceededException(off + len, buf.length, FIELD_OFF + " + " + FIELD_LEN, FIELD_BUF + LENGTH));
 		return Optional.empty();
 	}
 	
@@ -151,7 +153,7 @@ public final class IOChecks {
 		if (buf == null) throw new NullPointerException(FIELD_BUF);
 		NegativeValueException.check(off, FIELD_OFF);
 		NegativeValueException.check(len, FIELD_LEN);
-		LimitExceededException.check((long) off + len, buf.length, FIELD_OFF + " + " + FIELD_LEN, FIELD_BUF + ".length");
+		LimitExceededException.check((long) off + len, buf.length, FIELD_OFF + " + " + FIELD_LEN, FIELD_BUF + LENGTH);
 	}
 	
 	/**
@@ -241,7 +243,7 @@ public final class IOChecks {
 		if (buf == null) return Optional.of(new NullPointerException(FIELD_BUF));
 		if (off < 0) return Optional.of(new NegativeValueException(off, FIELD_OFF));
 		if (len < 0) return Optional.of(new NegativeValueException(len, FIELD_LEN));
-		if (off + len > buf.length) return Optional.of(new LimitExceededException(off + len, buf.length, FIELD_OFF + " + " + FIELD_LEN, FIELD_BUF + ".length"));
+		if (off + len > buf.length) return Optional.of(new LimitExceededException(off + len, buf.length, FIELD_OFF + " + " + FIELD_LEN, FIELD_BUF + LENGTH));
 		return Optional.empty();
 	}
 

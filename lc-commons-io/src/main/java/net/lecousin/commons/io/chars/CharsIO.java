@@ -4,6 +4,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.channels.ClosedChannelException;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -12,8 +13,10 @@ import net.lecousin.commons.exceptions.LimitExceededException;
 import net.lecousin.commons.exceptions.NegativeValueException;
 import net.lecousin.commons.io.IO;
 import net.lecousin.commons.io.IOChecks;
+import net.lecousin.commons.io.bytes.BytesIO;
 import net.lecousin.commons.io.chars.memory.CharArray;
 import net.lecousin.commons.io.chars.memory.ReadableSeekableCharsIOFromCharSequence;
+import net.lecousin.commons.io.chars.utils.ReadableCharsIOFromBytesIO;
 
 /**
  * IO working on characters.
@@ -167,35 +170,6 @@ public interface CharsIO extends IO {
 		default void readCharsFully(char[] buf) throws IOException {
 			IOChecks.checkCharArrayOperation(this, buf);
 			readCharsFully(buf, 0, buf.length);
-		}
-		
-		/**
-		 * Skip up to <code>toSkip</code> characters.
-		 * 
-		 * @param toSkip maximum number of characters to skip
-		 * @return the number of characters skipped, or -1 if no character can be skipped because end is reached
-		 * @throws ClosedChannelException if this IO is already closed
-		 * @throws IOException in case an error occurred while skipping characters
-		 */
-		long skipUpTo(long toSkip) throws IOException;
-		
-		/**
-		 * Skip exactly <code>toSkip</code> characters.
-		 * 
-		 * @param toSkip number of characters to skip
-		 * @throws ClosedChannelException if this IO is already closed
-		 * @throws EOFException if the requested number of characters cannot be skipped because it would reach the end
-		 * @throws IOException in case an error occurred while skipping characters
-		 */
-		default void skipFully(long toSkip) throws IOException {
-			if (isClosed()) throw new ClosedChannelException();
-			NegativeValueException.check(toSkip, "toSkip");
-			long done = 0;
-			while (done < toSkip) {
-				long nb = skipUpTo(toSkip - done);
-				if (nb <= 0) throw new EOFException();
-				done += nb;
-			}
 		}
 		
 		/**
@@ -776,6 +750,17 @@ public interface CharsIO extends IO {
 	static CharsIO.Readable.Seekable asReadableSeekable(CharSequence chars) {
 		if (chars instanceof CharArray ca) return ca.asCharsIO().asReadableSeekableCharsIO();
 		return new ReadableSeekableCharsIOFromCharSequence(chars);
+	}
+
+	/**
+	 * Create a CharsIO from a BytesIO, using s specific Charset to decode bytes into characters.
+	 * @param bytes BytesIO
+	 * @param charset charset to use
+	 * @param closeIoOnClose if true the BytesIO will be closed when the CharsIO is closed
+	 * @return the CharsIO
+	 */
+	static CharsIO.Readable fromBytesIO(BytesIO.Readable bytes, Charset charset, boolean closeIoOnClose) {
+		return new ReadableCharsIOFromBytesIO(bytes, charset, closeIoOnClose);
 	}
 	
 }

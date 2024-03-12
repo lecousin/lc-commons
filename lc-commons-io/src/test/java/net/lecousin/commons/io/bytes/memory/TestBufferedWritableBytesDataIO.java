@@ -1,7 +1,5 @@
 package net.lecousin.commons.io.bytes.memory;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.io.RandomAccessFile;
 import java.nio.ByteOrder;
 import java.nio.file.Files;

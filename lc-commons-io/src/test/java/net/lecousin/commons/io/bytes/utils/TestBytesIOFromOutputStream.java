@@ -1,6 +1,5 @@
 package net.lecousin.commons.io.bytes.utils;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.FileOutputStream;

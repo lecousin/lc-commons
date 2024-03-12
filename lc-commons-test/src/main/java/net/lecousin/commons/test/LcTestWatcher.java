@@ -14,7 +14,7 @@ public class LcTestWatcher implements TestWatcher {
 	@Override
 	public void testFailed(ExtensionContext context, Throwable cause) {
 		if (cause != null)
-			log.error("Test failed: {}", context.getDisplayName(), cause);
+			log.error("Test failed: {} {}", context.getClass(), context.getDisplayName(), cause);
 	}
 	
 }

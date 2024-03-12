@@ -2,6 +2,7 @@ package net.lecousin.commons.io.bytes;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.util.List;
@@ -12,6 +13,7 @@ import net.lecousin.commons.exceptions.LimitExceededException;
 import net.lecousin.commons.exceptions.NegativeValueException;
 import net.lecousin.commons.io.IO;
 import net.lecousin.commons.io.IOChecks;
+import net.lecousin.commons.io.bytes.utils.BytesIOFromInputStream;
 
 /**
  * IO working on bytes.
@@ -167,35 +169,6 @@ public interface BytesIO extends IO {
 		default void readBytesFully(byte[] buf) throws IOException {
 			IOChecks.checkByteArrayOperation(this, buf);
 			readBytesFully(buf, 0, buf.length);
-		}
-		
-		/**
-		 * Skip up to <code>toSkip</code> bytes.
-		 * 
-		 * @param toSkip maximum number of bytes to skip
-		 * @return the number of bytes skipped, or -1 if no byte can be skipped because end is reached
-		 * @throws ClosedChannelException if this IO is already closed
-		 * @throws IOException in case an error occurred while skipping bytes
-		 */
-		long skipUpTo(long toSkip) throws IOException;
-		
-		/**
-		 * Skip exactly <code>toSkip</code> bytes.
-		 * 
-		 * @param toSkip number of bytes to skip
-		 * @throws ClosedChannelException if this IO is already closed
-		 * @throws EOFException if the requested number of bytes cannot be skipped because it would reach the end
-		 * @throws IOException in case an error occurred while skipping bytes
-		 */
-		default void skipFully(long toSkip) throws IOException {
-			if (isClosed()) throw new ClosedChannelException();
-			NegativeValueException.check(toSkip, "toSkip");
-			long done = 0;
-			while (done < toSkip) {
-				long nb = skipUpTo(toSkip - done);
-				if (nb <= 0) throw new EOFException();
-				done += nb;
-			}
 		}
 		
 		/**
@@ -766,6 +739,16 @@ public interface BytesIO extends IO {
 			
 		}
 		
+	}
+
+	/** Create a BytesIO from an InputStream.
+	 * 
+	 * @param stream the InputStream
+	 * @param closeStreamOnClose if true the InputStream will be closed when the returned BytesIO is closed
+	 * @return a BytesIO.Readable
+	 */
+	static BytesIO.Readable from(InputStream stream, boolean closeStreamOnClose) {
+		return new BytesIOFromInputStream(stream, closeStreamOnClose);
 	}
 
 }

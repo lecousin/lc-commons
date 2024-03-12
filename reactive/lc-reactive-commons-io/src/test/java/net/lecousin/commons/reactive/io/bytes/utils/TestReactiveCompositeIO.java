@@ -1,7 +1,5 @@
 package net.lecousin.commons.reactive.io.bytes.utils;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;

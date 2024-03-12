@@ -1,7 +1,5 @@
 package net.lecousin.commons.io.bytes.utils;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.nio.ByteOrder;
 import java.util.List;
 

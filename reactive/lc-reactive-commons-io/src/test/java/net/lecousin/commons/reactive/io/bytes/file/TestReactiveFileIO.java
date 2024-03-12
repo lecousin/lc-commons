@@ -1,7 +1,5 @@
 package net.lecousin.commons.reactive.io.bytes.file;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.io.ByteArrayInputStream;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
