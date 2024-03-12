@@ -12,11 +12,18 @@ import net.lecousin.commons.io.AbstractIO;
 import net.lecousin.commons.io.IOChecks;
 import net.lecousin.commons.io.chars.CharsIO;
 
+/**
+ * Readable and Seekable CharsIO from a CharSequence.
+ */
 public class ReadableSeekableCharsIOFromCharSequence extends AbstractIO implements CharsIO.Readable.Seekable {
 
 	private final CharSequence chars;
 	private int position = 0;
 	
+	/**
+	 * Constructor.
+	 * @param chars char sequence
+	 */
 	public ReadableSeekableCharsIOFromCharSequence(CharSequence chars) {
 		this.chars = chars;
 	}
