@@ -41,4 +41,13 @@ class TestCharArray {
 		assertThat(b.remaining()).isEqualTo(4);
 	}
 	
+	@Test
+	void testAsCharSequence() {
+		CharArray a = new CharArray("abcdefg".toCharArray());
+		assertThat(a.length()).isEqualTo(7);
+		assertThat(a.charAt(3)).isEqualTo('d');
+		assertThat(a.subSequence(2, 5).toString()).isEqualTo("cde");
+		assertThat(a.toString()).isEqualTo("abcdefg");
+	}
+	
 }

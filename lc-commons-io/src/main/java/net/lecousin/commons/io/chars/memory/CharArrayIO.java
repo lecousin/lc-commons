@@ -192,7 +192,7 @@ public class CharArrayIO extends AbstractIO implements CharsIO.ReadWrite.Resizab
 	public char readChar() throws IOException {
 		if (chars == null) throw new ClosedChannelException();
 		if (chars.start + chars.position == chars.end) throw new EOFException();
-		return chars.chars[chars.start + chars.position++];
+		return chars.readChar();
 	}
 	
 	@Override
@@ -295,8 +295,7 @@ public class CharArrayIO extends AbstractIO implements CharsIO.ReadWrite.Resizab
 		IOChecks.checkCharArrayOperation(this, buf, off, len);
 		if (len == 0) return;
 		if (len > chars.remaining() && !extendCapacity((long) chars.position + len)) throw new EOFException();
-		System.arraycopy(buf, off, chars.chars, chars.start + chars.position, len);
-		chars.position += len;
+		chars.write(buf, off, len);
 	}
 	
 	@Override
@@ -318,7 +317,7 @@ public class CharArrayIO extends AbstractIO implements CharsIO.ReadWrite.Resizab
 	public void writeChar(char value) throws IOException {
 		if (chars == null) throw new ClosedChannelException();
 		if (chars.position == chars.end - chars.start && !extendCapacity(chars.getSize() + 1L)) throw new EOFException();
-		chars.chars[chars.start + chars.position++] = value;
+		chars.writeChar(value);
 	}
 	
 	@Override

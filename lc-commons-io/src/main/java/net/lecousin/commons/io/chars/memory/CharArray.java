@@ -125,7 +125,7 @@ public class CharArray implements DataArray<char[]>, CharSequence {
 	 * @return the char
 	 */
 	public char readChar() {
-		return chars[position++];
+		return chars[start + position++];
 	}
 	
 	/**
@@ -133,7 +133,7 @@ public class CharArray implements DataArray<char[]>, CharSequence {
 	 * @param b the char
 	 */
 	public void writeChar(char b) {
-		chars[position++] = b;
+		chars[start + position++] = b;
 	}
 	
 	/**
@@ -143,7 +143,7 @@ public class CharArray implements DataArray<char[]>, CharSequence {
 	 * @param len number of chars
 	 */
 	public void write(char[] src, int off, int len) {
-		System.arraycopy(src, off, chars, position, len);
+		System.arraycopy(src, off, chars, start + position, len);
 		position += len;
 	}
 	

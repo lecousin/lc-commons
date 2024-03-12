@@ -126,7 +126,7 @@ public class ByteArray implements DataArray<byte[]> {
 	 * @return the byte
 	 */
 	public byte readByte() {
-		return bytes[position++];
+		return bytes[start + position++];
 	}
 	
 	/**
@@ -134,7 +134,7 @@ public class ByteArray implements DataArray<byte[]> {
 	 * @param b the byte
 	 */
 	public void writeByte(byte b) {
-		bytes[position++] = b;
+		bytes[start + position++] = b;
 	}
 	
 	/**
@@ -144,7 +144,7 @@ public class ByteArray implements DataArray<byte[]> {
 	 * @param len number of bytes
 	 */
 	public void write(byte[] src, int off, int len) {
-		System.arraycopy(src, off, bytes, position, len);
+		System.arraycopy(src, off, bytes, start + position, len);
 		position += len;
 	}
 	

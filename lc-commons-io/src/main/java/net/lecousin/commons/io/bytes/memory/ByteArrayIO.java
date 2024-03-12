@@ -191,7 +191,7 @@ public class ByteArrayIO extends AbstractIO implements BytesIO.ReadWrite.Resizab
 	public byte readByte() throws IOException {
 		if (bytes == null) throw new ClosedChannelException();
 		if (bytes.start + bytes.position == bytes.end) throw new EOFException();
-		return bytes.bytes[bytes.start + bytes.position++];
+		return bytes.readByte();
 	}
 	
 	@Override
@@ -294,8 +294,7 @@ public class ByteArrayIO extends AbstractIO implements BytesIO.ReadWrite.Resizab
 		IOChecks.checkByteArrayOperation(this, buf, off, len);
 		if (len == 0) return;
 		if (len > bytes.remaining() && !extendCapacity((long) bytes.position + len)) throw new EOFException();
-		System.arraycopy(buf, off, bytes.bytes, bytes.start + bytes.position, len);
-		bytes.position += len;
+		bytes.write(buf, off, len);
 	}
 	
 	@Override
@@ -317,7 +316,7 @@ public class ByteArrayIO extends AbstractIO implements BytesIO.ReadWrite.Resizab
 	public void writeByte(byte value) throws IOException {
 		if (bytes == null) throw new ClosedChannelException();
 		if (bytes.position == bytes.end - bytes.start && !extendCapacity(bytes.getSize() + 1L)) throw new EOFException();
-		bytes.bytes[bytes.start + bytes.position++] = value;
+		bytes.writeByte(value);
 	}
 	
 	@Override

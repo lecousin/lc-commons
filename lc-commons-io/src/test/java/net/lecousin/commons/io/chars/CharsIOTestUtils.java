@@ -1,5 +1,10 @@
 package net.lecousin.commons.io.chars;
 
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
@@ -11,7 +16,6 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import net.lecousin.commons.io.IOTestUtils;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.BufferSizeProvider;
-import net.lecousin.commons.io.bytes.data.BytesData;
 import net.lecousin.commons.test.ParameterizedTestUtils;
 import net.lecousin.commons.test.ParameterizedTestUtils.CompositeArgumentsProvider;
 
@@ -23,23 +27,15 @@ public final class CharsIOTestUtils {
 	
 	public static char[] generateContent(int size) {
 		char[] data = new char[size];
+		CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.IGNORE).onUnmappableCharacter(CodingErrorAction.IGNORE);
 		Random random = new Random();
 		for (int i = 0; i < size; ) {
-			byte[] bytes = new byte[(size - i) * 4];
+			byte[] bytes = new byte[(size - i) * 2 + 16];
 			random.nextBytes(bytes);
-			for (int j = 0; j < bytes.length && i < size; j += 4) {
-				int r = BytesData.LE.readInteger(bytes, j);
-				if (Character.isDefined(r)) {
-					int nb = Character.charCount(r);
-					if (i + nb <= size) {
-						Character.toChars(r, data, i);
-						i += nb;
-					}
-				}
-			}
-			for (int j = 0; j < bytes.length && i < size; j += 32) {
-				data[i++] = (char)bytes[j];
-			}
+			CharBuffer b = CharBuffer.wrap(data, i, size - i);
+			decoder.reset();
+			decoder.decode(ByteBuffer.wrap(bytes), b, true);
+			i += b.position();
 		}
 		return data;
 	}
