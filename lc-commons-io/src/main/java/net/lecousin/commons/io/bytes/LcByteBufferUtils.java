@@ -1,4 +1,4 @@
-package net.lecousin.commons.io;
+package net.lecousin.commons.io.bytes;
 
 import java.nio.ByteBuffer;
 

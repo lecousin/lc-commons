@@ -678,7 +678,7 @@ public interface BytesIO extends IO {
 			}
 			
 			/**
-			 * Write all bytes ath the given position from the all the given buffer.<br/>
+			 * Write all bytes at the given position from the all the given buffer.<br/>
 			 * If it cannot write all bytes because end is reached, EOFException is thrown.
 			 * 
 			 * @param pos position

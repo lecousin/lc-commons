@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
+
 import net.lecousin.commons.io.bytes.AbstractReadWriteBytesIOTest;
 import net.lecousin.commons.io.bytes.AbstractReadableSeekableBytesIOTest;
 import net.lecousin.commons.io.bytes.AbstractWritableBytesIOTest.WritableTestCase;
@@ -95,7 +97,7 @@ public class TestFileIO {
 		protected void checkWrittenData(BytesIO.Writable.Seekable io, Object object, byte[] expected) throws Exception {
 			Path path = (Path) object;
 			byte[] found = Files.readAllBytes(path);
-			assertThat(found).containsExactly(expected);
+			Assertions.assertArrayEquals(expected, found);
 		}
 	}
 	

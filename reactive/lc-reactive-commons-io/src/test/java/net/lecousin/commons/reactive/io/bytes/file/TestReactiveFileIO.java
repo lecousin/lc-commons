@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
+
 import net.lecousin.commons.reactive.io.bytes.AbstractReadWriteReactiveBytesIOTest;
 import net.lecousin.commons.reactive.io.bytes.AbstractReadableReactiveBytesIOTest;
 import net.lecousin.commons.reactive.io.bytes.AbstractWritableReactiveBytesIOTest;
@@ -74,7 +76,7 @@ public class TestReactiveFileIO {
 		protected void checkWrittenData(ReactiveBytesIO.Writable io, Object object, byte[] expected) throws Exception {
 			Path path = (Path) object;
 			byte[] found = Files.readAllBytes(path);
-			assertThat(found).containsExactly(expected);
+			Assertions.assertArrayEquals(expected, found);
 		}
 	}
 	
@@ -137,7 +139,7 @@ public class TestReactiveFileIO {
 		protected void checkWrittenData(ReactiveBytesIO.Writable.Seekable io, Object object, byte[] expected) throws Exception {
 			Path path = (Path) object;
 			byte[] found = Files.readAllBytes(path);
-			assertThat(found).containsExactly(expected);
+			Assertions.assertArrayEquals(expected, found);
 		}
 	}
 	

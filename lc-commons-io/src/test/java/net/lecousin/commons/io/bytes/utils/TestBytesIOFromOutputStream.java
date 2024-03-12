@@ -12,6 +12,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
+
 import net.lecousin.commons.io.bytes.AbstractWritableBytesIOTest;
 import net.lecousin.commons.io.bytes.BytesIO;
 import net.lecousin.commons.io.stream.ByteArrayOutputStreamAccessible;
@@ -59,7 +61,7 @@ public class TestBytesIOFromOutputStream extends AbstractWritableBytesIOTest {
 			try {
 				Path path = (Path) object;
 				byte[] found = Files.readAllBytes(path);
-				assertThat(found).containsExactly(expected);
+				Assertions.assertArrayEquals(expected, found);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

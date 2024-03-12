@@ -9,6 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
+
 import net.lecousin.commons.io.bytes.memory.ByteArray;
 import net.lecousin.commons.reactive.io.bytes.AbstractReadWriteReactiveBytesIOTest;
 import net.lecousin.commons.reactive.io.bytes.AbstractReadableSeekableReactiveBytesIOTest;
@@ -59,7 +61,7 @@ public class TestReactiveSubBytesIO {
 		byte[] found = new byte[expected.length];
 		reader.readBytesFully(found).block();
 		reader.close().block();
-		assertThat(found).containsExactly(expected);
+		Assertions.assertArrayEquals(expected, found);
 	}
 	
 	public static class TestWritableSeekable extends AbstractWritableSeekableReactiveBytesIOTest {

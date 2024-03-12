@@ -24,7 +24,6 @@ import net.lecousin.commons.exceptions.NegativeValueException;
 import net.lecousin.commons.io.AbstractWritableIOTest;
 import net.lecousin.commons.io.AbstractWritableResizableIOTest;
 import net.lecousin.commons.io.IO;
-import net.lecousin.commons.io.LcByteBufferUtils;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.RandomContentTestCasesProvider;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.RandomContentWithBufferSizeTestCasesProvider;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.SmallRandomContentTestCasesProvider;

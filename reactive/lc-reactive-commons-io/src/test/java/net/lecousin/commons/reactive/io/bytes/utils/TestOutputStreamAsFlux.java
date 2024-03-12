@@ -7,6 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -32,7 +33,7 @@ class TestOutputStreamAsFlux {
 			error -> done.completeExceptionally(error),
 			() -> {
 				assertThat(pos.get()).isEqualTo(content.length);
-				assertThat(found).containsExactly(content);
+				Assertions.assertArrayEquals(content, found);
 				done.complete(null);
 			}
 		);

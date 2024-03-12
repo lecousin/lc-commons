@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
+
 import net.lecousin.commons.io.bytes.memory.ByteArray;
 import net.lecousin.commons.reactive.io.bytes.AbstractReadWriteReactiveBytesIOTest;
 import net.lecousin.commons.reactive.io.bytes.AbstractReadableReactiveBytesIOTest;
@@ -169,7 +171,7 @@ public class TestReactiveCompositeIO {
 			expected = new byte[len];
 			System.arraycopy(data, off, expected, 0, len);
 		}
-		assertThat(written).containsExactly(expected);
+		Assertions.assertArrayEquals(expected, written);
 	}
 
 	

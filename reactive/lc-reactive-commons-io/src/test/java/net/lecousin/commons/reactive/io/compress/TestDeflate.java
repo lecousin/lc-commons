@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -35,7 +36,7 @@ class TestDeflate {
 			byte[] expected = new byte[buf.length];
 			System.arraycopy(data, pos, expected, 0, buf.length);
 			b.get(buf);
-			assertThat(buf).containsExactly(expected);
+			Assertions.assertArrayEquals(expected, buf);
 			pos += buf.length;
 		}
 		assertThat(pos).isEqualTo(data.length);
@@ -57,7 +58,7 @@ class TestDeflate {
 			byte[] expected = new byte[buf.length];
 			System.arraycopy(data, pos, expected, 0, buf.length);
 			b.get(buf);
-			assertThat(buf).containsExactly(expected);
+			Assertions.assertArrayEquals(expected, buf);
 			pos += buf.length;
 		}
 		assertThat(pos).isEqualTo(data.length);

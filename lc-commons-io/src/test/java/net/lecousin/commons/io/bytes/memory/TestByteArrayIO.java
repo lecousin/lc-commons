@@ -6,6 +6,8 @@ import java.nio.ByteOrder;
 import java.util.List;
 import java.util.function.IntBinaryOperator;
 
+import org.junit.jupiter.api.Assertions;
+
 import net.lecousin.commons.io.bytes.AbstractReadWriteBytesIOTest;
 import net.lecousin.commons.io.bytes.AbstractReadableSeekableBytesIOTest;
 import net.lecousin.commons.io.bytes.AbstractWritableBytesIOTest.WritableTestCase;
@@ -154,7 +156,7 @@ public class TestByteArrayIO {
 			assertThat(ba.getSize()).isEqualTo(expected.length);
 			ba.trim();
 			assertThat(ba.getSize()).isEqualTo(expected.length);
-			assertThat(ba.getArray()).containsExactly(expected);
+			Assertions.assertArrayEquals(expected, ba.getArray());
 			assertThat(ba.getArrayStartOffset()).isZero();
 		}
 	}
@@ -293,7 +295,7 @@ public class TestByteArrayIO {
 			assertThat(ba.getSize()).isEqualTo(expected.length);
 			ba.trim();
 			assertThat(ba.getSize()).isEqualTo(expected.length);
-			assertThat(ba.getArray()).containsExactly(expected);
+			Assertions.assertArrayEquals(expected, ba.getArray());
 		}
 	}
 

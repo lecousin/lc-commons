@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
+
 import net.lecousin.commons.io.bytes.AbstractReadWriteBytesIOTest;
 import net.lecousin.commons.io.bytes.AbstractReadableBytesIOTest;
 import net.lecousin.commons.io.bytes.AbstractReadableSeekableBytesIOTest;
@@ -52,7 +54,7 @@ public class TestReactiveBytesIOToNonReactive {
 		@Override
 		protected void checkWrittenData(BytesIO.Writable io, Object object, byte[] expected) throws Exception {
 			ByteArray ba = (ByteArray) object;
-			assertThat(ba.getArray()).containsExactly(expected);
+			Assertions.assertArrayEquals(expected, ba.getArray());
 		}
 	}
 	
@@ -74,7 +76,7 @@ public class TestReactiveBytesIOToNonReactive {
 		protected void checkWrittenData(BytesIO.Writable.Seekable io, Object object, byte[] expected) throws Exception {
 			ByteArray ba = (ByteArray) object;
 			ba.trim();
-			assertThat(ba.getArray()).containsExactly(expected);
+			Assertions.assertArrayEquals(expected, ba.getArray());
 		}
 	}
 	

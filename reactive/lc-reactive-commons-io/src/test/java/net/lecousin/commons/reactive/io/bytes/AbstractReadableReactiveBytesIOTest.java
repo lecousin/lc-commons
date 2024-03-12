@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -422,7 +423,7 @@ public abstract class AbstractReadableReactiveBytesIOTest implements TestCasesPr
 		ReactiveBytesIO.Writable out = ReactiveBytesIO.fromByteArrayAppendable(ba);
 		io.transferFully(out, 2).block();
 		ba.trim();
-		assertThat(ba.getArray()).containsExactly(expected);
+		Assertions.assertArrayEquals(expected, ba.getArray());
 
 		io.close().block();
 		StepVerifier.create(io.transferFully(out, 2)).expectError(ClosedChannelException.class).verify();
@@ -439,7 +440,7 @@ public abstract class AbstractReadableReactiveBytesIOTest implements TestCasesPr
 		
 		io.transferBytes(out, expected.length - expected.length / 2, bufferSize).block();
 		ba.trim();
-		assertThat(ba.getArray()).containsExactly(expected);
+		Assertions.assertArrayEquals(expected, ba.getArray());
 		
 		StepVerifier.create(io.transferBytes(out, 10, bufferSize)).expectError(EOFException.class).verify();
 		

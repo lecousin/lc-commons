@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
+
 import net.lecousin.commons.io.bytes.AbstractWritableBytesIOTest.WritableTestCase;
 import net.lecousin.commons.io.bytes.data.AbstractWritableBytesDataIOTest;
 import net.lecousin.commons.io.bytes.data.BytesDataIO;
@@ -86,7 +88,7 @@ public class TestBufferedWritableBytesDataIO extends AbstractWritableBytesDataIO
 			found = new byte[ba.getSize()];
 			System.arraycopy(ba.getArray(), ba.getArrayStartOffset(), found, 0, found.length);
 		}
-		assertThat(found).containsExactly(expected);
+		Assertions.assertArrayEquals(expected, found);
 	}
 	
 }
