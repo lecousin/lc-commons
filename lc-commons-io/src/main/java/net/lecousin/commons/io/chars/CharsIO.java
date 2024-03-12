@@ -767,7 +767,12 @@ public interface CharsIO extends IO {
 		}
 		
 	}
-	
+
+	/**
+	 * Create a readable and seekable CharsIO from a CharSequence.
+	 * @param chars char sequence
+	 * @return CharsIO
+	 */
 	static CharsIO.Readable.Seekable asReadableSeekable(CharSequence chars) {
 		if (chars instanceof CharArray ca) return ca.asCharsIO().asReadableSeekableCharsIO();
 		return new ReadableSeekableCharsIOFromCharSequence(chars);
