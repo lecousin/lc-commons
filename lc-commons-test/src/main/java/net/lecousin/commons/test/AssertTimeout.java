@@ -12,6 +12,7 @@ public final class AssertTimeout {
 	 * @param timeout timeout in milliseconds
 	 * @param checkInterval interval to check in milliseconds
 	 */
+	@SuppressWarnings("java:S1181")
 	public static void assertTimeout(Runnable assertions, long timeout, long checkInterval) {
 		Throwable lastException = null;
 		long start = System.currentTimeMillis();
@@ -37,6 +38,7 @@ public final class AssertTimeout {
 	 * @param assertions assertions
 	 * @param delay delay in milliseconds
 	 */
+	@SuppressWarnings("java:S112")
 	public static void assertIn(Runnable assertions, long delay) {
 		try {
 			Thread.sleep(delay);

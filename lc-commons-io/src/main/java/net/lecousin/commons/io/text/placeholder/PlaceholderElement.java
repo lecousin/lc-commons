@@ -115,17 +115,17 @@ public interface PlaceholderElement<T> {
 	 * @param elements elements
 	 * @param <T> type of input to resolve placeholders
 	 */
-	@SuppressWarnings("java:S127")
 	static <T> void mergeStrings(List<PlaceholderElement<? super T>> elements) {
-		for (int i = 1; i < elements.size(); ++i) {
-			PlaceholderElement<?> e = elements.get(i);
-			if (e instanceof PlaceholderStringElement s1) {
-				PlaceholderElement<?> e2 = elements.get(i - 1);
-				if (e2 instanceof PlaceholderStringElement s2) {
-					s1.setString(s1.getString() + s2.getString());
-					elements.remove(i);
-					i--;
-				}
+		if (elements.size() < 2) return;
+		var it = elements.iterator();
+		var previous = it.next();
+		while (it.hasNext()) {
+			var next = it.next();
+			if (next instanceof PlaceholderStringElement s2 && previous instanceof PlaceholderStringElement s1) {
+				s1.setString(s1.getString() + s2.getString());
+				it.remove();
+			} else {
+				previous = next;
 			}
 		}
 	}

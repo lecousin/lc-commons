@@ -4,13 +4,12 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.channels.ClosedChannelException;
-import java.util.Objects;
 import java.util.Optional;
 
 import net.lecousin.commons.exceptions.NegativeValueException;
-import net.lecousin.commons.io.AbstractIO;
 import net.lecousin.commons.io.IOChecks;
 import net.lecousin.commons.io.chars.CharsIO;
+import net.lecousin.commons.io.utils.AbstractSubIO;
 
 /**
  * Sub-part of a seekable IO.
@@ -59,57 +58,13 @@ public interface SubCharsIO {
 	}
 
 	/** Read-Write implementation. */
-	class ReadWrite extends AbstractIO implements CharsIO.ReadWrite {
+	class ReadWrite extends AbstractSubIO<CharsIO> implements CharsIO.ReadWrite {
 
-		protected CharsIO io;
-		protected long start;
-		protected long size;
-		protected long position = 0;
-		private boolean closeIoOnClose;
-		
 		protected ReadWrite(CharsIO io, long start, long size, boolean closeIoOnClose) {
-			NegativeValueException.check(start, "start");
-			NegativeValueException.check(size, "size");
-			this.io = io;
-			this.start = start;
-			this.size = size;
-			this.closeIoOnClose = closeIoOnClose;
+			super(io, start, size, closeIoOnClose);
 		}
 		
 		private static final int DEFAULT_BUFFER_SIZE = 8192;
-		
-		@Override
-		protected void closeInternal() throws IOException {
-			if (closeIoOnClose) io.close();
-			io = null;
-		}
-		
-		@Override
-		public long position() throws IOException {
-			if (io == null) throw new ClosedChannelException();
-			return position;
-		}
-		
-		@Override
-		public long size() throws IOException {
-			if (io == null) throw new ClosedChannelException();
-			return size;
-		}
-		
-		@Override
-		public long seek(SeekFrom from, long offset) throws IOException {
-			if (io == null) throw new ClosedChannelException();
-			long p;
-			switch (Objects.requireNonNull(from, "from")) {
-			case CURRENT: p = position + offset; break;
-			case END: p = size - offset; break;
-			case START: default: p = offset; break;
-			}
-			if (p < 0) throw new IllegalArgumentException("Cannot move beyond the start: " + p);
-			if (p > size) throw new EOFException();
-			this.position = p;
-			return p;
-		}
 		
 		// --- Readable ---
 		
@@ -149,7 +104,7 @@ public interface SubCharsIO {
 		
 		@Override
 		public int readCharsAt(long pos, CharBuffer buffer) throws IOException {
-			IOChecks.checkCharBufferOperation(this, pos, buffer);
+			IOChecks.checkBufferOperation(this, pos, buffer);
 			int r = buffer.remaining();
 			if (r == 0) return 0;
 			if (pos >= size) return -1;
@@ -164,7 +119,7 @@ public interface SubCharsIO {
 		
 		@Override
 		public int readChars(char[] buf, int off, int len) throws IOException {
-			IOChecks.checkCharArrayOperation(this, buf, off, len);
+			IOChecks.checkArrayOperation(this, buf, off, len);
 			if (len == 0) return 0;
 			if (position == size) return -1;
 			len = (int) Math.min(len, size - position);
@@ -175,7 +130,7 @@ public interface SubCharsIO {
 		
 		@Override
 		public int readCharsAt(long pos, char[] buf, int off, int len) throws IOException {
-			IOChecks.checkCharArrayOperation(this, pos, buf, off, len);
+			IOChecks.checkArrayOperation(this, pos, buf, off, len);
 			if (len == 0) return 0;
 			if (pos >= size) return -1;
 			len = (int) Math.min(len, size - pos);
@@ -204,7 +159,7 @@ public interface SubCharsIO {
 		
 		@Override
 		public void readCharsFullyAt(long pos, CharBuffer buffer) throws IOException {
-			IOChecks.checkCharBufferOperation(this, pos, buffer);
+			IOChecks.checkBufferOperation(this, pos, buffer);
 			int r = buffer.remaining();
 			if (r == 0) return;
 			if (pos + r > size) throw new EOFException();
@@ -213,7 +168,7 @@ public interface SubCharsIO {
 		
 		@Override
 		public void readCharsFully(char[] buf, int off, int len) throws IOException {
-			IOChecks.checkCharArrayOperation(this, buf, off, len);
+			IOChecks.checkArrayOperation(this, buf, off, len);
 			if (len == 0) return;
 			if (position + len > size) throw new EOFException();
 			((CharsIO.Readable.Seekable) io).readCharsFullyAt(start + position, buf, off, len);
@@ -222,40 +177,15 @@ public interface SubCharsIO {
 		
 		@Override
 		public void readCharsFullyAt(long pos, char[] buf, int off, int len) throws IOException {
-			IOChecks.checkCharArrayOperation(this, pos, buf, off, len);
+			IOChecks.checkArrayOperation(this, pos, buf, off, len);
 			if (len == 0) return;
 			if (pos + len > size) throw new EOFException();
 			((CharsIO.Readable.Seekable) io).readCharsFullyAt(start + pos, buf, off, len);
 		}
 		
-		@Override
-		public long skipUpTo(long toSkip) throws IOException {
-			if (io == null) throw new ClosedChannelException();
-			if (toSkip == 0) return 0;
-			NegativeValueException.check(toSkip, "toSkip");
-			if (position == size) return -1;
-			long skip = Math.min(toSkip, size - position);
-			this.position += skip;
-			return skip;
-		}
-		
-		@Override
-		public void skipFully(long toSkip) throws IOException {
-			if (io == null) throw new ClosedChannelException();
-			NegativeValueException.check(toSkip, "toSkip");
-			if (toSkip > size - position) throw new EOFException();
-			this.position += toSkip;
-		}
-		
 		
 		// --- Writable ---
 		
-		@Override
-		public void flush() throws IOException {
-			if (io == null) throw new ClosedChannelException();
-			((CharsIO.Writable) io).flush();
-		}
-
 		@Override
 		public void writeChar(char value) throws IOException {
 			if (io == null) throw new ClosedChannelException();
@@ -292,7 +222,7 @@ public interface SubCharsIO {
 		
 		@Override
 		public int writeCharsAt(long pos, CharBuffer buffer) throws IOException {
-			IOChecks.checkCharBufferOperation(this, pos, buffer);
+			IOChecks.checkBufferOperation(this, pos, buffer);
 			int r = buffer.remaining();
 			if (r == 0) return 0;
 			if (pos >= size) return -1;
@@ -307,7 +237,7 @@ public interface SubCharsIO {
 		
 		@Override
 		public int writeChars(char[] buf, int off, int len) throws IOException {
-			IOChecks.checkCharArrayOperation(this, buf, off, len);
+			IOChecks.checkArrayOperation(this, buf, off, len);
 			if (len == 0) return 0;
 			if (position == size) return -1;
 			len = (int) Math.min(len, size - position);
@@ -318,7 +248,7 @@ public interface SubCharsIO {
 		
 		@Override
 		public int writeCharsAt(long pos, char[] buf, int off, int len) throws IOException {
-			IOChecks.checkCharArrayOperation(this, pos, buf, off, len);
+			IOChecks.checkArrayOperation(this, pos, buf, off, len);
 			if (len == 0) return 0;
 			if (pos >= size) return -1;
 			len = (int) Math.min(len, size - pos);
@@ -337,7 +267,7 @@ public interface SubCharsIO {
 		
 		@Override
 		public void writeCharsFullyAt(long pos, CharBuffer buffer) throws IOException {
-			IOChecks.checkCharBufferOperation(this, pos, buffer);
+			IOChecks.checkBufferOperation(this, pos, buffer);
 			int r = buffer.remaining();
 			if (r == 0) return;
 			if (pos + r > size) throw new EOFException();
@@ -346,7 +276,7 @@ public interface SubCharsIO {
 		
 		@Override
 		public void writeCharsFully(char[] buf, int off, int len) throws IOException {
-			IOChecks.checkCharArrayOperation(this, buf, off, len);
+			IOChecks.checkArrayOperation(this, buf, off, len);
 			if (len == 0) return;
 			if (position + len > size) throw new EOFException();
 			((CharsIO.Writable.Seekable) io).writeCharsFullyAt(start + position, buf, off, len);
@@ -355,7 +285,7 @@ public interface SubCharsIO {
 		
 		@Override
 		public void writeCharsFullyAt(long pos, char[] buf, int off, int len) throws IOException {
-			IOChecks.checkCharArrayOperation(this, pos, buf, off, len);
+			IOChecks.checkArrayOperation(this, pos, buf, off, len);
 			if (len == 0) return;
 			if (pos + len > size) throw new EOFException();
 			((CharsIO.Writable.Seekable) io).writeCharsFullyAt(start + pos, buf, off, len);

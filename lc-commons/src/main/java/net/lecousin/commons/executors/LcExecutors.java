@@ -89,6 +89,7 @@ public final class LcExecutors {
 	 * @param service the service to wrap
 	 * @return the LcExecutor wrapping the service
 	 */
+	@SuppressWarnings("java:S1181")
 	public static LcExecutor createJavaExecutor(ScheduledExecutorService service) {
 		return new LcExecutor() {
 			@Override

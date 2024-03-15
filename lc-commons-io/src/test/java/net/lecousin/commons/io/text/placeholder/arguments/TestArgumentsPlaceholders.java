@@ -34,6 +34,7 @@ public class TestArgumentsPlaceholders extends AbstractTextParserTest<List<Place
 			testCase("ab{{1}}\r", List.of(9), "ab9"),
 			testCase("{", List.of(9), "{"),
 			testCase("}", List.of(9), "}"),
+			testCase("hello \\{{1}} {{1}}.", List.of(9), "hello {{1}} 9."),
 			
 			testCase("{{if:{{1}}={{2}};yes;no}}", List.of(10, 20), "no"),
 			testCase("{{if:{{1}}={{2}};yes;no}}", List.of(10, 10), "yes"),

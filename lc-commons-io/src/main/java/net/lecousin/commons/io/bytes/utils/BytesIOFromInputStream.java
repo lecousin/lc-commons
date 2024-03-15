@@ -52,7 +52,7 @@ public class BytesIOFromInputStream extends AbstractIO implements BytesIO.Readab
 	
 	@Override
 	public int readBytes(byte[] buf, int off, int len) throws IOException {
-		IOChecks.checkByteArrayOperation(this, buf, off, len);
+		IOChecks.checkArrayOperation(this, buf, off, len);
 		if (len == 0) return 0;
 		int nb = stream.read(buf, off, len);
 		if (nb > 0) return nb;

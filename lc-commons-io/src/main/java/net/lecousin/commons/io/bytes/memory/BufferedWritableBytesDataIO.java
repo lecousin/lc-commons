@@ -92,7 +92,7 @@ public class BufferedWritableBytesDataIO<I extends BytesIO.Writable & IO.Writabl
 		}
 		while (!toWrite.isEmpty()) {
 			ByteArray buffer = toWrite.removeFirst();
-			io.writeBytesFully(buffer.bytes, buffer.start + buffer.position, buffer.remaining());
+			io.writeBytesFully(buffer.getArray(), buffer.getArrayStartOffset() + buffer.getPosition(), buffer.remaining());
 		}
 	}
 	
@@ -113,7 +113,7 @@ public class BufferedWritableBytesDataIO<I extends BytesIO.Writable & IO.Writabl
 	}
 	
 	private void checkCurrentBuffer() throws IOException {
-		if (currentBuffer.start + currentBuffer.position == currentBuffer.end) {
+		if (currentBuffer.remaining() == 0) {
 			toWrite.add(currentBuffer.flip());
 			currentBuffer = null;
 			flushPartial();
@@ -123,9 +123,9 @@ public class BufferedWritableBytesDataIO<I extends BytesIO.Writable & IO.Writabl
 	
 	private void flushPartial() throws IOException {
 		ByteArray buffer = toWrite.removeFirst();
-		int nb = io.writeBytes(buffer.bytes, buffer.start + buffer.position, buffer.remaining());
+		int nb = io.writeBytes(buffer.getArray(), buffer.getArrayStartOffset() + buffer.getPosition(), buffer.remaining());
 		if (nb <= 0) throw new EOFException();
-		buffer.position += nb;
+		buffer.moveForward(nb);
 		if (buffer.remaining() > 0) {
 			toWrite.addFirst(buffer);
 		}
@@ -134,21 +134,21 @@ public class BufferedWritableBytesDataIO<I extends BytesIO.Writable & IO.Writabl
 	@Override
 	public void writeByte(byte value) throws IOException {
 		start();
-		currentBuffer.bytes[currentBuffer.position++] = value;
+		currentBuffer.writeByte(value);
 		checkCurrentBuffer();
 	}
 	
 	@Override
 	public int writeBytes(byte[] buf, int off, int len) throws IOException {
-		IOChecks.checkByteArrayOperation(this, buf, off, len);
+		IOChecks.checkArrayOperation(this, buf, off, len);
 		if (len == 0) return 0;
 		if (len >= bufferSize) {
 			// want to write more than buffer size
 			if (currentBuffer != null) {
 				// but we have a current buffer => first fill the buffer
 				int r = currentBuffer.remaining();
-				System.arraycopy(buf, off, currentBuffer.bytes, currentBuffer.start + currentBuffer.position, r);
-				currentBuffer.position += r;
+				System.arraycopy(buf, off, currentBuffer.getArray(), currentBuffer.getArrayStartOffset() + currentBuffer.getPosition(), r);
+				currentBuffer.moveForward(r);
 				checkCurrentBuffer();
 				return r;
 			}
@@ -165,8 +165,8 @@ public class BufferedWritableBytesDataIO<I extends BytesIO.Writable & IO.Writabl
 		// less than buffer size, bufferization must happen
 		if (currentBuffer == null) currentBuffer = new ByteArray(new byte[bufferSize]);
 		int r = Math.min(currentBuffer.remaining(), len);
-		System.arraycopy(buf, off, currentBuffer.bytes, currentBuffer.start + currentBuffer.position, r);
-		currentBuffer.position += r;
+		System.arraycopy(buf, off, currentBuffer.getArray(), currentBuffer.getArrayStartOffset() + currentBuffer.getPosition(), r);
+		currentBuffer.moveForward(r);
 		checkCurrentBuffer();
 		return r;
 	}
@@ -181,8 +181,8 @@ public class BufferedWritableBytesDataIO<I extends BytesIO.Writable & IO.Writabl
 			if (currentBuffer != null) {
 				// but we have a current buffer => first fill the buffer
 				int r = currentBuffer.remaining();
-				buffer.get(currentBuffer.bytes, currentBuffer.start + currentBuffer.position, r);
-				currentBuffer.position += r;
+				buffer.get(currentBuffer.getArray(), currentBuffer.getArrayStartOffset() + currentBuffer.getPosition(), r);
+				currentBuffer.moveForward(r);
 				checkCurrentBuffer();
 				return r;
 			}
@@ -199,8 +199,8 @@ public class BufferedWritableBytesDataIO<I extends BytesIO.Writable & IO.Writabl
 		// less than buffer size, bufferization must happen
 		if (currentBuffer == null) currentBuffer = new ByteArray(new byte[bufferSize]);
 		int r = Math.min(currentBuffer.remaining(), len);
-		buffer.get(currentBuffer.bytes, currentBuffer.start + currentBuffer.position, r);
-		currentBuffer.position += r;
+		buffer.get(currentBuffer.getArray(), currentBuffer.getArrayStartOffset() + currentBuffer.getPosition(), r);
+		currentBuffer.moveForward(r);
 		checkCurrentBuffer();
 		return r;
 	}
@@ -216,8 +216,8 @@ public class BufferedWritableBytesDataIO<I extends BytesIO.Writable & IO.Writabl
 			currentBuffer = new ByteArray(new byte[bufferSize]);
 			flushPartial();
 		}
-		writer.accept(BytesData.of(order), currentBuffer.bytes, currentBuffer.start + currentBuffer.position, value);
-		currentBuffer.position += nbBytes;
+		writer.accept(BytesData.of(order), currentBuffer.getArray(), currentBuffer.getArrayStartOffset() + currentBuffer.getPosition(), value);
+		currentBuffer.moveForward(nbBytes);
 		checkCurrentBuffer();
 	}
 	

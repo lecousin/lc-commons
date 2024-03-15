@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 
+import net.lecousin.commons.events.Cancellable;
 import net.lecousin.commons.executors.LcExecutors;
 
 /**
@@ -17,7 +18,7 @@ import net.lecousin.commons.executors.LcExecutors;
  * @param <K> type of key
  * @param <V> type of value
  */
-public class MapExpireCache<K, V> {
+public class MapExpireCache<K, V> implements Cancellable {
 	
 	private final class Item {
 		private V value;
@@ -29,6 +30,7 @@ public class MapExpireCache<K, V> {
 	}
 	
 	private Map<K, Item> map = new HashMap<>();
+	private Cancellable schedule;
 	
 	/**
 	 * Constructor.
@@ -36,7 +38,12 @@ public class MapExpireCache<K, V> {
 	 * @param checkInterval interval to check for expired values
 	 */
 	public MapExpireCache(Duration expirationDelay, Duration checkInterval) {
-		clean(expirationDelay.toMillis(), checkInterval);
+		schedule = LcExecutors.getCpu().scheduleWithFixedDelay(() -> clean(expirationDelay.toMillis()), checkInterval);
+	}
+	
+	@Override
+	public boolean cancel() {
+		return schedule.cancel();
 	}
 	
 	/** Get a value.
@@ -90,7 +97,7 @@ public class MapExpireCache<K, V> {
 		return list;
 	}
 	
-	private void clean(long expirationDelay, Duration scheduleInterval) {
+	private void clean(long expirationDelay) {
 		long now = System.currentTimeMillis();
 		synchronized (map) {
 			for (Iterator<Entry<K, Item>> it = map.entrySet().iterator(); it.hasNext();) {
@@ -98,7 +105,6 @@ public class MapExpireCache<K, V> {
 					it.remove();
 			}
 		}
-		LcExecutors.getCpu().scheduleWithFixedDelay(() -> clean(expirationDelay, scheduleInterval), scheduleInterval);
 	}
 
 }

@@ -110,7 +110,7 @@ public class ReadableSeekableCharsIOFromCharSequence extends AbstractIO implemen
 	
 	@Override
 	public int readChars(char[] buf, int off, int len) throws IOException {
-		IOChecks.checkCharArrayOperation(this, buf, off, len);
+		IOChecks.checkArrayOperation(this, buf, off, len);
 		if (len == 0) return 0;
 		int l = chars.length() - position;
 		if (l == 0) return -1;
@@ -121,7 +121,7 @@ public class ReadableSeekableCharsIOFromCharSequence extends AbstractIO implemen
 	
 	@Override
 	public int readCharsAt(long pos, CharBuffer buffer) throws IOException {
-		IOChecks.checkCharBufferOperation(this, pos, buffer);
+		IOChecks.checkBufferOperation(this, pos, buffer);
 		int r = buffer.remaining();
 		if (r == 0) return 0;
 		int l = chars.length();
@@ -133,7 +133,7 @@ public class ReadableSeekableCharsIOFromCharSequence extends AbstractIO implemen
 	
 	@Override
 	public int readCharsAt(long pos, char[] buf, int off, int len) throws IOException {
-		IOChecks.checkCharArrayOperation(this, pos, buf, off, len);
+		IOChecks.checkArrayOperation(this, pos, buf, off, len);
 		if (len == 0) return 0;
 		int l = chars.length();
 		if (pos >= l) return -1;

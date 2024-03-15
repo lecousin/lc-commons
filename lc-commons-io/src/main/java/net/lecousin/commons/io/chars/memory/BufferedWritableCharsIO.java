@@ -66,7 +66,7 @@ public class BufferedWritableCharsIO<I extends CharsIO.Writable & IO.Writable.Ap
 		}
 		while (!toWrite.isEmpty()) {
 			CharArray buffer = toWrite.removeFirst();
-			io.writeCharsFully(buffer.chars, buffer.start + buffer.position, buffer.remaining());
+			io.writeCharsFully(buffer.getArray(), buffer.getArrayStartOffset() + buffer.getPosition(), buffer.remaining());
 		}
 	}
 	
@@ -77,7 +77,7 @@ public class BufferedWritableCharsIO<I extends CharsIO.Writable & IO.Writable.Ap
 	}
 	
 	private void checkCurrentBuffer() throws IOException {
-		if (currentBuffer.start + currentBuffer.position == currentBuffer.end) {
+		if (currentBuffer.remaining() == 0) {
 			toWrite.add(currentBuffer.flip());
 			currentBuffer = null;
 			flushPartial();
@@ -87,9 +87,9 @@ public class BufferedWritableCharsIO<I extends CharsIO.Writable & IO.Writable.Ap
 	
 	private void flushPartial() throws IOException {
 		CharArray buffer = toWrite.removeFirst();
-		int nb = io.writeChars(buffer.chars, buffer.start + buffer.position, buffer.remaining());
+		int nb = io.writeChars(buffer.getArray(), buffer.getArrayStartOffset() + buffer.getPosition(), buffer.remaining());
 		if (nb <= 0) throw new EOFException();
-		buffer.position += nb;
+		buffer.moveForward(nb);
 		if (buffer.remaining() > 0) {
 			toWrite.addFirst(buffer);
 		}
@@ -98,21 +98,20 @@ public class BufferedWritableCharsIO<I extends CharsIO.Writable & IO.Writable.Ap
 	@Override
 	public void writeChar(char value) throws IOException {
 		start();
-		currentBuffer.chars[currentBuffer.position++] = value;
+		currentBuffer.writeChar(value);
 		checkCurrentBuffer();
 	}
 	
 	@Override
 	public int writeChars(char[] buf, int off, int len) throws IOException {
-		IOChecks.checkCharArrayOperation(this, buf, off, len);
+		IOChecks.checkArrayOperation(this, buf, off, len);
 		if (len == 0) return 0;
 		if (len >= bufferSize) {
 			// want to write more than buffer size
 			if (currentBuffer != null) {
 				// but we have a current buffer => first fill the buffer
 				int r = currentBuffer.remaining();
-				System.arraycopy(buf, off, currentBuffer.chars, currentBuffer.start + currentBuffer.position, r);
-				currentBuffer.position += r;
+				currentBuffer.write(buf, off, r);
 				checkCurrentBuffer();
 				return r;
 			}
@@ -129,8 +128,7 @@ public class BufferedWritableCharsIO<I extends CharsIO.Writable & IO.Writable.Ap
 		// less than buffer size, bufferization must happen
 		if (currentBuffer == null) currentBuffer = new CharArray(new char[bufferSize]);
 		int r = Math.min(currentBuffer.remaining(), len);
-		System.arraycopy(buf, off, currentBuffer.chars, currentBuffer.start + currentBuffer.position, r);
-		currentBuffer.position += r;
+		currentBuffer.write(buf, off, r);
 		checkCurrentBuffer();
 		return r;
 	}
@@ -145,8 +143,8 @@ public class BufferedWritableCharsIO<I extends CharsIO.Writable & IO.Writable.Ap
 			if (currentBuffer != null) {
 				// but we have a current buffer => first fill the buffer
 				int r = currentBuffer.remaining();
-				buffer.get(currentBuffer.chars, currentBuffer.start + currentBuffer.position, r);
-				currentBuffer.position += r;
+				buffer.get(currentBuffer.getArray(), currentBuffer.getArrayStartOffset() + currentBuffer.getPosition(), r);
+				currentBuffer.moveForward(r);
 				checkCurrentBuffer();
 				return r;
 			}
@@ -163,8 +161,8 @@ public class BufferedWritableCharsIO<I extends CharsIO.Writable & IO.Writable.Ap
 		// less than buffer size, bufferization must happen
 		if (currentBuffer == null) currentBuffer = new CharArray(new char[bufferSize]);
 		int r = Math.min(currentBuffer.remaining(), len);
-		buffer.get(currentBuffer.chars, currentBuffer.start + currentBuffer.position, r);
-		currentBuffer.position += r;
+		buffer.get(currentBuffer.getArray(), currentBuffer.getArrayStartOffset() + currentBuffer.getPosition(), r);
+		currentBuffer.moveForward(r);
 		checkCurrentBuffer();
 		return r;
 	}

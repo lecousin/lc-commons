@@ -56,7 +56,6 @@ public final class I18nResourceBundle {
 			Thread.currentThread().interrupt();
 			return "[Interrupted]";
 		} catch (Exception e) {
-			log.error("Error loading i18n resource bundle {}", namespace, e);
 			return "[Error]";
 		}
 	}

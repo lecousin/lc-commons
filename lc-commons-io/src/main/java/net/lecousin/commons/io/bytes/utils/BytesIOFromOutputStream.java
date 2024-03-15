@@ -53,7 +53,7 @@ public class BytesIOFromOutputStream extends AbstractIO implements BytesIO.Writa
 	
 	@Override
 	public int writeBytes(byte[] buf, int off, int len) throws IOException {
-		IOChecks.checkByteArrayOperation(this, buf, off, len);
+		IOChecks.checkArrayOperation(this, buf, off, len);
 		if (len == 0) return 0;
 		stream.write(buf, off, len);
 		return len;

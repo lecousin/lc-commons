@@ -7,12 +7,14 @@ import java.util.function.Supplier;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
+import net.lecousin.commons.events.Event;
 import net.lecousin.commons.io.text.PropertiesParser.Property;
 
 /** Properties parser.
  * @param <T> type of properties value
  */
-public class PropertiesParser<T> implements TextParser<List<Property<T>>> {
+public class PropertiesParser<T> implements TextParser.Emitter<Property<T>> {
 
 	private static final int NAME_BUFFER_SIZE = 128;
 	
@@ -24,6 +26,8 @@ public class PropertiesParser<T> implements TextParser<List<Property<T>>> {
 	private boolean escape = false;
 	
 	private final List<Property<T>> properties = new LinkedList<>();
+	@Getter
+	private final Event<Property<T>> event = new Event<>();
 	
 	/**
 	 * Property.
@@ -101,7 +105,9 @@ public class PropertiesParser<T> implements TextParser<List<Property<T>>> {
 			valueParser = valueParserSupplier.get();
 		}
 		T value = valueParser.endOfInput();
-		properties.add(new Property<>(name.toString(), value));
+		Property<T> property = new Property<>(name.toString(), value);
+		event.emit(property);
+		properties.add(property);
 		name = new StringBuilder(NAME_BUFFER_SIZE);
 		valueParser = null;
 	}

@@ -78,7 +78,7 @@ public interface CharsIO extends IO {
 		 * @throws IOException in case an error occurred while reading
 		 */
 		default int readChars(char[] buf, int off, int len) throws IOException {
-			IOChecks.checkCharArrayOperation(this, buf, off, len);
+			IOChecks.checkArrayOperation(this, buf, off, len);
 			return readChars(CharBuffer.wrap(buf, off, len));
 		}
 		
@@ -101,7 +101,7 @@ public interface CharsIO extends IO {
 		 * @throws IOException in case an error occurred while reading
 		 */
 		default int readChars(char[] buf) throws IOException {
-			IOChecks.checkCharArrayOperation(this, buf);
+			IOChecks.checkArrayOperation(this, buf);
 			return readChars(buf, 0, buf.length);
 		}
 		
@@ -148,7 +148,7 @@ public interface CharsIO extends IO {
 		 * @throws IOException in case an error occurred while reading
 		 */
 		default void readCharsFully(char[] buf, int off, int len) throws IOException {
-			IOChecks.checkCharArrayOperation(this, buf, off, len);
+			IOChecks.checkArrayOperation(this, buf, off, len);
 			while (len > 0) {
 				int nb = readChars(buf, off, len);
 				if (nb <= 0) throw new EOFException();
@@ -168,7 +168,7 @@ public interface CharsIO extends IO {
 		 * @throws IOException in case an error occurred while reading
 		 */
 		default void readCharsFully(char[] buf) throws IOException {
-			IOChecks.checkCharArrayOperation(this, buf);
+			IOChecks.checkArrayOperation(this, buf);
 			readCharsFully(buf, 0, buf.length);
 		}
 		
@@ -245,7 +245,7 @@ public interface CharsIO extends IO {
 			 * @throws IOException in case an error occurred while reading
 			 */
 			default int readCharsAt(long pos, char[] buf, int off, int len) throws IOException {
-				IOChecks.checkCharArrayOperation(this, pos, buf, off, len);
+				IOChecks.checkArrayOperation(this, pos, buf, off, len);
 				return readCharsAt(pos, CharBuffer.wrap(buf, off, len));
 			}
 			
@@ -270,7 +270,7 @@ public interface CharsIO extends IO {
 			 * @throws IOException in case an error occurred while reading
 			 */
 			default int readCharsAt(long pos, char[] buf) throws IOException {
-				IOChecks.checkCharArrayOperation(this, pos, buf);
+				IOChecks.checkArrayOperation(this, pos, buf);
 				return readCharsAt(pos, buf, 0, buf.length);
 			}
 			
@@ -313,7 +313,7 @@ public interface CharsIO extends IO {
 			 * @throws IOException in case an error occurred while reading
 			 */
 			default void readCharsFullyAt(long pos, char[] buf, int off, int len) throws IOException {
-				IOChecks.checkCharArrayOperation(this, pos, buf, off, len);
+				IOChecks.checkArrayOperation(this, pos, buf, off, len);
 				while (len > 0) {
 					int nb = readCharsAt(pos, buf, off, len);
 					if (nb <= 0) throw new EOFException();
@@ -336,7 +336,7 @@ public interface CharsIO extends IO {
 			 * @throws IOException in case an error occurred while reading
 			 */
 			default void readCharsFullyAt(long pos, char[] buf) throws IOException {
-				IOChecks.checkCharArrayOperation(this, pos, buf);
+				IOChecks.checkArrayOperation(this, pos, buf);
 				readCharsFullyAt(pos, buf, 0, buf.length);
 			}
 			
@@ -409,7 +409,7 @@ public interface CharsIO extends IO {
 		 * @throws IOException in case an error occurred while writing
 		 */
 		default int writeChars(char[] buf, int off, int len) throws IOException {
-			IOChecks.checkCharArrayOperation(this, buf, off, len);
+			IOChecks.checkArrayOperation(this, buf, off, len);
 			return writeChars(CharBuffer.wrap(buf, off, len));
 		}
 		
@@ -432,7 +432,7 @@ public interface CharsIO extends IO {
 		 * @throws IOException in case an error occurred while writing
 		 */
 		default int writeChars(char[] buf) throws IOException {
-			IOChecks.checkCharArrayOperation(this, buf);
+			IOChecks.checkArrayOperation(this, buf);
 			return writeChars(buf, 0, buf.length);
 		}
 		
@@ -480,7 +480,7 @@ public interface CharsIO extends IO {
 		 * @throws IOException in case an error occurred while writing
 		 */
 		default void writeCharsFully(char[] buf, int off, int len) throws IOException {
-			IOChecks.checkCharArrayOperation(this, buf, off, len);
+			IOChecks.checkArrayOperation(this, buf, off, len);
 			while (len > 0) {
 				int nb = writeChars(buf, off, len);
 				if (nb <= 0) throw new EOFException();
@@ -499,7 +499,7 @@ public interface CharsIO extends IO {
 		 * @throws IOException in case an error occurred while writing
 		 */
 		default void writeCharsFully(char[] buf) throws IOException {
-			IOChecks.checkCharArrayOperation(this, buf);
+			IOChecks.checkArrayOperation(this, buf);
 			writeCharsFully(buf, 0, buf.length);
 		}
 
@@ -566,7 +566,7 @@ public interface CharsIO extends IO {
 			 * @throws IOException in case an error occurred while writing
 			 */
 			default int writeCharsAt(long pos, char[] buf, int off, int len) throws IOException {
-				IOChecks.checkCharArrayOperation(this, pos, buf, off, len);
+				IOChecks.checkArrayOperation(this, pos, buf, off, len);
 				return writeCharsAt(pos, CharBuffer.wrap(buf, off, len));
 			}
 			
@@ -591,7 +591,7 @@ public interface CharsIO extends IO {
 			 * @throws IOException in case an error occurred while writing
 			 */
 			default int writeCharsAt(long pos, char[] buf) throws IOException {
-				IOChecks.checkCharArrayOperation(this, pos, buf);
+				IOChecks.checkArrayOperation(this, pos, buf);
 				return writeCharsAt(pos, buf, 0, buf.length);
 			}
 			
@@ -607,7 +607,7 @@ public interface CharsIO extends IO {
 			 * @throws IOException in case an error occurred while writing
 			 */
 			default void writeCharsFullyAt(long pos, CharBuffer buffer) throws IOException {
-				IOChecks.checkCharBufferOperation(this, pos, buffer);
+				IOChecks.checkBufferOperation(this, pos, buffer);
 				int done = 0;
 				while (buffer.hasRemaining()) {
 					int nb = writeCharsAt(pos + done, buffer);
@@ -631,7 +631,7 @@ public interface CharsIO extends IO {
 			 * @throws IOException in case an error occurred while writing
 			 */
 			default void writeCharsFullyAt(long pos, char[] buf, int off, int len) throws IOException {
-				IOChecks.checkCharArrayOperation(this, pos, buf, off, len);
+				IOChecks.checkArrayOperation(this, pos, buf, off, len);
 				writeCharsFullyAt(pos, CharBuffer.wrap(buf, off, len));
 			}
 			
@@ -647,7 +647,7 @@ public interface CharsIO extends IO {
 			 * @throws IOException in case an error occurred while writing
 			 */
 			default void writeCharsFullyAt(long pos, char[] buf) throws IOException {
-				IOChecks.checkCharArrayOperation(this, pos, buf);
+				IOChecks.checkArrayOperation(this, pos, buf);
 				writeCharsFullyAt(pos, buf, 0, buf.length);
 			}
 			

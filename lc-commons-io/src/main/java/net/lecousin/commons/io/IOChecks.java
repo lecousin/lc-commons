@@ -1,7 +1,7 @@
 package net.lecousin.commons.io;
 
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
+import java.lang.reflect.Array;
+import java.nio.Buffer;
 import java.nio.channels.ClosedChannelException;
 import java.util.Objects;
 import java.util.Optional;
@@ -31,220 +31,118 @@ public final class IOChecks {
 	private static final String LENGTH = ".length";
 
 	/**
-	 * Check byte array parameters.
+	 * Check array parameters.
 	 * @param buf buffer
 	 * @param off offset
 	 * @param len length
+	 * @param <T> type of array
 	 * @throws NullPointerException if buf is null
 	 * @throws NegativeValueException if off or len is negative
 	 * @throws LimitExceededException if off + len is greater than buf.length
 	 */
 	@SuppressWarnings("java:S1695") // NPE thrown
-	public static void checkByteArray(byte[] buf, int off, int len) {
+	public static <T> void checkArray(T buf, int off, int len) {
 		if (buf == null) throw new NullPointerException(FIELD_BUF);
 		NegativeValueException.check(off, FIELD_OFF);
 		NegativeValueException.check(len, FIELD_LEN);
-		LimitExceededException.check((long) off + len, buf.length, FIELD_OFF + " + " + FIELD_LEN, FIELD_BUF + LENGTH);
+		LimitExceededException.check((long) off + len, Array.getLength(buf), FIELD_OFF + " + " + FIELD_LEN, FIELD_BUF + LENGTH);
 	}
 	
 	/**
-	 * Checks the I/O is not closed, then that the given byte array parameters are correct.
+	 * Checks the I/O is not closed, then that the given array parameters are correct.
 	 * @param io the IO
 	 * @param buf buffer
 	 * @param off offset
 	 * @param len length
+	 * @param <T> type of array
 	 * @throws ClosedChannelException if the IO is closed
 	 * @throws NullPointerException if buf is null
 	 * @throws NegativeValueException if off or len is negative
 	 * @throws LimitExceededException if off + len is greater than buf.length
 	 */
-	public static void checkByteArrayOperation(IO io, byte[] buf, int off, int len) throws ClosedChannelException {
+	public static <T> void checkArrayOperation(IO io, T buf, int off, int len) throws ClosedChannelException {
 		if (io.isClosed()) throw new ClosedChannelException();
-		checkByteArray(buf, off, len);
+		checkArray(buf, off, len);
 	}
 	
 	/**
-	 * Checks the I/O is not closed, then that the given byte array is not null.
+	 * Checks the I/O is not closed, then that the given array is not null.
 	 * @param io the IO
 	 * @param buf buffer
+	 * @param <T> type of array
 	 * @throws ClosedChannelException if the IO is closed
 	 * @throws NullPointerException if buf is null
 	 */
-	public static void checkByteArrayOperation(IO io, byte[] buf) throws ClosedChannelException {
+	public static <T> void checkArrayOperation(IO io, T buf) throws ClosedChannelException {
 		if (io.isClosed()) throw new ClosedChannelException();
 		Objects.requireNonNull(buf, FIELD_BUF);
 	}
 	
 	/**
-	 * Checks the I/O is not closed, the position is not negative, then that the given byte array parameters are correct.
+	 * Checks the I/O is not closed, the position is not negative, then that the given array parameters are correct.
 	 * @param io the IO
 	 * @param pos position
 	 * @param buf buffer
 	 * @param off offset
 	 * @param len length
+	 * @param <T> type of array
 	 * @throws ClosedChannelException if the IO is closed
 	 * @throws NullPointerException if buf is null
 	 * @throws NegativeValueException if pos, off or len is negative
 	 * @throws LimitExceededException if off + len is greater than buf.length
 	 */
-	public static void checkByteArrayOperation(IO io, long pos, byte[] buf, int off, int len) throws ClosedChannelException {
+	public static <T> void checkArrayOperation(IO io, long pos, T buf, int off, int len) throws ClosedChannelException {
 		if (io.isClosed()) throw new ClosedChannelException();
 		NegativeValueException.check(pos, FIELD_POS);
-		checkByteArray(buf, off, len);
+		checkArray(buf, off, len);
 	}
 	
 	/**
-	 * Checks the I/O is not closed, the position is not negative, then that the given byte array is not null.
+	 * Checks the I/O is not closed, the position is not negative, then that the given array is not null.
 	 * @param io the IO
 	 * @param pos position
 	 * @param buf buffer
+	 * @param <T> type of array
 	 * @throws ClosedChannelException if the IO is closed
 	 * @throws NullPointerException if buf is null
 	 * @throws NegativeValueException if pos is negative
 	 */
-	public static void checkByteArrayOperation(IO io, long pos, byte[] buf) throws ClosedChannelException {
+	public static <T> void checkArrayOperation(IO io, long pos, T buf) throws ClosedChannelException {
 		if (io.isClosed()) throw new ClosedChannelException();
 		NegativeValueException.check(pos, FIELD_POS);
 		Objects.requireNonNull(buf, FIELD_BUF);
 	}
 	
 	/**
-	 * Checks the I/O is not closed, the position is not negative, then that the given ByteBuffer is not null.
+	 * Checks the I/O is not closed, the position is not negative, then that the given Buffer is not null.
 	 * @param io the IO
 	 * @param pos position
 	 * @param buffer buffer
+	 * @param <T> type of buffer
 	 * @throws ClosedChannelException if the IO is closed
 	 * @throws NullPointerException if buffer is null
 	 * @throws NegativeValueException if pos is negative
 	 */
-	public static void checkByteBufferOperation(IO io, long pos, ByteBuffer buffer) throws ClosedChannelException {
+	public static <T extends Buffer> void checkBufferOperation(IO io, long pos, T buffer) throws ClosedChannelException {
 		if (io.isClosed()) throw new ClosedChannelException();
 		NegativeValueException.check(pos, FIELD_POS);
 		Objects.requireNonNull(buffer, FIELD_BUFFER);
 	}
 	
 	/**
-	 * Check byte array parameters.
+	 * Check array parameters.
 	 * @param buf buffer
 	 * @param off offset
 	 * @param len length
+	 * @param <T> type of array
 	 * @return an optional exception
 	 */
-	public static Optional<Exception> byteArrayChecker(byte[] buf, int off, int len) {
+	public static <T> Optional<Exception> arrayChecker(T buf, int off, int len) {
 		if (buf == null) return Optional.of(new NullPointerException(FIELD_BUF));
 		if (off < 0) return Optional.of(new NegativeValueException(off, FIELD_OFF));
 		if (len < 0) return Optional.of(new NegativeValueException(len, FIELD_LEN));
-		if (off + len > buf.length) return Optional.of(new LimitExceededException(off + len, buf.length, FIELD_OFF + " + " + FIELD_LEN, FIELD_BUF + LENGTH));
+		if (off + len > Array.getLength(buf)) return Optional.of(new LimitExceededException(off + len, Array.getLength(buf), FIELD_OFF + " + " + FIELD_LEN, FIELD_BUF + LENGTH));
 		return Optional.empty();
 	}
 	
-	
-	/**
-	 * Check character array parameters.
-	 * @param buf buffer
-	 * @param off offset
-	 * @param len length
-	 * @throws NullPointerException if buf is null
-	 * @throws NegativeValueException if off or len is negative
-	 * @throws LimitExceededException if off + len is greater than buf.length
-	 */
-	@SuppressWarnings("java:S1695") // NPE thrown
-	public static void checkCharArray(char[] buf, int off, int len) {
-		if (buf == null) throw new NullPointerException(FIELD_BUF);
-		NegativeValueException.check(off, FIELD_OFF);
-		NegativeValueException.check(len, FIELD_LEN);
-		LimitExceededException.check((long) off + len, buf.length, FIELD_OFF + " + " + FIELD_LEN, FIELD_BUF + LENGTH);
-	}
-	
-	/**
-	 * Checks the I/O is not closed, then that the given character array parameters are correct.
-	 * @param io the IO
-	 * @param buf buffer
-	 * @param off offset
-	 * @param len length
-	 * @throws ClosedChannelException if the IO is closed
-	 * @throws NullPointerException if buf is null
-	 * @throws NegativeValueException if off or len is negative
-	 * @throws LimitExceededException if off + len is greater than buf.length
-	 */
-	public static void checkCharArrayOperation(IO io, char[] buf, int off, int len) throws ClosedChannelException {
-		if (io.isClosed()) throw new ClosedChannelException();
-		checkCharArray(buf, off, len);
-	}
-	
-	/**
-	 * Checks the I/O is not closed, then that the given character array is not null.
-	 * @param io the IO
-	 * @param buf buffer
-	 * @throws ClosedChannelException if the IO is closed
-	 * @throws NullPointerException if buf is null
-	 */
-	public static void checkCharArrayOperation(IO io, char[] buf) throws ClosedChannelException {
-		if (io.isClosed()) throw new ClosedChannelException();
-		Objects.requireNonNull(buf, FIELD_BUF);
-	}
-	
-	/**
-	 * Checks the I/O is not closed, the position is not negative, then that the given character array parameters are correct.
-	 * @param io the IO
-	 * @param pos position
-	 * @param buf buffer
-	 * @param off offset
-	 * @param len length
-	 * @throws ClosedChannelException if the IO is closed
-	 * @throws NullPointerException if buf is null
-	 * @throws NegativeValueException if pos, off or len is negative
-	 * @throws LimitExceededException if off + len is greater than buf.length
-	 */
-	public static void checkCharArrayOperation(IO io, long pos, char[] buf, int off, int len) throws ClosedChannelException {
-		if (io.isClosed()) throw new ClosedChannelException();
-		NegativeValueException.check(pos, FIELD_POS);
-		checkCharArray(buf, off, len);
-	}
-	
-	/**
-	 * Checks the I/O is not closed, the position is not negative, then that the given character array is not null.
-	 * @param io the IO
-	 * @param pos position
-	 * @param buf buffer
-	 * @throws ClosedChannelException if the IO is closed
-	 * @throws NullPointerException if buf is null
-	 * @throws NegativeValueException if pos is negative
-	 */
-	public static void checkCharArrayOperation(IO io, long pos, char[] buf) throws ClosedChannelException {
-		if (io.isClosed()) throw new ClosedChannelException();
-		NegativeValueException.check(pos, FIELD_POS);
-		Objects.requireNonNull(buf, FIELD_BUF);
-	}
-	
-	/**
-	 * Checks the I/O is not closed, the position is not negative, then that the given CharBuffer is not null.
-	 * @param io the IO
-	 * @param pos position
-	 * @param buffer buffer
-	 * @throws ClosedChannelException if the IO is closed
-	 * @throws NullPointerException if buffer is null
-	 * @throws NegativeValueException if pos is negative
-	 */
-	public static void checkCharBufferOperation(IO io, long pos, CharBuffer buffer) throws ClosedChannelException {
-		if (io.isClosed()) throw new ClosedChannelException();
-		NegativeValueException.check(pos, FIELD_POS);
-		Objects.requireNonNull(buffer, FIELD_BUFFER);
-	}
-	
-	/**
-	 * Check character array parameters.
-	 * @param buf buffer
-	 * @param off offset
-	 * @param len length
-	 * @return an optional exception
-	 */
-	public static Optional<Exception> charArrayChecker(char[] buf, int off, int len) {
-		if (buf == null) return Optional.of(new NullPointerException(FIELD_BUF));
-		if (off < 0) return Optional.of(new NegativeValueException(off, FIELD_OFF));
-		if (len < 0) return Optional.of(new NegativeValueException(len, FIELD_LEN));
-		if (off + len > buf.length) return Optional.of(new LimitExceededException(off + len, buf.length, FIELD_OFF + " + " + FIELD_LEN, FIELD_BUF + LENGTH));
-		return Optional.empty();
-	}
-
 }

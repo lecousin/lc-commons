@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import net.lecousin.commons.events.Event;
 import net.lecousin.commons.io.bytes.BytesIO;
 import net.lecousin.commons.io.chars.CharsIO;
 
@@ -86,6 +88,18 @@ public interface TextParser<T> {
 		while ((b = input.readBuffer()).isPresent())
 			parse(b.get());
 		return endOfInput();
+	}
+	
+	/**
+	 * A TextParser returning a list of items, and capable to emit
+	 * each item as soon as it is parsed for early consumption.
+	 * @param <T> type of element
+	 */
+	interface Emitter<T> extends TextParser<List<T>> {
+		
+		/** @return the event emitting the items. */
+		Event<T> getEvent();
+		
 	}
 	
 }

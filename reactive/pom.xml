@@ -9,29 +9,11 @@
   <packaging>pom</packaging>
   
   <properties>
-	<project-reactor.version>3.6.2</project-reactor.version>
-	
-    <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../../jacoco-report-aggregate/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+    <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../../../jacoco-report-aggregate/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
   </properties>
   
-  <dependencies>
-	<dependency>
-	  <groupId>io.projectreactor</groupId>
-      <artifactId>reactor-core</artifactId>
-      <version>${project-reactor.version}</version>
-	</dependency>
-	
-	<dependency>
-	  <groupId>io.projectreactor</groupId>
-      <artifactId>reactor-test</artifactId>
-      <version>${project-reactor.version}</version>
-      <scope>test</scope>
-	</dependency>
-  </dependencies>
-  
   <modules>
-  	<module>lc-reactive-commons</module>
-  	<module>lc-reactive-commons-io</module>
+  	<module>reactor</module>
   </modules>
   
   <profiles>
@@ -40,7 +22,7 @@
 	  <id>checkstyle-reactive</id>
 	  <activation>
 		<property><name>!skipCheckstyle</name></property>
-		<file><exists>../../checkstyle.xml</exists></file>
+		<file><exists>../../../checkstyle.xml</exists></file>
 	  </activation>
 	  <build>
         <plugins>
@@ -56,7 +38,7 @@
               </dependency>
             </dependencies>
             <configuration>
-              <configLocation>${project.basedir}/../../checkstyle.xml</configLocation>
+              <configLocation>${project.basedir}/../../../checkstyle.xml</configLocation>
               <consoleOutput>true</consoleOutput>
               <failsOnError>true</failsOnError>
             </configuration>
