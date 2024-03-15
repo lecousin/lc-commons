@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.function.Function;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Nested;
 
 import net.lecousin.commons.io.IO.Seekable.SeekFrom;
@@ -57,7 +58,7 @@ public abstract class AbstractReadWriteBytesDataIOTest<T extends BytesDataIO.Rea
 			t.seek(SeekFrom.START, 0);
 			byte[] found = new byte[expected.length];
 			t.readBytesFully(found);
-			assertThat(found).containsExactly(expected);
+			Assertions.assertArrayEquals(expected, found);
 		}
 	}
 	

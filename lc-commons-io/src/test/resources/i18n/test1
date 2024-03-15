@@ -1,0 +1,19 @@
+key1=value1
+key2=value2
+key3=the value is <{{1}}>
+key4=hello \{{1}} {{1}}.
+key\=5=value5
+iamempty
+key6={{1}}{{2}}
+key7=}}
+key8={{
+key9=}
+key10={
+key11={{toto
+# this is a comment
+test_less=using {{1}} and {{2}} the result is {{if:{{1}}<{{2}};less;not less}}
+test_less_or_equals=using {{1}} and {{2}} the result is {{if:{{1}}<={{2}};less;not less}} or equals
+test_greater=using {{1}} and {{2}} the result is {{if:{{1}}>{{2}};greater;not greater}}
+test_greater_or_equals=using {{1}} and {{2}} the result is {{if:{{1}}>={{2}};greater;not greater}} or equals
+test_equals=using {{1}} and {{2}} the result is {{if:{{1}}={{2}};equals;not equals}}
+test_not_equals=using {{1}} and {{2}} the result is {{if:{{1}}!={{2}};not equals;equals}}

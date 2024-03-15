@@ -21,12 +21,12 @@
 	</dependency>
 	<dependency>
 	  <groupId>${project.groupId}</groupId>
-	  <artifactId>lc-reactive-commons</artifactId>
+	  <artifactId>lc-commons-reactor</artifactId>
 	  <version>${project.version}</version>
 	</dependency>
 	<dependency>
 	  <groupId>${project.groupId}</groupId>
-	  <artifactId>lc-reactive-commons-io</artifactId>
+	  <artifactId>lc-commons-io-reactor</artifactId>
 	  <version>${project.version}</version>
 	</dependency>
   </dependencies>

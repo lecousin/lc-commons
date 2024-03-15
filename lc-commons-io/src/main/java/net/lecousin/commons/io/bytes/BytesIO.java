@@ -2,6 +2,7 @@ package net.lecousin.commons.io.bytes;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.util.List;
@@ -12,6 +13,7 @@ import net.lecousin.commons.exceptions.LimitExceededException;
 import net.lecousin.commons.exceptions.NegativeValueException;
 import net.lecousin.commons.io.IO;
 import net.lecousin.commons.io.IOChecks;
+import net.lecousin.commons.io.bytes.utils.BytesIOFromInputStream;
 
 /**
  * IO working on bytes.
@@ -75,7 +77,7 @@ public interface BytesIO extends IO {
 		 * @throws IOException in case an error occurred while reading
 		 */
 		default int readBytes(byte[] buf, int off, int len) throws IOException {
-			IOChecks.checkByteArrayOperation(this, buf, off, len);
+			IOChecks.checkArrayOperation(this, buf, off, len);
 			return readBytes(ByteBuffer.wrap(buf, off, len));
 		}
 		
@@ -98,7 +100,7 @@ public interface BytesIO extends IO {
 		 * @throws IOException in case an error occurred while reading
 		 */
 		default int readBytes(byte[] buf) throws IOException {
-			IOChecks.checkByteArrayOperation(this, buf);
+			IOChecks.checkArrayOperation(this, buf);
 			return readBytes(buf, 0, buf.length);
 		}
 		
@@ -145,7 +147,7 @@ public interface BytesIO extends IO {
 		 * @throws IOException in case an error occurred while reading
 		 */
 		default void readBytesFully(byte[] buf, int off, int len) throws IOException {
-			IOChecks.checkByteArrayOperation(this, buf, off, len);
+			IOChecks.checkArrayOperation(this, buf, off, len);
 			while (len > 0) {
 				int nb = readBytes(buf, off, len);
 				if (nb <= 0) throw new EOFException();
@@ -165,37 +167,8 @@ public interface BytesIO extends IO {
 		 * @throws IOException in case an error occurred while reading
 		 */
 		default void readBytesFully(byte[] buf) throws IOException {
-			IOChecks.checkByteArrayOperation(this, buf);
+			IOChecks.checkArrayOperation(this, buf);
 			readBytesFully(buf, 0, buf.length);
-		}
-		
-		/**
-		 * Skip up to <code>toSkip</code> bytes.
-		 * 
-		 * @param toSkip maximum number of bytes to skip
-		 * @return the number of bytes skipped, or -1 if no byte can be skipped because end is reached
-		 * @throws ClosedChannelException if this IO is already closed
-		 * @throws IOException in case an error occurred while skipping bytes
-		 */
-		long skipUpTo(long toSkip) throws IOException;
-		
-		/**
-		 * Skip exactly <code>toSkip</code> bytes.
-		 * 
-		 * @param toSkip number of bytes to skip
-		 * @throws ClosedChannelException if this IO is already closed
-		 * @throws EOFException if the requested number of bytes cannot be skipped because it would reach the end
-		 * @throws IOException in case an error occurred while skipping bytes
-		 */
-		default void skipFully(long toSkip) throws IOException {
-			if (isClosed()) throw new ClosedChannelException();
-			NegativeValueException.check(toSkip, "toSkip");
-			long done = 0;
-			while (done < toSkip) {
-				long nb = skipUpTo(toSkip - done);
-				if (nb <= 0) throw new EOFException();
-				done += nb;
-			}
 		}
 		
 		/**
@@ -271,7 +244,7 @@ public interface BytesIO extends IO {
 			 * @throws IOException in case an error occurred while reading
 			 */
 			default int readBytesAt(long pos, byte[] buf, int off, int len) throws IOException {
-				IOChecks.checkByteArrayOperation(this, pos, buf, off, len);
+				IOChecks.checkArrayOperation(this, pos, buf, off, len);
 				return readBytesAt(pos, ByteBuffer.wrap(buf, off, len));
 			}
 			
@@ -296,7 +269,7 @@ public interface BytesIO extends IO {
 			 * @throws IOException in case an error occurred while reading
 			 */
 			default int readBytesAt(long pos, byte[] buf) throws IOException {
-				IOChecks.checkByteArrayOperation(this, pos, buf);
+				IOChecks.checkArrayOperation(this, pos, buf);
 				return readBytesAt(pos, buf, 0, buf.length);
 			}
 			
@@ -339,7 +312,7 @@ public interface BytesIO extends IO {
 			 * @throws IOException in case an error occurred while reading
 			 */
 			default void readBytesFullyAt(long pos, byte[] buf, int off, int len) throws IOException {
-				IOChecks.checkByteArrayOperation(this, pos, buf, off, len);
+				IOChecks.checkArrayOperation(this, pos, buf, off, len);
 				while (len > 0) {
 					int nb = readBytesAt(pos, buf, off, len);
 					if (nb <= 0) throw new EOFException();
@@ -362,7 +335,7 @@ public interface BytesIO extends IO {
 			 * @throws IOException in case an error occurred while reading
 			 */
 			default void readBytesFullyAt(long pos, byte[] buf) throws IOException {
-				IOChecks.checkByteArrayOperation(this, pos, buf);
+				IOChecks.checkArrayOperation(this, pos, buf);
 				readBytesFullyAt(pos, buf, 0, buf.length);
 			}
 			
@@ -435,7 +408,7 @@ public interface BytesIO extends IO {
 		 * @throws IOException in case an error occurred while writing
 		 */
 		default int writeBytes(byte[] buf, int off, int len) throws IOException {
-			IOChecks.checkByteArrayOperation(this, buf, off, len);
+			IOChecks.checkArrayOperation(this, buf, off, len);
 			return writeBytes(ByteBuffer.wrap(buf, off, len));
 		}
 		
@@ -458,7 +431,7 @@ public interface BytesIO extends IO {
 		 * @throws IOException in case an error occurred while writing
 		 */
 		default int writeBytes(byte[] buf) throws IOException {
-			IOChecks.checkByteArrayOperation(this, buf);
+			IOChecks.checkArrayOperation(this, buf);
 			return writeBytes(buf, 0, buf.length);
 		}
 		
@@ -506,7 +479,7 @@ public interface BytesIO extends IO {
 		 * @throws IOException in case an error occurred while writing
 		 */
 		default void writeBytesFully(byte[] buf, int off, int len) throws IOException {
-			IOChecks.checkByteArrayOperation(this, buf, off, len);
+			IOChecks.checkArrayOperation(this, buf, off, len);
 			while (len > 0) {
 				int nb = writeBytes(buf, off, len);
 				if (nb <= 0) throw new EOFException();
@@ -525,7 +498,7 @@ public interface BytesIO extends IO {
 		 * @throws IOException in case an error occurred while writing
 		 */
 		default void writeBytesFully(byte[] buf) throws IOException {
-			IOChecks.checkByteArrayOperation(this, buf);
+			IOChecks.checkArrayOperation(this, buf);
 			writeBytesFully(buf, 0, buf.length);
 		}
 
@@ -592,7 +565,7 @@ public interface BytesIO extends IO {
 			 * @throws IOException in case an error occurred while writing
 			 */
 			default int writeBytesAt(long pos, byte[] buf, int off, int len) throws IOException {
-				IOChecks.checkByteArrayOperation(this, pos, buf, off, len);
+				IOChecks.checkArrayOperation(this, pos, buf, off, len);
 				return writeBytesAt(pos, ByteBuffer.wrap(buf, off, len));
 			}
 			
@@ -617,7 +590,7 @@ public interface BytesIO extends IO {
 			 * @throws IOException in case an error occurred while writing
 			 */
 			default int writeBytesAt(long pos, byte[] buf) throws IOException {
-				IOChecks.checkByteArrayOperation(this, pos, buf);
+				IOChecks.checkArrayOperation(this, pos, buf);
 				return writeBytesAt(pos, buf, 0, buf.length);
 			}
 			
@@ -633,7 +606,7 @@ public interface BytesIO extends IO {
 			 * @throws IOException in case an error occurred while writing
 			 */
 			default void writeBytesFullyAt(long pos, ByteBuffer buffer) throws IOException {
-				IOChecks.checkByteBufferOperation(this, pos, buffer);
+				IOChecks.checkBufferOperation(this, pos, buffer);
 				int done = 0;
 				while (buffer.hasRemaining()) {
 					int nb = writeBytesAt(pos + done, buffer);
@@ -657,7 +630,7 @@ public interface BytesIO extends IO {
 			 * @throws IOException in case an error occurred while writing
 			 */
 			default void writeBytesFullyAt(long pos, byte[] buf, int off, int len) throws IOException {
-				IOChecks.checkByteArrayOperation(this, pos, buf, off, len);
+				IOChecks.checkArrayOperation(this, pos, buf, off, len);
 				writeBytesFullyAt(pos, ByteBuffer.wrap(buf, off, len));
 			}
 			
@@ -673,12 +646,12 @@ public interface BytesIO extends IO {
 			 * @throws IOException in case an error occurred while writing
 			 */
 			default void writeBytesFullyAt(long pos, byte[] buf) throws IOException {
-				IOChecks.checkByteArrayOperation(this, pos, buf);
+				IOChecks.checkArrayOperation(this, pos, buf);
 				writeBytesFullyAt(pos, buf, 0, buf.length);
 			}
 			
 			/**
-			 * Write all bytes ath the given position from the all the given buffer.<br/>
+			 * Write all bytes at the given position from the all the given buffer.<br/>
 			 * If it cannot write all bytes because end is reached, EOFException is thrown.
 			 * 
 			 * @param pos position
@@ -766,6 +739,16 @@ public interface BytesIO extends IO {
 			
 		}
 		
+	}
+
+	/** Create a BytesIO from an InputStream.
+	 * 
+	 * @param stream the InputStream
+	 * @param closeStreamOnClose if true the InputStream will be closed when the returned BytesIO is closed
+	 * @return a BytesIO.Readable
+	 */
+	static BytesIO.Readable from(InputStream stream, boolean closeStreamOnClose) {
+		return new BytesIOFromInputStream(stream, closeStreamOnClose);
 	}
 
 }

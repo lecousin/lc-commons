@@ -58,17 +58,17 @@ public class ByteArrayDataIO extends ByteArrayIO implements BytesDataIO.ReadWrit
 	
 	protected <T extends Number> T readData(int nbBytes, BiFunction<byte[], Integer, T> reader) throws IOException {
 		if (bytes == null) throw new ClosedChannelException();
-		if (bytes.start + bytes.position + nbBytes > bytes.end) throw new EOFException();
-		T result = reader.apply(bytes.bytes, bytes.start + bytes.position);
-		bytes.position += nbBytes;
+		if (nbBytes > bytes.remaining()) throw new EOFException();
+		T result = reader.apply(bytes.getArray(), bytes.getArrayStartOffset() + bytes.getPosition());
+		bytes.moveForward(nbBytes);
 		return result;
 	}
 
 	protected <T extends Number> T readDataAt(long pos, int nbBytes, BiFunction<byte[], Integer, T> reader) throws IOException {
 		if (bytes == null) throw new ClosedChannelException();
 		NegativeValueException.check(pos, IOChecks.FIELD_POS);
-		if (bytes.start + pos + nbBytes > bytes.end) throw new EOFException();
-		return reader.apply(bytes.bytes, bytes.start + (int) pos);
+		if (pos + nbBytes > bytes.getSize()) throw new EOFException();
+		return reader.apply(bytes.getArray(), bytes.getArrayStartOffset() + (int) pos);
 	}
 	
 	@Override
@@ -211,16 +211,16 @@ public class ByteArrayDataIO extends ByteArrayIO implements BytesDataIO.ReadWrit
 	
 	protected <T extends Number> void writeData(int nbBytes, DataWriter<T> writer, T value) throws IOException {
 		if (bytes == null) throw new ClosedChannelException();
-		if (bytes.start + bytes.position + nbBytes > bytes.end && !extendCapacity((long) bytes.position + nbBytes)) throw new EOFException();
-		writer.write(bytes.bytes, bytes.start + bytes.position, value);
-		bytes.position += nbBytes;
+		if (nbBytes > bytes.remaining() && !extendCapacity((long) bytes.getPosition() + nbBytes)) throw new EOFException();
+		writer.write(bytes.getArray(), bytes.getArrayStartOffset() + bytes.getPosition(), value);
+		bytes.moveForward(nbBytes);
 	}
 
 	protected <T extends Number> void writeDataAt(long pos, int nbBytes, DataWriter<T> writer, T value) throws IOException {
 		if (bytes == null) throw new ClosedChannelException();
 		NegativeValueException.check(pos, IOChecks.FIELD_POS);
-		if (bytes.start + pos + nbBytes > bytes.end && !extendCapacity(pos + nbBytes)) throw new EOFException();
-		writer.write(bytes.bytes, bytes.start + (int) pos, value);
+		if (pos + nbBytes > bytes.getSize() && !extendCapacity(pos + nbBytes)) throw new EOFException();
+		writer.write(bytes.getArray(), bytes.getArrayStartOffset() + (int) pos, value);
 	}
 	
 	@Override

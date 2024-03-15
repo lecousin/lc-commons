@@ -1,12 +1,12 @@
 package net.lecousin.commons.io.bytes.memory;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.io.RandomAccessFile;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+
+import org.junit.jupiter.api.Assertions;
 
 import net.lecousin.commons.io.bytes.AbstractWritableBytesIOTest.WritableTestCase;
 import net.lecousin.commons.io.bytes.data.AbstractWritableBytesDataIOTest;
@@ -86,7 +86,7 @@ public class TestBufferedWritableBytesDataIO extends AbstractWritableBytesDataIO
 			found = new byte[ba.getSize()];
 			System.arraycopy(ba.getArray(), ba.getArrayStartOffset(), found, 0, found.length);
 		}
-		assertThat(found).containsExactly(expected);
+		Assertions.assertArrayEquals(expected, found);
 	}
 	
 }

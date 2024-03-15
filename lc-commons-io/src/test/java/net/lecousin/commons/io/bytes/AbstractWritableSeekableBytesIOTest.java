@@ -20,7 +20,6 @@ import net.lecousin.commons.exceptions.LimitExceededException;
 import net.lecousin.commons.exceptions.NegativeValueException;
 import net.lecousin.commons.io.AbstractSeekableIOTest;
 import net.lecousin.commons.io.IO;
-import net.lecousin.commons.io.LcByteBufferUtils;
 import net.lecousin.commons.io.bytes.AbstractWritableBytesIOTest.WritableTestCase;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.RandomContentTestCasesProvider;
 import net.lecousin.commons.io.bytes.BytesIOTestUtils.SmallRandomContentTestCasesProvider;

@@ -28,7 +28,38 @@ public interface IO extends Closeable {
 	/**
 	 * Marker interface for a Readable IO.
 	 */
-	interface Readable extends IO { }
+	interface Readable extends IO {
+		
+		/**
+		 * Skip up to <code>toSkip</code> elements.
+		 * 
+		 * @param toSkip maximum number of elements to skip
+		 * @return the number of elements skipped, or -1 if no byte can be skipped because end is reached
+		 * @throws ClosedChannelException if this IO is already closed
+		 * @throws IOException in case an error occurred while skipping bytes
+		 */
+		long skipUpTo(long toSkip) throws IOException;
+		
+		/**
+		 * Skip exactly <code>toSkip</code> elements.
+		 * 
+		 * @param toSkip number of elements to skip
+		 * @throws ClosedChannelException if this IO is already closed
+		 * @throws EOFException if the requested number of elements cannot be skipped because it would reach the end
+		 * @throws IOException in case an error occurred while skipping bytes
+		 */
+		default void skipFully(long toSkip) throws IOException {
+			if (isClosed()) throw new ClosedChannelException();
+			NegativeValueException.check(toSkip, "toSkip");
+			long done = 0;
+			while (done < toSkip) {
+				long nb = skipUpTo(toSkip - done);
+				if (nb <= 0) throw new EOFException();
+				done += nb;
+			}
+		}
+
+	}
 	
 	/**
 	 * Marker interface for a Writable IO.

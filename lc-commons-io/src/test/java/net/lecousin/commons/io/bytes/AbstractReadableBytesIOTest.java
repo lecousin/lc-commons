@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -401,7 +402,7 @@ public abstract class AbstractReadableBytesIOTest implements TestCasesProvider<b
 		ByteArray ba = new ByteArray(new byte[expected.length]);
 		io.transferFully(ba.asBytesIO());
 		assertThat(io.readBuffer()).isEmpty();
-		assertThat(ba.getArray()).containsExactly(expected);
+		Assertions.assertArrayEquals(expected, ba.getArray());
 		io.close();
 	}
 

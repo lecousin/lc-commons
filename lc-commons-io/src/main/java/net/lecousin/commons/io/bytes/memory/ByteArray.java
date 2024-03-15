@@ -5,19 +5,11 @@ import java.nio.ByteOrder;
 import java.util.Objects;
 import java.util.function.IntBinaryOperator;
 
-import net.lecousin.commons.exceptions.LimitExceededException;
-import net.lecousin.commons.exceptions.NegativeValueException;
-import net.lecousin.commons.io.IOChecks;
 import net.lecousin.commons.io.memory.DataArray;
 
 /** Wrapper for a byte[] as a DataArray. */
-public class ByteArray implements DataArray<byte[]> {
+public class ByteArray extends DataArray<byte[]> {
 
-	protected byte[] bytes;
-	protected int start;
-	protected int position;
-	protected int end;
-	
 	/**
 	 * Constructor.
 	 * @param buf byte array to use
@@ -25,11 +17,7 @@ public class ByteArray implements DataArray<byte[]> {
 	 * @param len number of bytes to used, that will be considered as the size of this IO
 	 */
 	public ByteArray(byte[] buf, int off, int len) {
-		IOChecks.checkByteArray(buf, off, len);
-		this.bytes = buf;
-		this.start = off;
-		this.position = 0;
-		this.end = off + len;
+		super(buf, off, len);
 	}
 
 	/**
@@ -46,87 +34,34 @@ public class ByteArray implements DataArray<byte[]> {
 	 */
 	public ByteArray(ByteBuffer buffer) {
 		if (buffer.hasArray()) {
-			this.bytes = buffer.array();
+			this.array = buffer.array();
 			this.start = buffer.arrayOffset();
 			this.position = buffer.position();
 			this.end = this.start + buffer.limit();
 		} else {
-			this.bytes = new byte[buffer.remaining()];
-			buffer.get(this.bytes);
+			this.array = new byte[buffer.remaining()];
+			buffer.get(this.array);
 			this.start = 0;
 			this.position = 0;
-			this.end = this.bytes.length;
+			this.end = this.array.length;
 		}
 	}
 	
 	@Override
-	public byte[] getArray() {
-		return bytes;
-	}
-	
-	/** @return the start offset in the array (corresponding to position 0). */
-	@Override
-	public int getArrayStartOffset() {
-		return start;
+	protected byte[] createArray(int size) {
+		return new byte[size];
 	}
 	
 	@Override
-	public int getPosition() {
-		return position;
-	}
-	
-	@Override
-	public void setPosition(int newPosition) {
-		LimitExceededException.checkWithNonNegative(newPosition, (long) end - start, "newPosition", "end - start");
-		this.position = newPosition;
-	}
-	
-	@Override
-	public int getSize() {
-		return end - start;
-	}
-	
-	@Override
-	public void setSize(int newSize) {
-		NegativeValueException.check(newSize, "newSize");
-		if (newSize < end - start || start + newSize <= bytes.length) {
-			end = start + newSize;
-		} else {
-			byte[] b = new byte[newSize];
-			System.arraycopy(bytes, start, b, 0, end - start);
-			bytes = b;
-			start = 0;
-			end = newSize;
-		}
-	}
-	
-	@Override
-	public void trim() {
-		if (start > 0 || end < bytes.length) {
-			byte[] b = new byte[end - start];
-			System.arraycopy(bytes, start, b, 0, end - start);
-			bytes = b;
-			start = 0;
-			end = b.length;
-		}
-	}
-	
-	/**
-	 * Flips this buffer. The end is set to the current position and then
-     * the position is set to zero.
-	 * @return this
-	 */
 	public ByteArray flip() {
-		end = start + position;
-        position = 0;
-        return this;
+		return (ByteArray) super.flip();
 	}
 	
 	/** Read a byte from the current position, and increment the position.
 	 * @return the byte
 	 */
 	public byte readByte() {
-		return bytes[position++];
+		return array[start + position++];
 	}
 	
 	/**
@@ -134,23 +69,12 @@ public class ByteArray implements DataArray<byte[]> {
 	 * @param b the byte
 	 */
 	public void writeByte(byte b) {
-		bytes[position++] = b;
-	}
-	
-	/**
-	 * Write bytes at the current position
-	 * @param src bytes to write
-	 * @param off offset in src
-	 * @param len number of bytes
-	 */
-	public void write(byte[] src, int off, int len) {
-		System.arraycopy(src, off, bytes, position, len);
-		position += len;
+		array[start + position++] = b;
 	}
 	
 	/** @return a ByteBuffer from this ByteArray. */
 	public ByteBuffer toByteBuffer() {
-		return ByteBuffer.wrap(bytes, start + position, end - start - position);
+		return ByteBuffer.wrap(array, start + position, end - start - position);
 	}
 
 	/** @return a ByteArrayIO based on this byte array. */

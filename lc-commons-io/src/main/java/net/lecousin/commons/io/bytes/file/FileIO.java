@@ -227,7 +227,7 @@ public abstract class FileIO extends AbstractIO implements BytesIO, IO.Seekable 
 	}
 	
 	protected void writeBytesFullyAt(long pos, ByteBuffer buffer) throws IOException {
-		IOChecks.checkByteBufferOperation(this, pos, buffer);
+		IOChecks.checkBufferOperation(this, pos, buffer);
 		if (buffer.remaining() == 0) return;
 		if (!canAppend && pos + buffer.remaining() > size) throw new EOFException();
 		while (buffer.hasRemaining()) {

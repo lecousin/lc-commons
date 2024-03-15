@@ -2,6 +2,7 @@ package net.lecousin.commons.io.bytes.utils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -16,7 +17,7 @@ class TestBytesIOToInputStream {
 	void testReadAllBytes(String displayName, byte[] content) throws Exception {
 		BytesIO.Readable io = new ByteArray(content).asBytesIO();
 		try (BytesIOToInputStream in = new BytesIOToInputStream(io)) {
-			assertThat(in.readAllBytes()).containsExactly(content);
+			Assertions.assertArrayEquals(content, in.readAllBytes());
 			assertThat(in.read()).isEqualTo(-1);
 			assertThat(in.skip(1)).isEqualTo(-1);
 		}

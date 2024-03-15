@@ -1,8 +1,8 @@
 package net.lecousin.commons.io.bytes.utils;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.util.List;
+
+import org.junit.jupiter.api.Assertions;
 
 import net.lecousin.commons.io.bytes.AbstractReadWriteBytesIOTest;
 import net.lecousin.commons.io.bytes.AbstractReadableBytesIOTest;
@@ -174,7 +174,7 @@ public class TestCompositeBytesIO {
 		@Override
 		protected void checkWrittenData(BytesIO.Writable io, Object object, byte[] expected) throws Exception {
 			byte[] b = (byte[]) object;
-			assertThat(b).containsExactly(expected);
+			Assertions.assertArrayEquals(expected, b);
 		}
 	}
 	
@@ -209,7 +209,7 @@ public class TestCompositeBytesIO {
 		@Override
 		protected void checkWrittenData(BytesIO.Writable.Seekable io, Object object, byte[] expected) throws Exception {
 			byte[] b = (byte[]) object;
-			assertThat(b).containsExactly(expected);
+			Assertions.assertArrayEquals(expected, b);
 		}
 	}
 	

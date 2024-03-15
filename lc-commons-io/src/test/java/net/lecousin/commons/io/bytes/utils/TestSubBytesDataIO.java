@@ -1,8 +1,8 @@
 package net.lecousin.commons.io.bytes.utils;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.util.List;
+
+import org.junit.jupiter.api.Assertions;
 
 import net.lecousin.commons.io.bytes.AbstractWritableBytesIOTest.WritableTestCase;
 import net.lecousin.commons.io.bytes.data.AbstractReadWriteBytesDataIOTest;
@@ -44,7 +44,7 @@ public class TestSubBytesDataIO {
 			ByteArray ba = (ByteArray) object;
 			byte[] b = new byte[expected.length];
 			System.arraycopy(ba.getArray(), 111, b, 0, expected.length);
-			assertThat(b).containsExactly(expected);
+			Assertions.assertArrayEquals(expected, b);
 		}
 	}
 
