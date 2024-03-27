@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.lecousin.commons</groupId>
   <artifactId>lc-commons-parent</artifactId>
-  <version>1.0.0</version>
+  <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   
   <name>net.lecousin.commons</name>
@@ -37,8 +37,9 @@
       <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
     </repository>
     <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <id>github</id>
+      <name>GitHub Packages</name>
+	  <url>https://maven.pkg.github.com/lecousin/lc-commons</url>
     </snapshotRepository>
   </distributionManagement>
   
