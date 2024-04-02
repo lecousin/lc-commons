@@ -47,9 +47,9 @@
 	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	
 	<!-- dependencies -->
-	<lombok.version>1.18.30</lombok.version>
+	<lombok.version>1.18.32</lombok.version>
 	<slf4j.version>2.0.12</slf4j.version>
-	<logback.version>1.4.14</logback.version>
+	<logback.version>1.5.3</logback.version>
 	<apache-commons-lang3.version>3.14.0</apache-commons-lang3.version>
 	<apache.commons-io.version>2.15.1</apache.commons-io.version>
 	
@@ -66,12 +66,12 @@
 	<maven-javadoc.version>3.6.3</maven-javadoc.version>
 	<maven-surefire.version>3.2.5</maven-surefire.version>
     <maven-jacoco.version>0.8.11</maven-jacoco.version>
-    <maven-gpg-plugin.version>3.1.0</maven-gpg-plugin.version>
+    <maven-gpg-plugin.version>3.2.2</maven-gpg-plugin.version>
     <maven-resources.version>3.3.1</maven-resources.version>
     <maven-deploy.version>3.1.1</maven-deploy.version>
 	
 	<!-- checks -->
-	<checkstyle.version>10.14.0</checkstyle.version>
+	<checkstyle.version>10.14.2</checkstyle.version>
 	<maven-checkstyle.version>3.3.1</maven-checkstyle.version>
 	
 	<!-- sonar -->
