@@ -1,5 +1,7 @@
 package net.lecousin.commons.reactive;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -102,6 +104,18 @@ public final class MonoUtils {
 				d.publishOn(Schedulers.parallel())
 		);
 	}
+	
+	/**
+	 * Zip the given Mono, like {@link Mono#zip(Iterable, java.util.function.Function)}, with {@link List#of(Object...)} as
+	 * aggregator, and ensure they are processed in parallel by calling publishOn(Shedulers.parallel()) on each Mono.
+	 * @param <T> type of result
+	 * @param monos the Monos
+	 * @return result
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> Mono<List<T>> zipParallel(List<Mono<T>> monos) {
+		return Mono.zip(monos.stream().map(mono -> mono.publishOn(Schedulers.parallel())).toList(), results -> (List<T>) List.of(results));
+	}
 
 	
 	/**
@@ -147,6 +161,17 @@ public final class MonoUtils {
 			c.then(Mono.just(0)),
 			d.then(Mono.just(0))
 		).then();
+	}
+	
+	/**
+	 * Launch the given Mono in parallel
+	 * @param monos the Monos
+	 * @return a Mono completed once all are completed
+	 */
+	public static Mono<Void> zipVoidParallel(Iterable<Mono<Void>> monos) {
+		List<Mono<Integer>> monosWithOutput = new LinkedList<>();
+		monos.forEach(mono -> monosWithOutput.add(mono.then(Mono.just(0))));
+		return zipParallel(monosWithOutput).then();
 	}
 	
 }
