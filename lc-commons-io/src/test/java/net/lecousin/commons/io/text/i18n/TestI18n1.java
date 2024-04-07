@@ -78,4 +78,24 @@ class TestI18n1 {
 		assertThat(new TranslatedString("unknown", "unknownkey").localize(Locale.US)).isEqualTo("[unknown#unknownkey]");
 	}
 	
+	@Test
+	void testComposite() throws Exception {
+		var composite = CompositeI18nString.of(
+			"hello ",
+			new TranslatedString("test1", "key1"),
+			" world ",
+			CompositeI18nString.of(new NumberI18nString(12345L), new StaticI18nString(" !!"))
+		);
+		assertThat(composite.localize(Locale.US)).isEqualTo("hello value1 world 12,345 !!");
+		
+		StringBuilder out = new StringBuilder();
+		composite.localize(Locale.US, out);
+		assertThat(out).hasToString("hello value1 world 12,345 !!");
+		
+		assertThat(composite.localizeAsync(Locale.US).get()).isEqualTo("hello value1 world 12,345 !!");
+		out = new StringBuilder();
+		assertThat(composite.localizeAsync(Locale.US, out).get()).hasToString("hello value1 world 12,345 !!");
+		
+	}
+	
 }
