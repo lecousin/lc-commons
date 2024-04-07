@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class NumberI18nString implements I18nString {
 
+	private static final long serialVersionUID = 1L;
+	
 	private final Number number;
 	
 	@Override
