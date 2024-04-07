@@ -1,5 +1,6 @@
 package net.lecousin.commons.io.text.i18n;
 
+import java.io.Serializable;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -49,7 +50,7 @@ public final class I18nResourceBundle {
 	 * @param arguments arguments used in placeholders
 	 * @return the translated string
 	 */
-	public static String get(Locale locale, String namespace, String key, Object[] arguments) {
+	public static String get(Locale locale, String namespace, String key, Serializable[] arguments) {
 		try {
 			return getAsync(locale, namespace, key, arguments).get();
 		} catch (InterruptedException e) {
@@ -69,7 +70,7 @@ public final class I18nResourceBundle {
 	 * @param arguments arguments used in placeholders
 	 * @return the translated string
 	 */
-	public static CompletableFuture<String> getAsync(Locale locale, String namespace, String key, Object[] arguments) {
+	public static CompletableFuture<String> getAsync(Locale locale, String namespace, String key, Serializable[] arguments) {
 		List<Object> resolved = resolveArguments(locale, arguments);
 		CompletableFuture<String> result = new CompletableFuture<>();
 		getPlaceholders(getFilenames(locale, namespace), key)
@@ -103,7 +104,7 @@ public final class I18nResourceBundle {
 		return filenames;
 	}
 	
-	private static List<Object> resolveArguments(Locale locale, Object[] arguments) {
+	private static List<Object> resolveArguments(Locale locale, Serializable[] arguments) {
 		List<Object> resolved = new ArrayList<>(arguments.length);
 		for (int i = 0; i < arguments.length; ++i) {
 			Object arg = arguments[i];
