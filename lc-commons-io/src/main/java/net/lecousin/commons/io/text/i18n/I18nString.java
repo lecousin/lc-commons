@@ -1,12 +1,13 @@
 package net.lecousin.commons.io.text.i18n;
 
+import java.io.Serializable;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 /**
  * A localizable string.
  */
-public interface I18nString {
+public interface I18nString extends Serializable {
 
 	/** Localize into the given locale.
 	 * 
@@ -29,6 +30,19 @@ public interface I18nString {
 	 */
 	default void localize(Locale locale, StringBuilder output) {
 		output.append(localize(locale));
+	}
+	
+	/**
+	 * Localize into the given locale and append it to the output.
+	 * @param locale the target locale
+	 * @param output output
+	 * @return future completed with the output filled
+	 */
+	default CompletableFuture<StringBuilder> localizeAsync(Locale locale, StringBuilder output) {
+		return localizeAsync(locale).thenApplyAsync(s -> {
+			output.append(s);
+			return output;
+		});
 	}
 	
 }
