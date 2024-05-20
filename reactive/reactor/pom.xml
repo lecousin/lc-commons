@@ -9,7 +9,7 @@
   <packaging>pom</packaging>
   
   <properties>
-	<project-reactor.version>3.6.5</project-reactor.version>
+	<project-reactor.version>3.6.6</project-reactor.version>
   </properties>
   
   <dependencies>
