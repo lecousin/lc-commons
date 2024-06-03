@@ -63,7 +63,7 @@
 	<maven.compiler.target>17</maven.compiler.target>
 	<maven-source.version>3.3.1</maven-source.version>
 	<maven-jar.version>3.4.1</maven-jar.version>
-	<maven-javadoc.version>3.6.3</maven-javadoc.version>
+	<maven-javadoc.version>3.7.0</maven-javadoc.version>
 	<maven-surefire.version>3.2.5</maven-surefire.version>
     <maven-jacoco.version>0.8.12</maven-jacoco.version>
     <maven-gpg-plugin.version>3.2.4</maven-gpg-plugin.version>
